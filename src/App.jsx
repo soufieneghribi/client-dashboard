@@ -3,16 +3,18 @@ import Home from "./pages/Home";
 import Products from "./pages/Products";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import Header from "./components/Header"; // Import Header component
+import Header from "./components/Header";
+import PrivateRoute from "./components/PrivateRoute";
+import "./styles/styles.css";
 
 function App() {
     return (
         <Router>
-            <Header /> {/* Add Header here */}
+            <Header />
             <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/products" element={<Products />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+                <Route path="/products" element={<PrivateRoute><Products /></PrivateRoute>} />
                 <Route path="*" element={<NotFound />} />
             </Routes>
         </Router>

@@ -1,0 +1,62 @@
+/* Header container */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+background-color: #2b3a67;
+  padding: 10px 20px;
+  color: white;
+}
+
+header h1 {
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+header .logo {
+  font-weight: bold;
+  color: #fff;
+  text-decoration: none;
+}
+
+header .user-info {
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+}
+
+header .user-info p {
+  margin-right: 10px;
+}
+
+header button {
+  background-color: #ff4b5c;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+header button:hover {
+  background-color: #e03e4c;
+}
+
+/* For smaller screens, adjust layout */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px;
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  header .user-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -1,4 +1,5 @@
-/* Reset some default browser styling */
+/* Reset some default browser styling
+
 * {
   margin: 0;
   padding: 0;
@@ -7,7 +8,7 @@
 
 body {
   font-family: 'Arial', sans-serif;
-  background-color: #f7f8fc;  /* Light background */
+  background-color: #f7f8fc; 
   color: #333;
   line-height: 1.6;
 }
@@ -54,3 +55,4 @@ button:disabled {
     font-size: 2rem;
   }
 }
+   */

@@ -1,12 +1,5 @@
-/* Header container */
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-background-color: #2b3a67;
-  padding: 10px 20px;
-  color: white;
-}
+/* Header container
+
 
 header h1 {
   font-size: 1.8rem;
@@ -44,7 +37,7 @@ header button:hover {
 }
 
 /* For smaller screens, adjust layout */
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
   header {
     flex-direction: column;
     align-items: flex-start;
@@ -59,4 +52,4 @@ header button:hover {
     flex-direction: column;
     align-items: flex-start;
   }
-}
+} */ 

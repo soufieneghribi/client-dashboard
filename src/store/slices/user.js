@@ -44,7 +44,7 @@ export const updateUserProfile = createAsyncThunk(
   "user/updateUserProfile ",
   async (profileData, { rejectWithValue }) => {
     try {
-      const { data } = await axios.put("https://tn360-122923924979.europe-west1.run.app/api/v1/customer/update-profile", profileData);
+      const { data } = await axios.post("https://tn360-122923924979.europe-west1.run.app/api/v1/customer/update-profile", profileData);
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to update profile");

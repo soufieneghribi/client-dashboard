@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logout, loginSuccess } from "../store/slices/authSlice";
@@ -43,7 +42,7 @@ const Header = () => {
           <header className="w-full bg-gray-100">
         <div className="container flex flex-row flex-wrap items-center justify-between  mx-auto md:flex-row max-w-7xl">
             <div className="relative">
-                    <img src="../src/assets/image/logo_0.png"  width="150px"></img>
+                 <Link to="/" > <img src="../src/assets/image/logo_0.png"  width="150px"></img></Link> 
                    
             </div>
             <div className="relative mt-3">
@@ -59,9 +58,9 @@ const Header = () => {
               {auth.isLoggedIn && auth.user ? (
                 <div className="user-info flex flex-row gap-3 items-end">
                   <p>Welcome, {auth.user.nom_et_prenom || "User"}</p>
-                 <Link to={`/profile/${auth.token}`}> <i class="fa-regular fa-user"></i></Link>
-                 <Link to="/favoris" ><i class="fa-regular fa-heart"></i></Link>
-                 <Link to="/cart-shopping"><i class="fa-solid fa-cart-shopping"></i></Link>
+                 <Link to={`/profile`}> <i class="fa-regular fa-user"></i></Link>
+                 <Link to={`/favoris`} ><i class="fa-regular fa-heart"></i></Link>
+                 <Link to={`/cartShopping`}><i class="fa-solid fa-cart-shopping"></i></Link>
                   <button className="text-base font-medium leading-6 text-orange-360 whitespace-no-wrap transition duration-150 ease-in-out"  onClick={handleLogout}>Logout</button>
 
                 </div>

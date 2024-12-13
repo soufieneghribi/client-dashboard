@@ -1,16 +1,26 @@
 /* eslint-disable no-unused-vars */
 import React from "react";
 import '../styles/Home.css';  // Import Home styles
+import Categories from "../components/Categories";
+import ProductRecommande from "../components/ProductRecommande";
+
+
+
 
 const Home = () => {
+    
     return (
         <div className="home-container">
             <h1>Welcome to 360TN</h1>
-            <section>
-                <h2>Featured Products</h2>
-                <p>Check out our amazing products!</p>
+            <section className="grid ">
                 {/* Add more content here */}
-            </section>
+               <Categories/>
+
+               <ProductRecommande/>
+
+               
+               
+             </section>
         </div>
     );
 };

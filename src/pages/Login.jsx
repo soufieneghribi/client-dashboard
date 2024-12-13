@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
@@ -80,27 +79,25 @@ const Login = () => {
     setLoadingModal(true);
     setError('');
     setMessage('');
-    if (!email) {
+    if (!searchMail) {
       setError("Veuillez entrer une adresse e-mail valide.");
       setLoading(false);
       return;
     }
     try {
-      const response = await fetch(
-        "https://tn360-122923924979.europe-west1.run.app/api/v1/auth/ForgotPasswordController",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
-      if (!response.ok) {
-        throw new Error('Une erreur est survenue lors de la demande de réinitialisation');
-      }
-      setMessage('Un e-mail a été envoyé avec des instructions pour réinitialiser votre mot de passe.',`${client}`);
-      setSearchMail({searchsMail: ''}); // Clear email after sending reset
+      await sendPasswordResetEmail(auth, searchMail);
+      toast.success("Password reset link sent! Check your email.");
+      setSearchMail(""); // Clear email after sending reset
+      toast.success('Un e-mail a été envoyé avec des instructions pour réinitialiser votre mot de passe.',`${client}`);
+     
     } catch (err) {
-      setError(err.message);
+      if (error.code === "auth/user-not-found") {
+        toast.error("No account found with this email.");
+      } else if (error.code === "auth/invalid-email") {
+        toast.error("Please enter a valid email address.");
+      } else {
+        toast.error("Failed to send password reset email.");
+      }
     }
     setLoadingModal(false);
   };
@@ -182,7 +179,9 @@ const Login = () => {
                           placeholder="Email"
                           name="email"
                           defaultValue={email}
-                          onChange={(e) => setSearchMail(e.target.value)}
+                          onChange={(e) => {setSearchMail(e.target.value)
+                            console.log(searchMail)
+                          }}
                         />
                       </div>
                       {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -191,7 +190,7 @@ const Login = () => {
                         <button
                           type="button"
                           className="px-4 py-2 bg-orange-360 text-white rounded-md"
-                          onClick={() => setIsModalOpen(false)}
+                          onClick={() =>{ setIsModalOpen(false) ; setLoadingModal(false)}}
                         >
                           Annuler
                         </button>

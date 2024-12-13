@@ -274,10 +274,9 @@ console.log(user)
                     defaultValue={user.situation_familiale}
                     onChange={changeHandler}>
                       <option value=""></option>
-                      <option value="celebataire">Célebataire</option>
-                      <option value="marie" > Marié </option>
-                      <option value="divorce" >Divorce</option>
-                  
+                      <option value="Célebataire">Célebataire</option>
+                      <option value="Marié" > Marié </option>
+                      <option value="Divorce" >Divorce</option>
                       </select>
                     
                       {user.situation_familiale !== "celebataire" && user.situation_familiale !== "" ? (

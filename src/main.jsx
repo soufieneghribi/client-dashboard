@@ -22,6 +22,8 @@ import "./styles/index.css"
 import CartShopping from "./pages/CartShopping";
 import Favoris from "./pages/Favoris";
 import Profile from "./pages/Profile";
+import OrderConfirmation from "./pages/OrderConfirmation";
+import Orders from "./pages/Commandes";
 
 
 const router = createBrowserRouter(
@@ -35,6 +37,8 @@ const router = createBrowserRouter(
         <Route path="/favoris" element={<Favoris/>}/>
         <Route path="/cartShopping" element={<CartShopping/>}/>
         <Route path="/cart-shopping" element={<CartShopping />} />
+        <Route path="/order-confirmation" element={<OrderConfirmation/>}/>
+        <Route path="/Mes-Commandes" element={<Orders/>}/>
         <Route path="/deals" element={<Deals />} />
         <Route path="/catalogue" element={<Catalogue />} />
         <Route path="/categories" element={<Categories />} />

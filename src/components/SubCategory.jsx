@@ -1,22 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import Carousel from 'react-bootstrap/Carousel';
 import { useNavigate, useParams } from 'react-router-dom';
 
-const SubCategory = ({ data, categorie }) => {
+const SubCategory = ({ data }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
-  const itemPerSlide = 4;
+  const itemsPerSlide = 4;
 
-  // Ensure data is passed as an array of subcategories
   if (!data || data.length === 0) {
-    return <p>No subcategories available</p>;
+    return <p className="text-center text-gray-500">No subcategories available</p>;
   }
 
-  // Group subcategories into slides
   const slides = data.reduce((acc, subcategory, index) => {
-    const slideIndex = Math.floor(index / itemPerSlide);
+    const slideIndex = Math.floor(index / itemsPerSlide);
     if (!acc[slideIndex]) {
       acc[slideIndex] = [];
     }
@@ -24,12 +21,10 @@ const SubCategory = ({ data, categorie }) => {
     return acc;
   }, []);
 
-  // Handle filtering products based on the subcategory ID
   const handleSubCategoryClick = (id, title) => {
     setSelectedSubCategory({ id, title });
   };
 
-  // Navigate to /products when a subcategory is selected
   useEffect(() => {
     if (selectedSubCategory) {
       navigate('/products', {
@@ -37,6 +32,7 @@ const SubCategory = ({ data, categorie }) => {
       });
     }
   }, [selectedSubCategory, navigate]);
+
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
@@ -46,59 +42,96 @@ const SubCategory = ({ data, categorie }) => {
   };
 
   return (
-    <div className="mx-auto py-12 w-full">
-      <div className="relative w-full mx-auto rounded-lg overflow-hidden">
-       <div className="relative h-80 md:h-96 mx-8"> 
-        {slides.map((subcategoryGroup, slideIndex) => (
-            <div key={slideIndex} className={`duration-700 ease-in-out justify-around ${currentIndex === slideIndex ? "flex" : "hidden"}`}>
-              {subcategoryGroup.map((subcategory, index) => (
-                <div key={subcategory.id} className="grid m-4 w-1/4 ">
-                  <img
-                    className="d-block w-100"
-                    src={subcategory.picture || 'https://via.placeholder.com/800x400'}
-                    alt={subcategory.title || `Subcategory ${index + 1}`}
-                  />
-                  <button
-                      onClick={() => handleSubCategoryClick(subcategory.id, subcategory.title)}
-                      className=" flex flex-row justify-center items-center mt-2 bg-blue-360 text-white px-4 py-2 rounded-md hover:bg-blue-500"
-                  >{subcategory.title }</button>
-                </div>
-              ))}
+    <div className="container mx-auto py-12 px-6 lg:px-8">
+    
+
+      <div className="relative">
+        {/* Slides */}
+        <div className="relative h-auto md:h-[500px]">
+          {slides.map((subcategoryGroup, slideIndex) => (
+            <div
+              key={slideIndex}
+              className={`absolute inset-0 duration-700 ease-in-out transform ${
+                currentIndex === slideIndex ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
+              } flex justify-center items-center`}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                {subcategoryGroup.map((subcategory) => (
+                  <div
+                    key={subcategory.id}
+                    className="group relative bg-gradient-to-br from-white to-gray-100 dark:from-gray-800 dark:to-gray-900 shadow-lg rounded-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+                  >
+                    <div className="relative">
+                      <img
+                        className="w-full h-56 object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-500"
+                        src={subcategory.picture || 'https://via.placeholder.com/150'}
+                        alt={subcategory.title || 'Subcategory'}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-4">
+                        <h3 className="text-white font-bold text-lg">{subcategory.title}</h3>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <button
+                        onClick={() => handleSubCategoryClick(subcategory.id, subcategory.title)}
+                        className="bg-gradient-to-r from-blue-360 to-orange-360 text-white px-4 py-2 rounded-md w-full font-semibold hover:opacity-90 focus:ring focus:ring-purple-300 transition"
+                      >
+                        Explore
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
-      </div>
-     {/* Slider indicators */}
-     <div className="flex absolute bottom-5 left-1/2 z-30 -translate-x-1/2 space-x-2">
-       {slides.map((_, idx) => (
-       <button
-       key={idx}
-       className={`w-3 h-3 rounded-full ${currentIndex === idx ? "bg-blue-500" : "bg-gray-300"}`}
-       onClick={() => setCurrentIndex(idx)}
-       ></button>
-       ))}
-     </div>
+        </div>
 
-    {/* Slider controls */}
-     <button
-       type="button"
-       className="flex absolute top-0 -left-2 z-40 items-center justify-center w-10 h-10 bg-blue-360 rounded-full hover:bg-gray-300 focus:outline-none transition"
-       onClick={prevSlide}
-      >
-      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
-      </svg>
-     </button>
-    <button
-    type="button"
-    className="flex absolute top-0 -right-2 items-center justify-center w-10 h-10 bg-blue-360 rounded-full hover:bg-gray-300 focus:outline-none transition"
-    onClick={nextSlide}
-    >
-    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-    </svg>
-    </button>
-  </div>
-</div>
+        {/* Indicators */}
+        <div className="flex absolute bottom-5 left-1/2 transform -translate-x-1/2 space-x-3">
+          {slides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              className={`w-4 h-4 rounded-full ${
+                currentIndex === idx ? 'bg-blue-360' : 'bg-gray-400'
+              } transition-colors `}
+              title={`Go to slide ${idx + 1}`}
+            />
+          ))}
+        </div>
+
+        {/* Controls */}
+        <button
+          onClick={prevSlide}
+          className="absolute top-1/2 -left-10 transform -translate-y-1/2 bg-gradient-to-r from-purple-500 to-purple-700 text-white p-4 rounded-full hover:opacity-90 shadow-lg focus:ring focus:ring-purple-300 transition"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button
+          onClick={nextSlide}
+          className="absolute top-1/2 -right-10 transform -translate-y-1/2 bg-gradient-to-r from-purple-500 to-purple-700 text-white p-4 rounded-full hover:opacity-90 shadow-lg focus:ring focus:ring-purple-300 transition"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </div>
   );
 };
 

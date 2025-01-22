@@ -8,7 +8,12 @@ const Categories = () => {
   const { categories = [], loading, error } = useSelector((state) => state.categorie);
   const [subCategory, setSubCategory] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const itemsPerSlide = 6; // Number of items per slide
+  function getItemsPerRow() {
+    if (window.innerWidth < 720) return 1;
+    if (window.innerWidth > 720) return 6;
+ 
+  }
+// Nombre d'éléments par diapositive
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
@@ -20,9 +25,9 @@ const Categories = () => {
 
   const filteredCategories = categories.filter((category) => category.parent_id === 0);
 
-  // Group categories into slides
+  // Grouper les catégories par diapositives
   const slides = filteredCategories.reduce((acc, category, index) => {
-    const slideIndex = Math.floor(index / itemsPerSlide);
+    const slideIndex = Math.floor(index / getItemsPerRow());
     if (!acc[slideIndex]) {
       acc[slideIndex] = [];
     }
@@ -39,7 +44,7 @@ const Categories = () => {
   };
 
   const subHandler = (id, title) => {
-    setShow(true);
+    setShow(!show);
     setSubCategory(categories.filter((category) => category.parent_id === id));
     setCategoryTitle(title);
   };
@@ -54,17 +59,17 @@ const Categories = () => {
         <p className="text-center text-red-500">Error fetching categories.</p>
       ) : categories.length > 0 ? (
         <div className="relative w-full mx-auto rounded-lg overflow-hidden">
-          {/* Carousel wrapper */}
+          {/* Carrousel */}
           <div className="relative h-80 md:h-96 mx-8">
             {slides.map((slide, slideIndex) => (
               <div
                 key={slideIndex}
-                className={`duration-700 ease-in-out ${currentIndex === slideIndex ? "flex" : "hidden"}`}
+                className={`duration-700 ease-in-out ${currentIndex === slideIndex ? "flex" : "hidden"} justify-center md:justify-start`}
               >
                 {slide.map((category) => (
                   <div
                     key={category.id}
-                    className="bg-white p-4 rounded-lg shadow-xl w-full sm:w-1/2 lg:w-1/4 mx-2 mb-4"
+                    className="bg-white p-4 rounded-lg shadow-xl w-full sm:w-1/2 lg:w-1/4 xl:w-1/6 mx-2 mb-4"
                     onClick={() => subHandler(category.id, category.title)}
                   >
                     <img
@@ -72,7 +77,7 @@ const Categories = () => {
                       alt={category.name || `Image of ${category.title}`}
                       className="object-cover w-full h-40 rounded-md"
                     />
-                    <button className="text-lg font-semibold text-gray-800">
+                    <button className="text-lg font-semibold text-gray-800 mt-2 block text-center">
                       {category.title}
                     </button>
                   </div>
@@ -81,7 +86,7 @@ const Categories = () => {
             ))}
           </div>
 
-          {/* Slider indicators */}
+          {/* Indicateurs du carrousel */}
           <div className="flex absolute bottom-5 left-1/2 z-30 -translate-x-1/2 space-x-2">
             {slides.map((_, idx) => (
               <button
@@ -92,7 +97,7 @@ const Categories = () => {
             ))}
           </div>
 
-          {/* Slider controls */}
+          {/* Contrôles du carrousel */}
           <button
             type="button"
             className="flex absolute top-0 -left-2 z-40 items-center justify-center w-10 h-72 bg-blue-360 rounded-full hover:bg-gray-300 focus:outline-none transition"
@@ -116,7 +121,7 @@ const Categories = () => {
         <p className="text-center text-gray-500">No categories found.</p>
       )}
 
-      {/* SubCategory Display */}
+      {/* Affichage des sous-catégories */}
       {show && (
         <div>
           <SubCategory data={subCategory} categorie={categoryTitle} />

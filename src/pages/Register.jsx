@@ -279,7 +279,7 @@ console.log(user)
                       <option value="Divorce" >Divorce</option>
                       </select>
                     
-                      {user.situation_familiale !== "celebataire" && user.situation_familiale !== "" ? (
+                      {user.situation_familiale !== "Célebataire" && user.situation_familiale !== "" ? (
                         <div>
                         <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Enfants</label>
                         <select  name="enfants"

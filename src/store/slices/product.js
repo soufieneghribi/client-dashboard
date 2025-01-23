@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
@@ -83,5 +84,12 @@ const productSlice = createSlice({
         
 
     },
+=======
+import { createSlice } from "@reduxjs/toolkit";
+import axios from "axios";
+const productSlice = createSlice({
+    name: "product",
+    initialState: {}
+>>>>>>> 06d2071aedc2d640779f181a96887cf7422a4cc9
 })
 export default productSlice.reducer;

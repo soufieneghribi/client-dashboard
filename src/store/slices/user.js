@@ -40,7 +40,6 @@ export const fetchUserProfile = createAsyncThunk(
   }
 );
 // Update user profile
-<<<<<<< HEAD
 
 export const updateUserProfile = createAsyncThunk(
   "user/updateUserProfile",
@@ -75,19 +74,7 @@ export const updateUserProfile = createAsyncThunk(
   }
 );
 
-=======
-export const updateUserProfile = createAsyncThunk(
-  "user/updateUserProfile ",
-  async (profileData, { rejectWithValue }) => {
-    try {
-      const { data } = await axios.post("https://tn360-122923924979.europe-west1.run.app/api/v1/customer/update-profile", profileData);
-      return data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Failed to update profile");
-    }
-  }
-);
->>>>>>> 06d2071aedc2d640779f181a96887cf7422a4cc9
+
 const UserSlice = createSlice({
   name: "user",
   initialState: {

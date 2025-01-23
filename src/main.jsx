@@ -6,7 +6,7 @@ import store from "./store";
 import App from "./App";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
-<<<<<<< HEAD
+
 import Products from "./components/ProductsBySubCategory";
 import PrivateRoute from "./components/PrivateRoute";
 import Register from "./pages/Register";
@@ -18,22 +18,15 @@ import MesDeals from "./pages/MesDeals";
 import Categories from "./components/Categories";
 import SubCategory from "./components/SubCategory";
 import Catalogue from "./pages/Catalogue";
-=======
-import Products from "./pages/Products";
-import PrivateRoute from "./components/PrivateRoute";
-import Register from "./pages/Register";
-import NotFound from "./pages/NotFound";
->>>>>>> 06d2071aedc2d640779f181a96887cf7422a4cc9
 import "./styles/index.css"
 
 import CartShopping from "./pages/CartShopping";
 import Favoris from "./pages/Favoris";
 import Profile from "./pages/Profile";
-<<<<<<< HEAD
+
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Orders from "./pages/Commandes";
-=======
->>>>>>> 06d2071aedc2d640779f181a96887cf7422a4cc9
+
 
 
 const router = createBrowserRouter(
@@ -46,7 +39,6 @@ const router = createBrowserRouter(
         <Route path="/profile" element={<Profile/>}/>
         <Route path="/favoris" element={<Favoris/>}/>
         <Route path="/cartShopping" element={<CartShopping/>}/>
-<<<<<<< HEAD
         <Route path="/cart-shopping" element={<CartShopping />} />
         <Route path="/order-confirmation" element={<OrderConfirmation/>}/>
         <Route path="/Mes-Commandes" element={<Orders/>}/>
@@ -56,8 +48,7 @@ const router = createBrowserRouter(
         <Route path="/sub-category" element={<SubCategory />} />
         <Route path="/products" element={<Products />} />
         <Route path="/product/:id" element={<ProductDetails />} />
-=======
->>>>>>> 06d2071aedc2d640779f181a96887cf7422a4cc9
+
         <Route path="*" element={<NotFound />} />
       </Route>
     )

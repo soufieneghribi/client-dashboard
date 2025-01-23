@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -37,18 +37,6 @@ const categorieSlice = createSlice({
         state.error = action.payload;
       })
   }
-=======
-import { createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
 
-
-
-
-const categorieSlice = createSlice({
-    name: "categorie",
-    initialState: {
-
-    }
->>>>>>> 06d2071aedc2d640779f181a96887cf7422a4cc9
 })
 export default categorieSlice.reducer;

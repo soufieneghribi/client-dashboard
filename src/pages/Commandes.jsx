@@ -75,7 +75,7 @@ const Commandes = () => {
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Commande #{order.id}</h2>
               <div className="mb-4">
                 <p className="text-lg text-gray-600">
-                  <strong>Montant Total:</strong> {order.total} DT
+                  <strong>Montant Total:</strong> {orders.order_amount} DT
                 </p>
                 <p className="text-sm text-gray-500">
                   <strong>Date:</strong> {new Date(order.created_at).toLocaleDateString()}

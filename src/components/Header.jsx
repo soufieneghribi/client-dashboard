@@ -60,7 +60,7 @@ const Header = () => {
         {/* Logo */}
         <div className="relative flex-1">
           <Link to="/">
-            <img src="../src/assets/image/logo_0.png" width="150px" alt="Company Logo" />
+            <img src="../src/assets/images/logo_0.png" width="150px" alt="Company Logo" />
           </Link>
         </div>
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCategories } from "../store/slices/categorie";
@@ -6,15 +5,13 @@ import { Link, useNavigate } from "react-router-dom";
 import SubCategory from "./SubCategory";
 
 const Categories = () => {
-  const { categories = [], loading, error } = useSelector((state) => state.categorie);
+  const { categories = [], loading, error } = useSelector(
+    (state) => state.categorie
+  );
   const [subCategory, setSubCategory] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  function getItemsPerRow() {
-    if (window.innerWidth < 720) return 1;
-    if (window.innerWidth > 720) return 6;
- 
-  }
-// Nombre d'éléments par diapositive
+  const [itemsPerRow, setItemsPerRow] = useState(getItemsPerRow());
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
@@ -24,18 +21,35 @@ const Categories = () => {
     dispatch(fetchCategories());
   }, [dispatch]);
 
-  const filteredCategories = categories.filter((category) => category.parent_id === 0);
+  useEffect(() => {
+    const handleResize = () => {
+      setItemsPerRow(getItemsPerRow());
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  function getItemsPerRow() {
+    if (window.innerWidth < 720) return 1;
+    if (window.innerWidth >= 720 && window.innerWidth < 1024) return 3;
+    return 6;
+  }
+
+  const filteredCategories = categories.filter(
+    (category) => category.parent_id === 0
+  );
 
   // Grouper les catégories par diapositives
   const slides = filteredCategories.reduce((acc, category, index) => {
-    const slideIndex = Math.floor(index / getItemsPerRow());
+    const slideIndex = Math.floor(index / itemsPerRow);
     if (!acc[slideIndex]) {
       acc[slideIndex] = [];
     }
     acc[slideIndex].push(category);
     return acc;
   }, []);
-
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
@@ -66,24 +80,29 @@ const Categories = () => {
             {slides.map((slide, slideIndex) => (
               <div
                 key={slideIndex}
-                className={`duration-700 ease-in-out ${currentIndex === slideIndex ? "flex" : "hidden"} justify-center md:justify-start`}
+                className={`duration-700 ease-in-out ${
+                  currentIndex === slideIndex ? "flex" : "hidden"
+                } justify-center md:justify-start`}
               >
-                {slide.map((category) => (
-                  <div
-                    key={category.id}
-                    className="bg-white p-4 rounded-lg shadow-xl w-full sm:w-1/2 lg:w-1/4 xl:w-1/6 mx-2 mb-4"
-                    onClick={() => subHandler(category.id, category.title)}
-                  >
-                    <img
-                      src={category.picture}
-                      alt={category.name || `Image of ${category.title}`}
-                      className="object-cover w-full h-40 rounded-md"
-                    />
-                    <button className="text-lg font-semibold text-gray-800 mt-2 block text-center">
-                      {category.title}
-                    </button>
-                  </div>
-                ))}
+                {slide.map((category) => {
+                  const imageUrl = category.picture; // URL de l'image de la catégorie
+                  return (
+                    <div
+                      key={category.id}
+                      className="bg-white p-4 rounded-lg shadow-xl w-full sm:w-1/2 lg:w-1/4 xl:w-1/6 mx-2 mb-4"
+                      onClick={() => subHandler(category.id, category.title)}
+                    >
+                      <img
+                        src={`../assets/images/${imageUrl}`} // Assurez-vous que cette URL est correcte
+                        alt={category.name || `Image of ${category.title}`}
+                        className="object-cover w-full h-40 rounded-md"
+                      />
+                      <button className="text-lg font-semibold text-gray-800 mt-2 block text-center">
+                        {category.title}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -93,7 +112,9 @@ const Categories = () => {
             {slides.map((_, idx) => (
               <button
                 key={idx}
-                className={`w-3 h-3 rounded-full ${currentIndex === idx ? "bg-blue-500" : "bg-gray-300"}`}
+                className={`w-3 h-3 rounded-full ${
+                  currentIndex === idx ? "bg-blue-500" : "bg-gray-300"
+                }`}
                 onClick={() => setCurrentIndex(idx)}
               ></button>
             ))}
@@ -105,8 +126,19 @@ const Categories = () => {
             className="flex absolute top-0 -left-2 z-40 items-center justify-center w-10 h-72 bg-blue-360 rounded-full hover:bg-gray-300 focus:outline-none transition"
             onClick={prevSlide}
           >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+            <svg
+              className="w-5 h-5 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 19l-7-7 7-7"
+              ></path>
             </svg>
           </button>
           <button
@@ -114,8 +146,19 @@ const Categories = () => {
             className="flex absolute top-0 -right-2 items-center justify-center w-10 h-72 bg-blue-360 rounded-full hover:bg-gray-300 focus:outline-none transition"
             onClick={nextSlide}
           >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+            <svg
+              className="w-5 h-5 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 5l7 7-7 7"
+              ></path>
             </svg>
           </button>
         </div>
@@ -129,7 +172,6 @@ const Categories = () => {
           <SubCategory data={subCategory} categorie={categoryTitle} />
         </div>
       )}
-
     </div>
   );
 };

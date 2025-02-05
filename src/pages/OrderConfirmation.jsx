@@ -12,7 +12,7 @@ const OrderConfirmation = () => {
   const auth_token = localStorage.getItem("token");
 
   // Retrieve data passed from the cart page
-  const { orderDetails, subtotal, totalTTC } = location.state || {
+  const { orderDetails , subtotal, totalTTC } = location.state || {
     orderDetails: [],
     subtotal: 0,
     totalTTC: 0,

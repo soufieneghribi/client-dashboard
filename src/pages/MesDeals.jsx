@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { FaClock } from "react-icons/fa"; 
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOffre } from "../store/slices/offre.js";
 import Depense from "../components/Depense";
 import DealFrequence from "../components/DealFrequence.jsx";
 import DealAnniversaire from "../components/DealAnniversaire.jsx";
 import DealMarque from "../components/DealMarque.jsx";
-import Cagnotte from "../components/Cagnotte.jsx";
-import DealEnded from "../components/DealEnded.jsx";
 import { fetchUserProfile } from "../store/slices/user";
 
 const MesDeals = () => {
@@ -39,7 +36,7 @@ const MesDeals = () => {
 
   // Handle Previous Image in Carousel
   const handlePrev = () => {
-    setCurrentIndex((prevIndex) => 
+    setCurrentIndex((prevIndex) =>
       prevIndex === 0 ? images.length - 1 : prevIndex - 1
     );
   };
@@ -68,7 +65,7 @@ const MesDeals = () => {
     <>
       <nav className="bg-orange-360 flex flex-row justify-end">
         <div className="border bg-white px-2 py-2 m-2 rounded-2xl shadow-xl text-center font-bold text-sm font-limon-milk">
-          <p>Cagnotte </p>
+          <p>Cagnotte</p>
           <p>{Userprofile ? Userprofile.cagnotte_balance : "Chargement..." } DT</p>
         </div>
       </nav>
@@ -109,30 +106,62 @@ const MesDeals = () => {
 
       {/* Flash Sale Timer & Deals */}
       {deal.length > 0 ? (
-        deal.map((el) => {
-          const dealEndDate = new Date(el.date_fin); // Convert date_fin to Date object
-          const timeLeft = calculateTimeLeft(el.date_fin); // Get the time left for the deal
-          
-          // Check if deal is still active based on current date
-          if (formattedDate <= dealEndDate.toISOString().split("T")[0]) {
+        <div className="flex flex-wrap justify-between gap-4">
+          {deal.map((el) => {
+            const dealEndDate = new Date(el.date_fin); // Convert date_fin to Date object
+            const time = formattedDate <= dealEndDate.toISOString().split("T")[0];
+
             return (
-              <div key={el.id} className="flex flex-row justify-evenly w-auto p-4 bg-white shadow-lg rounded-lg mt-6">
-                {el.type_offre === "deal_depense" ? (
-                  <Depense Time={timeLeft} flashSaleTimeLeft={timeLeft} offre={el.type_offre} statut={el.statut} dateDebut={el.date_debut} dateFin={el.date_fin} className="w-1/3"/>
-                ) : el.type_offre === "deal_frequence" ? (
-                  <DealFrequence Time={timeLeft} flashSaleTimeLeft={timeLeft} offre={el.type_offre} statut={el.statut} dateDebut={el.date_debut} dateFin={el.date_fin} className="w-1/3"/>
-                ) : el.type_offre === "deal_anniversaire" ? (
-                  <DealAnniversaire Time={timeLeft} flashSaleTimeLeft={timeLeft} offre={el.type_offre} statut={el.statut} dateDebut={el.date_debut} dateFin={el.date_fin} className="w-1/3"/>
-                ) : el.type_offre === "deal_marque" ? (
-                  <DealMarque Time={timeLeft} flashSaleTimeLeft={timeLeft} offre={el.type_offre} statut={el.statut} dateDebut={el.date_debut} dateFin={el.date_fin} className="w-1/3"/>
-                ) : (
-                  <></> // Added empty fragment for unsupported offer types
-                )}
+              <div key={el.id} className="flex flex-col justify-items-center w-full sm:w-1/2 lg:w-1/2 xl:w-1/2 p-2">
+                <div className="flex flex-col w-full justify-around  p-4 bg-white shadow-lg rounded-lg mt-6">
+                  {/* Deal Type Depense */}
+                  {el.type_offre === "deal_depense" && (
+                    <Depense
+                      Time={time}
+                      offre={el.type_offre}
+                      statut={el.statut}
+                      dateDebut={el.date_debut}
+                      dateFin={el.date_fin}
+                    />
+                  )}
+
+                  {/* Deal Type Frequence */}
+                  {el.type_offre === "deal_frequence" && (
+                    <DealFrequence
+                      Time={time}
+                      offre={el.type_offre}
+                      statut={el.statut}
+                      dateDebut={el.date_debut}
+                      dateFin={el.date_fin}
+                    />
+                  )}
+
+                  {/* Deal Type Anniversaire */}
+                  {el.type_offre === "deal_anniversaire" && (
+                    <DealAnniversaire
+                      Time={time}
+                      offre={el.type_offre}
+                      statut={el.statut}
+                      dateDebut={el.date_debut}
+                      dateFin={el.date_fin}
+                    />
+                  )}
+
+                  {/* Deal Type Marque */}
+                  {el.type_offre === "deal_marque" && (
+                    <DealMarque
+                      Time={time}
+                      offre={el.type_offre}
+                      statut={el.statut}
+                      dateDebut={el.date_debut}
+                      dateFin={el.date_fin}
+                    />
+                  )}
+                </div>
               </div>
             );
-          }
-          return null;
-        })
+          })}
+        </div>
       ) : (
         <div className="grid items-center text-center">
           <i className="fa-solid fa-circle-exclamation"></i>

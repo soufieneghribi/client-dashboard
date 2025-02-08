@@ -37,19 +37,18 @@ const Banners = () => {
     <div className="w-full mx-auto">
       <div id="default-carousel" className="relative rounded-lg overflow-hidden shadow-lg">
         {/* Carousel wrapper */}
-        <div className="relative h-80 md:h-96">
+        <div className="relative h-auto md:h-auto">
           {slides.map((slide, slideIndex) => (
             <div
               key={slideIndex}
               className={`duration-700 ease-in-out ${currentIndex === slideIndex ? "block" : "hidden"}`}
             >
               {slide.map((banner) => (
-                <div key={banner.id} className="relative">
-                  <img
-                    src={banner?.image_path || "https://img-3.journaldesfemmes.fr/a5LFTZ3qU2fUVOmwIVKDJawBJXA=/1500x/smart/83c0e4f55dd846dea2be0be27e715dcd/ccmcms-jdf/10662446.jpg"}
-                    alt={banner.title || "Banner Image"}
-                  />
-                </div>
+                <img
+                src={banner.image_path ? `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}` : 'https://via.placeholder.com/150'}
+                alt={banner.title || "Banner Image"}
+                className="w-full h-auto object-cover"
+              />
               ))}
             </div>
           ))}

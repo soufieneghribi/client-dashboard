@@ -5,19 +5,21 @@ import { toast } from "react-hot-toast";
 import Modal from "react-modal";
 import { useSelector } from "react-redux";
 import axios from 'axios';
-
+import { fetchUserProfile } from "../store/slices/user";
+import { useDispatch } from "react-redux";
 const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const auth_token = localStorage.getItem("token");
-
+ const {UserProfile}= useSelector((state)=> state.user)
+ const dispatch = useDispatch()
   // Retrieve data passed from the cart page
   const { orderDetails , subtotal, totalTTC } = location.state || {
     orderDetails: [],
     subtotal: 0,
     totalTTC: 0,
   };
-
+  
   const auth = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
@@ -34,7 +36,9 @@ const OrderConfirmation = () => {
 
   const [mapError, setMapError] = useState(null);
   const [modalIsOpen, setModalIsOpen] = useState(false);
-
+  useEffect(() => {
+    dispatch(fetchUserProfile)
+  }, [dispatch]);
   useEffect(() => {
     if (!orderDetails.length) {
       toast.error("Votre panier est vide.");
@@ -160,7 +164,7 @@ const OrderConfirmation = () => {
                 <input
                   type="text"
                   name="contact_person_number"
-                  value={formData.contact_person_number}
+                  defaultValue={auth.nom_et_prenom}       
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded"
                 />

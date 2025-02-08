@@ -36,7 +36,7 @@ const CartShopping = () => {
   // Watch for logout and reset cart
   useEffect(() => {
     if (!auth.isLoggedIn) {
-      setCartItems([]);
+      
       Cookies.remove("cart");
     }
   }, [auth.isLoggedIn]);

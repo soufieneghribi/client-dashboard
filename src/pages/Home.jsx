@@ -11,7 +11,7 @@ const Home = () => {
     const navigate = useNavigate();
     return (
         <div className="home-container">
-            <h1>Welcome to 360TN</h1>
+            
             <section className="grid w-full">
                 {/* Categories and Banners */}
                 <Categories />

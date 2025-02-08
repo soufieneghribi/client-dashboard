@@ -85,7 +85,9 @@ const Categories = () => {
                 } justify-center md:justify-start`}
               >
                 {slide.map((category) => {
-                  const imageUrl = category.picture; // URL de l'image de la catégorie
+                  const imageUrl = category.picture? `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${category.picture}`
+                  : 'https://via.placeholder.com/150';
+                  console.log(imageUrl)
                   return (
                     <div
                       key={category.id}
@@ -93,7 +95,7 @@ const Categories = () => {
                       onClick={() => subHandler(category.id, category.title)}
                     >
                       <img
-                        src={`../assets/images/${imageUrl}`} // Assurez-vous que cette URL est correcte
+                        src= {imageUrl} // Assurez-vous que cette URL est correcte
                         alt={category.name || `Image of ${category.title}`}
                         className="object-cover w-full h-40 rounded-md"
                       />

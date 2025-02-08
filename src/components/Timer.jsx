@@ -15,7 +15,7 @@ const Timer = ({flashSaleTimeLeft ,offre, statut , dateDebut, dateFin}) => {
                       <p> Date de fin: {dateFin}</p>
                     </div>
                     <br />
-                    <div className="flex flex-row justify-evenly items-center text-3xl text-white">
+                    <div className="flex flex-row justify-evenly items-center text-xl text-white">
                       <span className="grid font-semibold">
                         <i className="fa-solid fa-calendar-days"></i>
                         <div>{flashSaleTimeLeft.days}</div>

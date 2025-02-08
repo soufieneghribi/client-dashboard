@@ -123,17 +123,16 @@ const ProductDetails = () => {
       <section className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
         {/* Image Carousel */}
         <div className="flex justify-center">
-          <Carousel showThumbs={false} infiniteLoop useKeyboardArrows autoPlay>
-            {product.images?.map((img, index) => (
-              <div key={index}>
+         
+              <div >
                 <img
-                  src={img || "https://via.placeholder.com/150"}
-                  alt={`${product.name}-image-${index}`}
+                  src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.img}` }
+                  alt={`${product.name}`}
                   className="max-w-full h-auto rounded-lg shadow-lg transition-transform transform hover:scale-105"
                 />
               </div>
-            ))}
-          </Carousel>
+           
+          
         </div>
 
         {/* Product Information */}

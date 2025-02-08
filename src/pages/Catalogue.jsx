@@ -130,7 +130,7 @@ const Catalogue = () => {
             className="border rounded-xl p-4 shadow hover:shadow-lg transition"
           >
             <img
-              src={data.img || "https://via.placeholder.com/150"}
+              src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${data.img}`}
               alt={data.name}
               className="w-full h-40 object-cover rounded-md"
             />

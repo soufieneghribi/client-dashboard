@@ -58,7 +58,7 @@ const Commandes = () => {
   }
 
   return (
-    <div className="order-list p-8 bg-gradient-to-r from-indigo-100 to-indigo-50 min-h-screen">
+    <div className="order-list p-8 bg-slate-100 min-h-screen">
       <h1 className="text-2xl font-extrabold mb-8 text-center text-gray-800">Liste des commandes</h1>
 
       {orders.length === 0 ? (
@@ -75,7 +75,7 @@ const Commandes = () => {
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Commande #{order.id}</h2>
               <div className="mb-4">
                 <p className="text-lg text-gray-600">
-                  <strong>Montant Total:</strong> {orders.order_amount} DT
+                  <strong>Montant Total:</strong> {order.order_amount} DT
                 </p>
                 <p className="text-sm text-gray-500">
                   <strong>Date:</strong> {new Date(order.created_at).toLocaleDateString()}
@@ -92,7 +92,7 @@ const Commandes = () => {
 
               <button
                 onClick={() => navigate(`/order/${order.id}`)} // Redirect to order details page
-                className="w-full px-6 py-3 bg-blue-500 text-white font-bold rounded-md hover:bg-blue-600 transition-all"
+                className="w-full px-6 py-3 bg-blue-360 text-white font-bold rounded-md hover:bg-orange-360 transition-all"
               >
                 Voir les détails
               </button>
@@ -130,7 +130,7 @@ const OrderStatusBadge = ({ status }) => {
       );
     default:
       return (
-        <span className="px-4 py-1 text-sm font-semibold text-white bg-gray-400 rounded-full flex items-center">
+        <span className="px-4 py-1 text-sm font-semibold text-white bg-orange-360 rounded-full flex items-center">
           <FaSpinner className="mr-2 animate-spin" />
           En Cours
         </span>

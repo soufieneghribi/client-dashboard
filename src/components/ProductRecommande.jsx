@@ -68,7 +68,7 @@ const ProductRecommande = () => {
               <div className="border rounded-xl p-4 shadow-xl hover:shadow-2xl transition-all bg-white bg-opacity-60 hover:bg-opacity-100 backdrop-blur-lg">
                 {/* Image with fade-in effect */}
                 <img
-                  src={product.img}
+                  src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.img}`}
                   alt={product.name}
                   className="w-full h-64 object-cover rounded-t-xl mb-4 transition-opacity duration-500 opacity-100 hover:opacity-75"
                 />

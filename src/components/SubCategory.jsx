@@ -64,7 +64,7 @@ const SubCategory = ({ data }) => {
                     <div className="relative">
                       <img
                         className="w-full h-56 object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-500"
-                        src={subcategory.picture || 'https://via.placeholder.com/150'}
+                        src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${subcategory.picture}`} 
                         alt={subcategory.title || 'Subcategory'}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-4">

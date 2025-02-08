@@ -82,7 +82,7 @@ const Header = () => {
           {auth.isLoggedIn && auth.user ? (
             <div className="user-info flex flex-row gap-3 items-center relative">
               <p className="text-white font-medium hidden lg:block">Welcome, {auth.user.nom_et_prenom || "User"}</p>
-              <i className="fa-regular fa-user text-white text-2xl cursor-pointer" onMouseEnter={showHandler}></i>
+              <i className="fa-regular fa-user text-white text-2xl cursor-pointer" onClick={showHandler}></i>
               {show && (
                 <div className="absolute w-60 bg-white border border-gray-200 rounded-md shadow-xl mt-52">
                   <div className="grid gap-1">
@@ -101,12 +101,7 @@ const Header = () => {
                   </div>
                 </div>
               )}
-              <Link to={`/favoris`} className="text-white text-xl">
-                <i className="fa-regular fa-heart"></i>
-              </Link>
-              <Link to={`/cart-Shopping`} className="text-white text-xl">
-                <i className="fa-solid fa-cart-shopping"></i>
-              </Link>
+              
             </div>
           ) : (
             <div className="hidden lg:flex space-x-4">
@@ -118,6 +113,12 @@ const Header = () => {
               </Link>
             </div>
           )}
+          <Link to={`/favoris`} className="text-white text-xl">
+                <i className="fa-regular fa-heart"></i>
+              </Link>
+              <Link to={`/cart-Shopping`} className="text-white text-xl">
+                <i className="fa-solid fa-cart-shopping"></i>
+              </Link>
         </div>
       </div>
 

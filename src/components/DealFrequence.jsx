@@ -38,6 +38,7 @@ const DealFrequence = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, date
   const renderMarkers = (deals) => {
     const markers = [];
     for (let i = 1; i <= deals.objectif_frequence; i++) {
+      if (deals.compteur_frequence >= i ){
       markers.push(
         <div>
         <span
@@ -61,6 +62,33 @@ const DealFrequence = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, date
        </span>
        </div>
       );
+    }
+    else{
+      markers.push(
+        <div>
+        <span
+          key={i}
+          style={{
+            left: `${(((i / deals.objectif_frequence) * 100)-i+1)}%`,
+            transform: "translateX(-50%) translateY(-50%)",
+            background: "gray",
+          }}
+          className="text-white rounded-full w-10 h-10 absolute top-1/2 transform -translate-y-1/2 flex items-center justify-center text-lg font-semibold"
+        >
+          {i}
+        </span>
+         <span
+         style={{
+          left: `${((i / deals.objectif_frequence) * 100)-i+1}%`, // Position it at 25% of the container's width
+          background: "blue", // Set background color to blue
+         }}
+          className="text-white rounded-full w-14 h-14 absolute top-full mt-2 transform -translate-x-1/2 flex items-center justify-center text-base font-medium">
+         {parseInt(deals.panier_moyen)} Dt
+       </span>
+       </div>
+      );
+
+    }
     }
     return markers;
   };

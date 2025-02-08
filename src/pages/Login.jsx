@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginSuccess } from "../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import { use } from "react";
-
 const Login = () => {
   const [email, setEmail] = useState(""); // Input for email
   const [searchMail, setSearchMail]=useState("")
@@ -210,7 +209,7 @@ const Login = () => {
         </div>
         <div className="flex-1 text-center hidden lg:flex">
           <div className="m-12 xl:m-16 bg-contain">
-            <img src='../src/assets/image/Splash.png' alt="Splash" />
+            <img src='../src/assets/images/Splash.png' alt="Splash" />
           </div>
         </div>
       </div>

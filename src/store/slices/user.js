@@ -6,7 +6,6 @@ import { toast } from "react-hot-toast";
 export const signUp = createAsyncThunk(
   "user/signup",
   async ({ user, navigate }) => {
-    
     try {
       const { data } = await axios.post(
         "https://tn360-122923924979.europe-west1.run.app/api/v1/auth/register",
@@ -20,6 +19,7 @@ export const signUp = createAsyncThunk(
     }
   }
 );
+
 export const fetchUserProfile = createAsyncThunk(
   "user/fetchUserProfile",
   async (_, { rejectWithValue }) => {
@@ -39,8 +39,8 @@ export const fetchUserProfile = createAsyncThunk(
     }
   }
 );
-// Update user profile
 
+// Update user profile
 export const updateUserProfile = createAsyncThunk(
   "user/updateUserProfile",
   async (profileData, { getState, rejectWithValue }) => {
@@ -73,7 +73,38 @@ export const updateUserProfile = createAsyncThunk(
     }
   }
 );
+export const updateCagnotteInDB = createAsyncThunk(
+  "user/updateCagnotteInDB",
+  async (updatedBalance, { getState, rejectWithValue }) => {
+    try {
+      const state = getState();
+      const token = state.auth?.token || localStorage.getItem("token");
 
+      if (!token) {
+        throw new Error("Authentication token is missing");
+      }
+
+      // Appel à l'API pour mettre à jour le cagnotte_balance dans la base de données
+      const { data } = await axios.post
+      (
+        "https://tn360-122923924979.europe-west1.run.app/api/v1/customer/update-cagnotte", // Remplacez par votre URL API
+        { cagnotte_balance: updatedBalance },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      toast.success("Cagnotte mise à jour avec succès");
+      return data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || error.message || "Erreur lors de la mise à jour de la cagnotte";
+      toast.error(errorMessage);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
 
 const UserSlice = createSlice({
   name: "user",
@@ -82,6 +113,9 @@ const UserSlice = createSlice({
     loggedInUser: null, // Initially no user logged in
     loading: false, // Track loading state
     error: null, // Track error message
+  },
+  reducers: {
+  
   },
   extraReducers: (builder) => {
     builder.addCase(signUp.pending, (state) => {
@@ -94,32 +128,45 @@ const UserSlice = createSlice({
     builder.addCase(signUp.rejected, (state) => {
       state.loading = false;
     });
-  
-  builder.addCase(fetchUserProfile.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  builder.addCase(fetchUserProfile.fulfilled, (state, action) => {
-    state.loading = false;
-    state.Userprofile = action.payload;
-  })
-  builder.addCase(fetchUserProfile.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload;
-  })
-  builder.addCase(updateUserProfile.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-  })
-  builder.addCase(updateUserProfile.fulfilled, (state, action) => {
-    state.loading = false;
-    state.Userprofile = action.payload;
-  })
-  builder.addCase(updateUserProfile.rejected, (state, action) => {
-    state.loading = false;
-    state.error = action.payload;
-  })
-},
+
+    builder.addCase(fetchUserProfile.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchUserProfile.fulfilled, (state, action) => {
+      state.loading = false;
+      state.Userprofile = action.payload;
+    });
+    builder.addCase(fetchUserProfile.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    });
+
+    builder.addCase(updateUserProfile.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(updateUserProfile.fulfilled, (state, action) => {
+      state.loading = false;
+      state.Userprofile = action.payload;
+    });
+    builder.addCase(updateUserProfile.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    });
+
+    builder.addCase(updateCagnotteInDB.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(updateCagnotteInDB.fulfilled, (state, action) => {
+      state.loading = false;
+      state.Userprofile = action.payload;
+    });
+    builder.addCase(updateCagnotteInDB.rejected, (state, action) => {
+      state.loading = false;
+      toast.error(action.payload);
+    });
+  },
 });
 
 

@@ -191,9 +191,7 @@ const DealMarque = () => {
             </div>
           </div>
         ))
-      ) : (
-        !loading && <p>Aucun deal de marque trouvé pour ce client.</p>
-      )}
+      ) : ("")}
     </div>
   );
 };

@@ -1,35 +1,47 @@
-import React, { useState, useEffect } from "react";
+import React from 'react'
+import { FaClock } from "react-icons/fa"; 
 
-const Timer = ({ initialSeconds }) => {
-  const [seconds, setSeconds] = useState(initialSeconds);
-
-  useEffect(() => {
-    if (seconds > 0) {
-      const interval = setInterval(() => {
-        setSeconds((prev) => prev - 1);
-      }, 1000);
-
-      return () => clearInterval(interval); // Cleanup on unmount or update
-    }
-  }, [seconds]);
-
-  const formatTime = () => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
+const Timer = ({flashSaleTimeLeft ,offre, statut , dateDebut, dateFin}) => {
   return (
-    <div className="flex flex-col items-center justify-center p-4">
-      <h2 className="text-2xl font-bold mb-4">Timer</h2>
-      <div className="text-4xl font-mono bg-gray-200 p-4 rounded-lg shadow-lg">
-        {formatTime()}
-      </div>
-      {seconds === 0 && (
-        <p className="mt-4 text-red-500 font-bold">Time's up!</p>
-      )}
-    </div>
-  );
-};
+    <div>
+                      {flashSaleTimeLeft &&(
+                  <div className="w-full text-center mt-8 p-6 bg-blue-360 rounded-xl shadow-2xl">
+                    <p className="font-bold text-3xl text-white mb-4">
+                      <FaClock className="inline-block mr-2" /> Offre: {offre}
+                    </p>
+                    <div className="flex flex-col text-white font-semibold text-xl">
+                      <p> Statut: {statut}</p>
+                      <p> Date de début: {dateDebut}</p>
+                      <p> Date de fin: {dateFin}</p>
+                    </div>
+                    <br />
+                    <div className="flex flex-row justify-evenly items-center text-3xl text-white">
+                      <span className="grid font-semibold">
+                        <i className="fa-solid fa-calendar-days"></i>
+                        <div>{flashSaleTimeLeft.days}</div>
+                        <div>Jours</div>
+                      </span>
+                      <span className="grid font-semibold">
+                        <i className="fa-regular fa-clock"></i>
+                        <div>{flashSaleTimeLeft.hours}</div>
+                        <div>Heures</div>
+                      </span>
+                      <span className="grid font-semibold">
+                        <i className="fa-solid fa-stopwatch"></i>
+                        <div>{flashSaleTimeLeft.minutes}</div>
+                        <div>Minutes</div>
+                      </span>
+                      <span className="grid font-semibold">
+                        <i className="fa-solid fa-clock"></i>
+                        <div>{flashSaleTimeLeft.seconds}</div>
+                        <div>Secondes</div>
+                      </span>
+                    </div>
+                  </div>
+                )}
 
-export default Timer;
+    </div>
+  )
+}
+
+export default Timer

@@ -166,6 +166,7 @@ const Profile = () => {
                         value={formData.date_de_naissance}
                         onChange={handleChange}
                         className="w-full border border-gray-300 rounded-md p-2 mt-1"
+                      
                       />
                     </div>
                     <div>
@@ -180,7 +181,7 @@ const Profile = () => {
                         onChange={handleChange}
                         required
                       >
-                        <option value=""></option>
+                        <option value="">{formData.profession}</option>
                         <option value="Agriculture / Arisans">Agriculture / Arisans</option>
                         <option value="Commerçant">Commerçant</option>
                         <option value="Chef d'entreprise">Chef d'entreprise</option>

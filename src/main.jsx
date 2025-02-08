@@ -13,7 +13,6 @@ import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 
 import ProductDetails from "./components/ProductDetails";
-import Deals from "./components/Deals";
 import MesDeals from "./pages/MesDeals";
 import Categories from "./components/Categories";
 import SubCategory from "./components/SubCategory";

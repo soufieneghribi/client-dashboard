@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Depense from "../components/Depense";
-import DealFrequence from "../components/DealFrequence.jsx";
-import { fetchUserProfile } from "../store/slices/user";
-import axios from "axios";
-import toast from "react-hot-toast";
-import DealAnniversaire from "../components/DealAnniversaire.jsx";
 import { FaClock } from "react-icons/fa"; 
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOffre } from "../store/slices/offre.js";
+import Depense from "../components/Depense";
+import DealFrequence from "../components/DealFrequence.jsx";
+import DealAnniversaire from "../components/DealAnniversaire.jsx";
 import DealMarque from "../components/DealMarque.jsx";
+import Cagnotte from "../components/Cagnotte.jsx";
+import DealEnded from "../components/DealEnded.jsx";
+import { fetchUserProfile } from "../store/slices/user";
 
 const MesDeals = () => {
   const images = [
@@ -20,14 +19,15 @@ const MesDeals = () => {
 
   // Get data from Redux store
   const { offre = [], loading, error } = useSelector((state) => state.offre);
+  const { Userprofile } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [flashSaleTimeLeft, setFlashSaleTimeLeft] = useState(3600);
 
   // Fetching offers
   useEffect(() => {
     dispatch(fetchOffre());
+    dispatch(fetchUserProfile());
   }, [dispatch]);
 
   const deal = offre.data || [];
@@ -50,7 +50,7 @@ const MesDeals = () => {
 
   // Function to calculate the time difference between the current date and the deal end date
   const calculateTimeLeft = (dealEndDate) => {
-    const endDate = new Date(dealEndDate); // Convert dealEndDate to a Date object
+    const endDate = new Date(dealEndDate); // Convert dealEndDate to Date object
     const timeDifference = endDate - new Date(); // Calculate difference in milliseconds
 
     if (timeDifference <= 0) return null; // If the deal is already expired, return null
@@ -68,13 +68,13 @@ const MesDeals = () => {
     <>
       <nav className="bg-orange-360 flex flex-row justify-end">
         <div className="border bg-white px-2 py-2 m-2 rounded-2xl shadow-xl text-center font-bold text-sm font-limon-milk">
-          <p>Cagnotte</p>
-          <p>0 DT</p>
+          <p>Cagnotte </p>
+          <p>{Userprofile ? Userprofile.cagnotte_balance : "Chargement..." } DT</p>
         </div>
       </nav>
 
       {/* Carousel Section */}
-      <div className="relative w-100 h-auto m-8 p-3">
+      <div className="relative w-full h-auto m-8 p-3">
         <div className="overflow-hidden rounded-lg">
           <img
             src={images[currentIndex]}
@@ -108,51 +108,38 @@ const MesDeals = () => {
       </div>
 
       {/* Flash Sale Timer & Deals */}
-      {deal.map((el) => {
-        const dealEndDate = new Date(el.date_fin); // Convert date_fin to Date object
-
-        // Check if the current date is greater than or equal to the deal end date
-        if (formattedDate <= dealEndDate.toISOString().split("T")[0]) {
-          const flashSaleTimeLeft = calculateTimeLeft(el.date_fin); // Get the time left for the deal
-
-          return (
-           <>
-            {flashSaleTimeLeft && (
-        <div className="w-full text-center mt-8 p-6 bg-gradient-to-r from-red-600 to-orange-500 rounded-xl shadow-2xl animate-pulse">
-          <p className="font-bold text-3xl text-white mb-4">
-            <FaClock className="inline-block mr-2" /> Flash Sale Ends In:
-          </p>
-          <div className="text-3xl text-white">
-            <span className="font-semibold">{flashSaleTimeLeft.days}d </span>
-            <span className="font-semibold">{flashSaleTimeLeft.hours}h </span>
-            <span className="font-semibold">{flashSaleTimeLeft.minutes}m </span>
-            <span className="font-semibold">{flashSaleTimeLeft.seconds}s</span>
-          </div>
+      {deal.length > 0 ? (
+        deal.map((el) => {
+          const dealEndDate = new Date(el.date_fin); // Convert date_fin to Date object
+          const timeLeft = calculateTimeLeft(el.date_fin); // Get the time left for the deal
+          
+          // Check if deal is still active based on current date
+          if (formattedDate <= dealEndDate.toISOString().split("T")[0]) {
+            return (
+              <div key={el.id} className="flex flex-row justify-evenly w-auto p-4 bg-white shadow-lg rounded-lg mt-6">
+                {el.type_offre === "deal_depense" ? (
+                  <Depense Time={timeLeft} flashSaleTimeLeft={timeLeft} offre={el.type_offre} statut={el.statut} dateDebut={el.date_debut} dateFin={el.date_fin} className="w-1/3"/>
+                ) : el.type_offre === "deal_frequence" ? (
+                  <DealFrequence Time={timeLeft} flashSaleTimeLeft={timeLeft} offre={el.type_offre} statut={el.statut} dateDebut={el.date_debut} dateFin={el.date_fin} className="w-1/3"/>
+                ) : el.type_offre === "deal_anniversaire" ? (
+                  <DealAnniversaire Time={timeLeft} flashSaleTimeLeft={timeLeft} offre={el.type_offre} statut={el.statut} dateDebut={el.date_debut} dateFin={el.date_fin} className="w-1/3"/>
+                ) : el.type_offre === "deal_marque" ? (
+                  <DealMarque Time={timeLeft} flashSaleTimeLeft={timeLeft} offre={el.type_offre} statut={el.statut} dateDebut={el.date_debut} dateFin={el.date_fin} className="w-1/3"/>
+                ) : (
+                  <></> // Added empty fragment for unsupported offer types
+                )}
+              </div>
+            );
+          }
+          return null;
+        })
+      ) : (
+        <div className="grid items-center text-center">
+          <i className="fa-solid fa-circle-exclamation"></i>
+          <p className="text-blue-950 font-semibold">Aucune offre active</p>
+          <p className="text-orange-360 font-medium">Venez vérifier plus tard!</p>
         </div>
       )}
-            <div className="flex flex-row justify-evenly w-auto p-4 bg-white shadow-lg rounded-lg mt-6" key={el.id}>
-              <div className="w-auto p-4">
-                <Depense />
-              </div>
-              <div className="w-auto p-4">
-                <DealFrequence />
-              </div>
-              <div className="w-auto p-4">
-                <DealAnniversaire />
-              </div>
-              <div className="w-auto p-4">
-                <DealMarque />
-              </div>
-              
-
-              
-            </div>
-            </>
-          );
-        } else {
-          return null; // Return nothing if the deal is not available yet
-        }
-      })}
     </>
   );
 };

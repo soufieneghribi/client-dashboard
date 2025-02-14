@@ -75,7 +75,7 @@ const Popular = () => {
                 <div className="flex justify-between items-center mt-4">
                   <div className="text-orange-360">
                     <i className="fa-regular fa-money-bill-1"></i>
-                    <del className="font-medium text-lg">{product.price} DT</del>
+                    <del className="font-medium text-lg">{product.price}DT</del>
                   </div>
 
                     <div className="relative flex items-center justify-center top-0 left-0 bg-red-500 text-white text-xs rounded-full px-2 py-1">
@@ -83,9 +83,9 @@ const Popular = () => {
                     </div>
                     
 
-                  <div className="text-orange-360">
-                    <i className="fa-regular fa-money-bill-1"></i>
-                    <p className="font-bold text-lg">{discountedPrice} DT</p>
+                  <div className="text-green-500 font-semibold text-lg ">
+                    <i className="fa-regular fa-money-bill-1  px-1"></i>
+                     {discountedPrice}DT
                   </div>
                 </div>
 

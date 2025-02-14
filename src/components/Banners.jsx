@@ -47,7 +47,7 @@ const Banners = () => {
                 <img
                 src={banner.image_path ? `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}` : 'https://via.placeholder.com/150'}
                 alt={banner.title || "Banner Image"}
-                className="w-full h-auto object-cover"
+                className="w-full h-96 object-cover"
               />
               ))}
             </div>

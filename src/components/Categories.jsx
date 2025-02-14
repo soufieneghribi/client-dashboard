@@ -38,7 +38,7 @@ const Categories = () => {
   }
 
   const filteredCategories = categories.filter(
-    (category) => category.parent_id === 0
+    (category) => (category.parent_id === 0 && category.id !=1)
   );
 
   // Grouper les catégories par diapositives
@@ -60,11 +60,11 @@ const Categories = () => {
   };
 
   const subHandler = (id, title) => {
-    setShow(!show);
+    setShow(true);
     setSubCategory(categories.filter((category) => category.parent_id === id));
     setCategoryTitle(title);
   };
-
+console.log({categories})
   return (
     <div className="mx-auto py-12 w-full">
       <h1 className="mx-10 text-blue-360 font-bold text-3xl mb-8">Categories</h1>
@@ -73,7 +73,7 @@ const Categories = () => {
         <p className="text-center text-gray-500">Loading categories...</p>
       ) : error ? (
         <p className="text-center text-red-500">Error fetching categories.</p>
-      ) : categories.length > 0 ? (
+      ) : categories.length > 0 ?  (
         <div className="relative w-full mx-auto rounded-lg overflow-hidden">
           {/* Carrousel */}
           <div className="relative h-80 md:h-96 mx-8">
@@ -85,8 +85,7 @@ const Categories = () => {
                 } justify-center md:justify-start`}
               >
                 {slide.map((category) => {
-                  const imageUrl = category.picture? `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${category.picture}`
-                  : 'https://via.placeholder.com/150';
+                  const imageUrl = `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${category.picture}`
                   console.log(imageUrl)
                   return (
                     <div
@@ -110,17 +109,7 @@ const Categories = () => {
           </div>
 
           {/* Indicateurs du carrousel */}
-          <div className="flex absolute bottom-5 left-1/2 z-30 -translate-x-1/2 space-x-2">
-            {slides.map((_, idx) => (
-              <button
-                key={idx}
-                className={`w-3 h-3 rounded-full ${
-                  currentIndex === idx ? "bg-blue-500" : "bg-gray-300"
-                }`}
-                onClick={() => setCurrentIndex(idx)}
-              ></button>
-            ))}
-          </div>
+          
 
           {/* Contrôles du carrousel */}
           <button

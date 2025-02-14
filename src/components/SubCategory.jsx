@@ -6,14 +6,14 @@ const SubCategory = ({ data }) => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
-  const itemsPerSlide = 4;
+  const itemsPerRow = useWindowWidth(); // Use custom hook for window resize logic
 
   if (!data || data.length === 0) {
     return <p className="text-center text-gray-500">No subcategories available</p>;
   }
 
   const slides = data.reduce((acc, subcategory, index) => {
-    const slideIndex = Math.floor(index / itemsPerSlide);
+    const slideIndex = Math.floor(index / itemsPerRow);
     if (!acc[slideIndex]) {
       acc[slideIndex] = [];
     }
@@ -42,9 +42,7 @@ const SubCategory = ({ data }) => {
   };
 
   return (
-    <div className="container mx-auto py-12 px-6 lg:px-8">
-    
-
+    <div className="container m-auto p-auto ">
       <div className="relative">
         {/* Slides */}
         <div className="relative h-auto md:h-[500px]">
@@ -63,8 +61,9 @@ const SubCategory = ({ data }) => {
                   >
                     <div className="relative">
                       <img
+                        loading="lazy"
                         className="w-full h-56 object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-500"
-                        src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${subcategory.picture}`} 
+                        src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${subcategory.picture}`}
                         alt={subcategory.title || 'Subcategory'}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-4">
@@ -73,6 +72,7 @@ const SubCategory = ({ data }) => {
                     </div>
                     <div className="p-4">
                       <button
+                        aria-label={`Explore ${subcategory.title}`}
                         onClick={() => handleSubCategoryClick(subcategory.id, subcategory.title)}
                         className="bg-gradient-to-r from-blue-360 to-orange-360 text-white px-4 py-2 rounded-md w-full font-semibold hover:opacity-90 focus:ring focus:ring-purple-300 transition"
                       >
@@ -87,18 +87,7 @@ const SubCategory = ({ data }) => {
         </div>
 
         {/* Indicators */}
-        <div className="flex absolute bottom-5 left-1/2 transform -translate-x-1/2 space-x-3">
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentIndex(idx)}
-              className={`w-4 h-4 rounded-full ${
-                currentIndex === idx ? 'bg-blue-360' : 'bg-gray-400'
-              } transition-colors `}
-              title={`Go to slide ${idx + 1}`}
-            />
-          ))}
-        </div>
+        
 
         {/* Controls */}
         <button
@@ -133,6 +122,29 @@ const SubCategory = ({ data }) => {
       </div>
     </div>
   );
+};
+
+// Custom hook for handling window resize logic
+const useWindowWidth = () => {
+  const [itemsPerRow, setItemsPerRow] = useState(getItemsPerRow());
+
+  useEffect(() => {
+    const handleResize = () => {
+      setItemsPerRow(getItemsPerRow());
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  function getItemsPerRow() {
+    if (window.innerWidth < 720) return 1;
+    if (window.innerWidth >= 720 && window.innerWidth < 1024) return 2;
+    return 4;
+  }
+
+  return itemsPerRow;
 };
 
 export default SubCategory;

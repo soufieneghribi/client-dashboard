@@ -6,7 +6,7 @@ import { fetchDealFrequence } from "../store/slices/frequence.js";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import DealEnded from "./DealEnded.jsx";
 import Timer from "./Timer.jsx";
-const DealFrequence = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, dateFin}) => {
+const DealFrequence = ({Time }) => {
   const { frequence = [], loading, error } = useSelector((state) => state.frequence);
   const { Userprofile } = useSelector((state) => state.user);
   const [objectif, setObjectif] = useState(0);
@@ -48,7 +48,7 @@ const DealFrequence = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, date
             transform: "translateX(-50%) translateY(-50%)",
             background: "linear-gradient(to right, #d19e1d, #ffd86e, #e3a812)",
           }}
-          className="text-white rounded-full w-10 h-10 absolute top-1/2 transform -translate-y-1/2 flex items-center justify-center text-lg font-semibold"
+          className="text-white rounded-full w-10 h-10 absolute top-1/2 transform -translate-y-1/2 flex items-center justify-center text-base font-semibold"
         >
           {i}
         </span>
@@ -57,8 +57,8 @@ const DealFrequence = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, date
           left: `${((i / deals.objectif_frequence) * 100)-i}%`, // Position it at 25% of the container's width
           background: "blue", // Set background color to blue
          }}
-          className="text-white rounded-full w-14 h-14 absolute top-full mt-2 transform -translate-x-1/2 flex items-center justify-center text-base font-medium">
-         {parseInt(deals.panier_moyen)} Dt
+          className="text-white rounded-full w-12 h-12 absolute top-full mt-2 transform -translate-x-1/2 flex items-center justify-center text-base font-semibold">
+         {parseInt(deals.panier_moyen)} dt
        </span>
        </div>
       );
@@ -69,7 +69,7 @@ const DealFrequence = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, date
         <span
           key={i}
           style={{
-            left: `${(((i / deals.objectif_frequence) * 100)-i+1)}%`,
+            left: `${(((i / deals.objectif_frequence) * 100)-i)}%`,
             transform: "translateX(-50%) translateY(-50%)",
             background: "gray",
           }}
@@ -79,11 +79,11 @@ const DealFrequence = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, date
         </span>
          <span
          style={{
-          left: `${((i / deals.objectif_frequence) * 100)-i+1}%`, // Position it at 25% of the container's width
+          left: `${((i / deals.objectif_frequence) * 100)-i}%`, // Position it at 25% of the container's width
           background: "blue", // Set background color to blue
          }}
-          className="text-white rounded-full w-14 h-14 absolute top-full mt-2 transform -translate-x-1/2 flex items-center justify-center text-base font-medium">
-         {parseInt(deals.panier_moyen)} Dt
+          className="text-white rounded-full w-12 h-12 absolute top-full mt-2 transform -translate-x-1/2 flex items-center justify-center text-base font-semibold">
+         {parseInt(deals.panier_moyen)} dt
        </span>
        </div>
       );
@@ -100,8 +100,8 @@ const DealFrequence = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, date
         filteredDeals.map((el) => (
           el.objectif_frequence !== el.compteur_frequence?(
           <div key={el.ID_deal}  className="flex flex-col justify-between w-full h-full p-4 bg-gray-50 shadow-md rounded-lg">
-          <Timer flashSaleTimeLeft={flashSaleTimeLeft} offre = {offre} statut ={statut} dateDebut={dateDebut} dateFin={dateFin}/>
-
+          <Timer flashSaleTimeLeft={Time}/>
+          
           <div key={el.ID_deal} className="flex justify-start m-8 items-center bg-gray-100">
             <div className="w-full rounded-lg overflow-hidden shadow-lg bg-white">
               {/* Button Section */}
@@ -143,7 +143,7 @@ const DealFrequence = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, date
 
                   {/* Visits Count */}
                   <div className="mt-16">
-                    <i className="fas fa-gift p-2 mt-4"></i> Mes visites : {el.compteur_frequence}
+                    <i className="fas fa-gift p-2 mt-4"></i> Mes visites : {parseInt(el.compteur_frequence)}
                   </div>
                 </div>
               </div>

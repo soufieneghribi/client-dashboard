@@ -10,7 +10,7 @@ import { fetchDealDepense } from "../store/slices/deal";
 import { object } from "prop-types";
 import Timer from "./Timer";
 
-const Depense = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, dateFin}) => {
+const Depense = ({Time }) => {
 
   const { deal = [], loading, error } = useSelector((state) => state.deal);
   const { Userprofile } = useSelector((state) => state.user);
@@ -18,7 +18,6 @@ const Depense = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, dateFin}) 
   const [gain, setGain] = useState(0);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  console.log(Time)
 
   useEffect(() => {
     dispatch(fetchUserProfile());
@@ -33,7 +32,7 @@ const Depense = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, dateFin}) 
     if (filteredDeals.length > 0 ) {
       filteredDeals.map ((deals)=>{
       // Handle goal progression with >= for better range matching
-      if (deals.compteur_objectif >= deal.objectif_3) {
+      if (deals.compteur_objectif >= deals.objectif_3) {
         setObjectif("100%");
         setGain(deals.gain_objectif_3);
       } else if (deals.compteur_objectif >= deals.objectif_2 && deals.compteur_objectif < deals.objectif_3) {
@@ -50,7 +49,6 @@ const Depense = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, dateFin}) 
     })
     }
   }, [filteredDeals]);
-  console.log(objectif)
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
@@ -60,9 +58,9 @@ const Depense = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, dateFin}) 
       
       {filteredDeals.length >0 &&(
         filteredDeals.map((el) => (
-          el.objectif_3 !== el.compteur_frequence?(
+          el.objectif_3 !== el.compteur_objectif?(
          <div key={el.ID_deal} className="flex flex-col justify-between w-full h-full p-4 bg-gray-50 shadow-md rounded-lg">
-            <Timer flashSaleTimeLeft={flashSaleTimeLeft} offre={offre} statut={statut} dateDebut={dateDebut} dateFin={dateFin} />
+            <Timer flashSaleTimeLeft={Time}/>
         
           <div
             key={el.ID_deal} // Use unique ID instead of index
@@ -108,7 +106,7 @@ const Depense = ({Time ,flashSaleTimeLeft ,offre, statut , dateDebut, dateFin}) 
                         }}
                         className="text-white rounded-full w-10 h-10 absolute top-1/2 transform -translate-y-1/2 flex items-center justify-center text-lg font-semibold"
                       >
-                        {el.gain_objectif_1}
+                        {el.gain_objectif_1}dt
                       </span>
                       <span
                         style={{

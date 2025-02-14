@@ -84,18 +84,20 @@ const Header = () => {
               <p className="text-white font-medium hidden lg:block">Welcome, {auth.user.nom_et_prenom || "User"}</p>
               <i className="fa-regular fa-user text-white text-2xl cursor-pointer" onClick={showHandler}></i>
               {show && (
-                <div className="absolute w-60 bg-white border border-gray-200 rounded-md shadow-xl mt-52">
-                  <div className="grid gap-1">
-                    <Link to="/profile" className="hover:bg-blue-500 hover:text-white p-2 rounded-md transition-all">
+                <div className="absolute w-52 bg-white border border-gray-200 rounded-md shadow-xl mt-44 ml-14">
+                  <div className="grid">
+                    <Link to="/profile" className="hover:bg-blue-500 hover:text-white px-2 py-1 rounded-md transition-all" onClick={showHandler}>
                       <i className="fa-solid fa-user pr-1"></i> Profile
                     </Link>
-                    <Link to="/profile" className="hover:bg-blue-500 hover:text-white p-2 rounded-md transition-all">
-                      <i className="fa-solid fa-gear pr-1"></i> Parametres
+                    <Link to="/profile" className="hover:bg-blue-500 hover:text-white px-2 py-1 rounded-md transition-all" onClick={showHandler}>
+                      <i className="fa-solid fa-gear pr-1" ></i> Parametres
                     </Link>
-                    <Link to="/Mes-Commandes" className="hover:bg-blue-500 hover:text-white p-2 rounded-md transition-all">
-                      <i className="fa-solid fa-bag-shopping pr-1"></i> Mes commandes
+                    <Link to="/Mes-Commandes" className="hover:bg-blue-500 hover:text-white px-2 py-1 rounded-md transition-all" onClick={showHandler}>
+                      <i className="fa-solid fa-bag-shopping pr-1" 
+                      ></i> Mes commandes
                     </Link>
-                    <Link to="/" className="hover:bg-blue-500 hover:text-white p-2 rounded-md transition-all" onClick={handleLogout}>
+                    <Link to="/" className="hover:bg-blue-500 hover:text-white px-2 py-1 rounded-md transition-all" onClick={handleLogout}
+                    >
                       <i className="fa-solid fa-right-from-bracket pr-1"></i> Deconnexion
                     </Link>
                   </div>

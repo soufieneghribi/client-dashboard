@@ -17,6 +17,20 @@ export const fetchOffre = createAsyncThunk(
     }
   }
 );
+export const fetchOffreById = createAsyncThunk(
+  "offre/etchOffreById",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        "https://tn360-122923924979.europe-west1.run.app/api/v1/offre/",id
+      );
+      return response.data;
+    } catch (err) {
+      toast.error("Erreur lors du chargement des offres.");
+      return rejectWithValue(err.response ? err.response.data : err.message);
+    }
+  }
+);
 
 const offreSlice = createSlice({
   name: "offre",
@@ -36,6 +50,18 @@ const offreSlice = createSlice({
       state.offre = action.payload; // Fix: Update `state.offre` instead of `state.deal`
     });
     builder.addCase(fetchOffre.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    });
+    builder.addCase(fetchOffreById.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchOffreById.fulfilled, (state, action) => {
+      state.loading = false;
+      state.offre = action.payload; // Fix: Update `state.offre` instead of `state.deal`
+    });
+    builder.addCase(fetchOffreById.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload;
     });

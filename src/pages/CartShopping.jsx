@@ -4,14 +4,44 @@ import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import { useSelector, useDispatch } from "react-redux";
 import { loginSuccess, logout } from "../store/slices/authSlice";
+import Modal from "react-modal";
+import { fetchUserProfile, updateCagnotteInDB } from "../store/slices/user";
 
 const CartShopping = () => {
   const [cartItems, setCartItems] = useState([]);
+  const { Userprofile } = useSelector((state) => state.user);
+  const [show, setShow] = useState(false);  // Modal visibility state
   const navigate = useNavigate();
   const auth = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
+
+  const cagnotteComfirmation = () => {
+    if (Userprofile.cagnotte_balance >= subtotal) {
+      const panier = 0;
+      const updatedBalance = Userprofile.cagnotte_balance - subtotal;
+      dispatch(updateCagnotteInDB(updatedBalance));  // Dispatch to update the balance in the database
+      toast.success("Votre cagnotte a été utilisée pour régler votre commande !");
+    } else {
+      const panier = subtotal - Userprofile.cagnotte_balance;
+      const updatedBalance = 0;
+      dispatch(updateCagnotteInDB(updatedBalance));  // Dispatch to update the balance to 0
+      toast.success("Votre cagnotte a été utilisée partiellement !");
+    }
+    setShow(false);  // Close the modal after confirmation
+  };
+
+  const Annuler = () => {
+    setShow(false);  // Close the modal without making changes
+  };
+
   // Load cart from cookies and manage user login
+  useEffect(() => {
+    dispatch(fetchUserProfile());
+  }, [dispatch]);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("user");
@@ -19,7 +49,6 @@ const CartShopping = () => {
     if (token && user) {
       try {
         const parsedUser = user !== "undefined" ? JSON.parse(user) : null;
-
         if (parsedUser && !auth.isLoggedIn) {
           dispatch(loginSuccess({ token, user: parsedUser }));
         }
@@ -36,7 +65,6 @@ const CartShopping = () => {
   // Watch for logout and reset cart
   useEffect(() => {
     if (!auth.isLoggedIn) {
-      
       Cookies.remove("cart");
     }
   }, [auth.isLoggedIn]);
@@ -59,14 +87,22 @@ const CartShopping = () => {
     setCartItems(updatedCart);
     toast.error("Produit supprimé du panier.");
   };
+
   const orderDetails = cartItems.map((el) => ({
     id: el.id,
     quantity: el.quantity,
   }));
+
   // Handle checkout
   const handleCheckout = () => {
     if (cartItems.length === 0) {
       toast.error("Votre panier est vide");
+      return;
+    }
+
+    if (!auth.isLoggedIn) {
+      toast.error("Vous devez être connecté pour effectuer une commande.");
+      navigate("/login");
       return;
     }
     toast.success("Commande validée ! Merci pour votre achat.");
@@ -76,15 +112,16 @@ const CartShopping = () => {
 
   // Handle quantity update
   const handleQuantityUpdate = (itemId, newQuantity) => {
-    if (newQuantity < 1) return; // Prevent quantity from going below 1
-    
+    if (newQuantity < 1) return;
+
     const updatedCart = cartItems.map((item) => {
       if (item.id === itemId) {
-        const price = item.price === 0 ? item.Initialprice : item.price;
-        return { ...item, quantity: newQuantity, total: (price * newQuantity).toFixed(2) };
+        const prices = item.price === 0 ? item.Initialprice : item.price;
+        return { ...item, quantity: newQuantity, total: (prices * newQuantity).toFixed(2) };
       }
       return item;
     });
+
     Cookies.set("cart", JSON.stringify(updatedCart), { expires: 7 });
     setCartItems(updatedCart);
   };
@@ -110,16 +147,14 @@ const CartShopping = () => {
               <div className="flex justify-between p-4 font-bold bg-gray-100">
                 <p className="flex-1">Produit</p>
                 <div className="flex w-1/2 justify-between">
-                  <p className="w-1/3 text-center">Prix</p>
-                  <p className="w-1/3 text-center">Quantité</p>
-                  <p className="w-1/3 text-center">Total</p>
+                  <p className="w-1/4 text-center">Prix</p>
+                  <p className="w-1/4 text-center">Quantité</p>
+                  <p className="w-1/4 text-center">Total</p>
+                  <p className="w-1/4 text-center"></p>
                 </div>
               </div>
               {cartItems.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center py-4 px-4 border-b"
-                >
+                <div key={index} className="flex justify-between items-center py-4 px-4 border-b">
                   <p
                     className="flex-1 cursor-pointer hover:underline"
                     onClick={() =>
@@ -128,9 +163,9 @@ const CartShopping = () => {
                   >
                     {item.name}
                   </p>
-                  <div className="flex w-1/2 justify-between items-center">
-                    <p className="w-1/3 text-center">{item.price} DT</p>
-                    <div className="w-1/3 flex items-center justify-center">
+                  <div className="flex w-1/2 justify-between">
+                    <p className="w-1/4 text-center">{item.price === 0 ? item.Initialprice : item.price} DT</p>
+                    <div className="w-1/4 flex items-center justify-center">
                       <button
                         onClick={() => handleQuantityUpdate(item.id, item.quantity - 1)}
                         className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
@@ -145,15 +180,15 @@ const CartShopping = () => {
                         +
                       </button>
                     </div>
-                    <div className="w-1/3 flex justify-between items-center">
+                    <div className="w-1/4 flex items-center justify-center">
                       <p>{item.total} DT</p>
-                      <button
-                        className="text-red-500 font-bold hover:underline ml-4"
-                        onClick={() => handleRemoveItem(item.id)}
-                      >
-                        X
-                      </button>
                     </div>
+                    <button
+                      className="w-1/4 text-red-500 font-bold hover:underline ml-4"
+                      onClick={() => handleRemoveItem(item.id)}
+                    >
+                      X
+                    </button>
                   </div>
                 </div>
               ))}
@@ -163,7 +198,7 @@ const CartShopping = () => {
           {/* Cart Totals */}
           <div className="w-full lg:w-1/3 mt-8 lg:mt-0">
             <div className="p-4 border rounded shadow-lg">
-              <h2 className="text-xl font-bold text-blue-360 mb-4">Panier Total </h2>
+              <h2 className="text-xl font-bold text-blue-360 mb-4">Panier Total</h2>
               <div className="flex justify-between py-2">
                 <p>Montant global :</p>
                 <p>{subtotal.toFixed(2)} DT</p>
@@ -177,15 +212,58 @@ const CartShopping = () => {
                 <p>Total TTC :</p>
                 <p>{totalTTC} DT</p>
               </div>
-              <button
-                onClick={handleCheckout}
-                className="mt-6 w-full px-6 py-3 bg-orange-500 text-white rounded hover:bg-orange-600"
-              >
-                Commander
-              </button>
+              <div className="flex flex-row justify-around">
+                <button
+                  onClick={handleCheckout}
+                  className="mt-6 w-1/2 px-6 py-3 m-2 bg-orange-500 text-white font-medium rounded hover:bg-orange-600"
+                >
+                  Commander
+                </button>
+                <button
+                  onClick={handleShow}
+                  className="mt-6 w-1/2 px-6 py-3 m-2 bg-orange-500 text-white font-medium rounded hover:bg-orange-600"
+                >
+                  Cagnotte Balance
+                </button>
+
+                <Modal
+                  isOpen={show}
+                  onRequestClose={handleClose}
+                  contentLabel="Confirmation de commande"
+                  className="modal-content p-8 max-w-lg mx-auto bg-white rounded-lg shadow-lg"
+                  overlayClassName="modal-overlay fixed inset-0 flex justify-center items-center bg-black bg-opacity-50"
+                >
+                  <h2 className="text-2xl font-bold mb-4">Mon Cagnotte Balance</h2>
+                  <div className="mt-4 font-medium">
+                    <div className="flex flex-row justify-between">
+                      <p>Total du panier :</p>  
+                      <p>{subtotal.toFixed(2)} DT</p>
+                    </div>
+                    <div className="flex flex-row justify-between">
+                      <p>Cagnotte Balance :</p>  
+                      <p> {Userprofile?.cagnotte_balance} DT</p>
+                    </div>
+                    
+                  </div>
+                  <div className="flex flex-row justify-between">
+                    <button
+                      onClick={Annuler}
+                      className="mt-6 px-6 py-2 bg-orange-360 text-white rounded-2xl"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={cagnotteComfirmation}
+                      className="mt-6 px-6 py-2 bg-blue-360 text-white rounded-2xl"
+                    >
+                      Confirmer
+                    </button>
+                  </div>
+                </Modal>
+              </div>
               <button
                 onClick={() => navigate("/")}
-                className="mt-4 w-full px-6 py-3 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                className="mt-4 w-full px-6 py-3 bg-gray-200 text-gray-800 font-medium rounded hover:bg-gray-300"
               >
                 Continuer vos achats
               </button>

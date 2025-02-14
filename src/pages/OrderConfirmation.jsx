@@ -7,19 +7,21 @@ import { useSelector } from "react-redux";
 import axios from 'axios';
 import { fetchUserProfile } from "../store/slices/user";
 import { useDispatch } from "react-redux";
+
 const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const auth_token = localStorage.getItem("token");
- const {UserProfile}= useSelector((state)=> state.user)
- const dispatch = useDispatch()
+  const { UserProfile } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+
   // Retrieve data passed from the cart page
-  const { orderDetails , subtotal, totalTTC } = location.state || {
+  const { orderDetails, subtotal, totalTTC } = location.state || {
     orderDetails: [],
     subtotal: 0,
     totalTTC: 0,
   };
-  
+
   const auth = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
@@ -36,9 +38,13 @@ const OrderConfirmation = () => {
 
   const [mapError, setMapError] = useState(null);
   const [modalIsOpen, setModalIsOpen] = useState(false);
+
+  // Fetch the user's profile
   useEffect(() => {
-    dispatch(fetchUserProfile)
+    dispatch(fetchUserProfile());
   }, [dispatch]);
+
+  // Redirect to the cart page if orderDetails is empty
   useEffect(() => {
     if (!orderDetails.length) {
       toast.error("Votre panier est vide.");
@@ -78,6 +84,7 @@ const OrderConfirmation = () => {
   };
 
   const handleSubmit = async () => {
+
     const { contact_person_name, contact_person_number, address, payment_method, order_type, latitude, longitude } = formData;
 
     // Validation
@@ -91,6 +98,7 @@ const OrderConfirmation = () => {
       toast.error("Localisation manquante.");
       return;
     }
+    if (auth.isLoggedIn ) {
 
     // Send order details including geolocation to the backend
     try {
@@ -106,7 +114,6 @@ const OrderConfirmation = () => {
         setModalIsOpen(true);
       } else {
          toast.error(`Erreur : ${response.data.message || "Une erreur est survenue."}`);
-      
       }
     } catch (error) {
       const errorMessage = error.response 
@@ -114,6 +121,9 @@ const OrderConfirmation = () => {
         : "Erreur de connexion réseau.";
       toast.error(`Erreur : ${errorMessage}`);
     }
+   }else {
+    navigate("/login")
+   }
   };
 
   const closeModal = () => {
@@ -187,11 +197,13 @@ const OrderConfirmation = () => {
           <div>
             <h2 className="text-xl font-bold mb-4">Localisation</h2>
             <div className="h-64 border rounded">
+              
               <GoogleMapReact
-                bootstrapURLKeys={{ key: "YOUR_GOOGLE_MAPS_API_KEY" }}
+                bootstrapURLKeys={{ key: "AIzaSyAFwGAsC3VUZYdxkEwB43DEf5tpSx4hAZg" }}
                 defaultCenter={{ lat: formData.latitude || 36.8065, lng: formData.longitude || 10.1815 }}
                 defaultZoom={12}
                 onClick={handleMapClick}
+                yesIWantToUseGoogleMapApiInternals
               />
             </div>
             {mapError && <p className="text-red-500 text-sm mt-2">{mapError}</p>}

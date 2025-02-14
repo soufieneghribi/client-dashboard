@@ -88,9 +88,9 @@ const ProductRecommande = () => {
                     </div>
                    
 
-                  <div className="text-orange-360">
-                    <i className="fa-regular fa-money-bill-1"></i>
-                    <p className="font-bold text-lg">{discountedPrice} DT</p>
+                  <div className="text-green-500 font-semibold text-lg">
+                    <i className="fa-regular fa-money-bill-1 px-1"></i>
+                    {discountedPrice} DT
                   </div>
                 </div>
 

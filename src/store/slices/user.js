@@ -3,6 +3,30 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 
 // Async thunk for user sign-in
+
+
+export const forgetPassword = createAsyncThunk(
+  "user/forgetPassword",
+  async ({ email }, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.post(
+        "https://tn360-122923924979.europe-west1.run.app/api/v1/auth/password/email",
+        { email } // Ensure the body is structured correctly (email should be inside an object)
+      );
+      toast.success("Un lien de réinitialisation a été envoyé à votre e-mail.");
+      return data;
+    } catch (error) {
+      // Handle error, providing more detailed feedback
+      if (error.response) {
+        toast.error(error.response.data.message || "Une erreur est survenue.");
+        return rejectWithValue(error.response.data.message || "Une erreur est survenue.");
+      } else {
+        toast.error("Problème de connexion. Veuillez réessayer.");
+        return rejectWithValue("Problème de connexion. Veuillez réessayer.");
+      }
+    }
+  }
+);
 export const signUp = createAsyncThunk(
   "user/signup",
   async ({ user, navigate }) => {
@@ -163,6 +187,17 @@ const UserSlice = createSlice({
       state.Userprofile = action.payload;
     });
     builder.addCase(updateCagnotteInDB.rejected, (state, action) => {
+      state.loading = false;
+      toast.error(action.payload);
+    });
+    builder.addCase(forgetPassword.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(forgetPassword.fulfilled, (state, action) => {
+      state.loading = false;
+      state.Userprofile = action.payload;
+    });
+    builder.addCase(forgetPassword.rejected, (state, action) => {
       state.loading = false;
       toast.error(action.payload);
     });

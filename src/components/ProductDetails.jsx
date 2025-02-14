@@ -36,7 +36,7 @@ const ProductDetails = () => {
     if (quantity > 0) setQuantity((prev) => prev - 1);
   };
 
-  const totalPrice = quantity === 0 ? product.price || 0 : (product.price || 0) * quantity;
+  const totalPrice = quantity === 0 ? product.price || 0 : ((product.price ) * quantity).toFixed(2);
   const isEligibleForDiscount = [2, 3].includes(Number(subId));
   const discountedPrice = isEligibleForDiscount
     ? (totalPrice * 0.9).toFixed(2)
@@ -59,7 +59,7 @@ const ProductDetails = () => {
       total: discountedPrice,
       quantity,
     };
-
+console.log(newItem)
     const existingItemIndex = cart.findIndex((el) => el.id === newItem.id);
 
     if (existingItemIndex !== -1) {
@@ -77,13 +77,7 @@ const ProductDetails = () => {
     navigate("/cart-shopping");
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-pulse w-80 h-80 bg-gray-300 rounded-md"></div>
-      </div>
-    );
-  }
+ 
 
   if (error) {
     return <p className="text-red-600 text-center">Erreur : {error}</p>;
@@ -94,9 +88,9 @@ const ProductDetails = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto my-8 px-4 py-8">
       {/* Hero Section with Gradient Background */}
-      <div className="relative mb-8 bg-gradient-to-r from-blue-500 to-green-500 text-white py-12 px-6 rounded-lg shadow-xl">
+      <div className="relative my-10 mb-4 bg-gradient-to-r from-blue-500 to-green-500 text-white py-12 px-6 rounded-lg shadow-xl">
         <div className="absolute inset-0 bg-black opacity-40"></div>
         <div className="relative z-10 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">{product.name}</h1>

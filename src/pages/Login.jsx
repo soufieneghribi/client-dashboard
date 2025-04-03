@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginSuccess } from "../store/slices/authSlice";
 import { Link, useNavigate } from "react-router-dom";
 import { forgetPassword } from "../store/slices/user";
-
+import splash from "../assets/images/Splash.png";
 const Login = () => {
   const [email, setEmail] = useState(""); // Input for email
   const [searchMail, setSearchMail] = useState(""); // For searching email during password reset
@@ -209,7 +209,7 @@ const Login = () => {
           </div>
           <div className="flex-1 text-center hidden lg:flex">
             <div className="m-12 xl:m-16 bg-contain">
-              <img src="../src/assets/images/Splash.png" alt="Splash" />
+              <img src={splash} alt="Splash" />
             </div>
           </div>
         </div>

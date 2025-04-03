@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout, loginSuccess } from "../store/slices/authSlice";
 import { Link } from "react-router-dom";
 import '@fortawesome/fontawesome-free/css/all.min.css';
-
+import Company_Logo from "../assets/images/logo_0.png"
 const Header = () => {
 
   const [show, setShow] = useState(false);
@@ -60,7 +60,7 @@ const Header = () => {
         {/* Logo */}
         <div className="relative flex-1">
           <Link to="/">
-            <img src="../src/assets/images/logo_0.png" width="150px" alt="Company Logo" />
+            <img src={Company_Logo} width="150px" alt="Company Logo" />
           </Link>
         </div>
 

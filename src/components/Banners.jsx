@@ -22,13 +22,24 @@ const Banners = () => {
     return acc;
   }, []);
 
+  // Handle the previous slide
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
 
+  // Handle the next slide
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
+
+  // Auto-transition the slides every 3 seconds
+  useEffect(() => {
+    const slideTimeout = setTimeout(() => {
+      nextSlide(); // Move to the next slide after 3 seconds
+    }, 3000); // Change slide every 3 seconds (3000 ms)
+
+    return () => clearTimeout(slideTimeout); // Cleanup the timeout when component unmounts or when the currentIndex changes
+  }, [currentIndex]); // Depend on currentIndex so the slide changes after each transition
 
   if (loading) return <p>Loading banners...</p>;
   if (error) return <p>Failed to load banners. Please try again.</p>;
@@ -45,10 +56,11 @@ const Banners = () => {
             >
               {slide.map((banner) => (
                 <img
-                src={banner.image_path ? `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}` : 'https://via.placeholder.com/150'}
-                alt={banner.title || "Banner Image"}
-                className="w-full h-96 object-cover"
-              />
+                  key={banner.id} // Assuming banners have a unique id
+                  src={banner.image_path ? `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}` : 'https://via.placeholder.com/150'}
+                  alt={banner.title || "Banner Image"}
+                  className="w-full object-cover sm:h-50 md:h-50 lg:h-50 xl:h-96"
+                />
               ))}
             </div>
           ))}
@@ -66,24 +78,19 @@ const Banners = () => {
           ))}
         </div>
 
-        {/* Slider controls */}
+        {/* Navigation buttons */}
         <button
-          type="button"
-          className="flex absolute top-1/2 left-3 z-40 items-center justify-center w-10 h-10 bg-gray-200/50 rounded-full hover:bg-gray-300 focus:outline-none transition"
           onClick={prevSlide}
+          className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black text-white p-2 rounded-full shadow-lg"
         >
-          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
-          </svg>
+          &lt;
         </button>
+
         <button
-          type="button"
-          className="flex absolute top-1/2 right-3 z-40 items-center justify-center w-10 h-10 bg-gray-200/50 rounded-full hover:bg-gray-300 focus:outline-none transition"
           onClick={nextSlide}
+          className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black text-white p-2 rounded-full shadow-lg"
         >
-          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-          </svg>
+          &gt;
         </button>
       </div>
     </div>

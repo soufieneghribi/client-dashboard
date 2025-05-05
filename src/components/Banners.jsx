@@ -45,53 +45,28 @@ const Banners = () => {
   if (error) return <p>Failed to load banners. Please try again.</p>;
 
   return (
-    <div className="w-full mx-auto">
-      <div id="default-carousel" className="relative rounded-lg overflow-hidden shadow-lg">
+    <div>
+      <div id="default-carousel" className="overflow-hidden shadow-lg ">
         {/* Carousel wrapper */}
-        <div className="relative h-auto md:h-auto">
+        <div className="">
           {slides.map((slide, slideIndex) => (
             <div
               key={slideIndex}
-              className={`duration-700 ease-in-out ${currentIndex === slideIndex ? "block" : "hidden"}`}
+              className={`duration-700 ease-in-out ${currentIndex === slideIndex ? "block" : "hidden"} `}
             >
               {slide.map((banner) => (
                 <img
                   key={banner.id} // Assuming banners have a unique id
                   src={banner.image_path ? `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}` : 'https://via.placeholder.com/150'}
                   alt={banner.title || "Banner Image"}
-                  className="w-full object-cover sm:h-50 md:h-50 lg:h-50 xl:h-96"
-                />
+                  className="h-[150px] sm:h-[180px] md:h-[250px] lg:h-[350px] xl:h-[400px] w-full object-cover"/>
               ))}
             </div>
           ))}
         </div>
 
-        {/* Slider indicators */}
-        <div className="flex absolute bottom-5 left-1/2 z-30 -translate-x-1/2 space-x-2">
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              className={`w-3 h-3 rounded-full ${currentIndex === idx ? "bg-blue-500" : "bg-gray-300"}`}
-              onClick={() => setCurrentIndex(idx)}
-            ></button>
-          ))}
-        </div>
+        
 
-        {/* Navigation buttons */}
-        <button
-          onClick={prevSlide}
-          className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black text-white p-2 rounded-full shadow-lg"
-        >
-          &lt;
-        </button>
-
-        <button
-          onClick={nextSlide}
-          className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black text-white p-2 rounded-full shadow-lg"
-        >
-          &gt;
-        </button>
       </div>
     </div>
   );

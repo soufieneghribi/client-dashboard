@@ -105,7 +105,7 @@ const Login = () => {
               <form onSubmit={handleLogin} className="w-full mt-8">
                 <div className="relative">
                   <input
-                    className="w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white"
+                    className="w-full px-8 py-2 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white"
                     type="email"
                     placeholder="Email"
                     name="email"
@@ -115,9 +115,9 @@ const Login = () => {
                   <i className="fa-solid fa-user absolute left-3 top-1/3 text-orange-360"></i>
                 </div>
 
-                <div className="relative mt-5">
+                <div className="relative mt-3">
                   <input
-                    className="w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white"
+                    className="w-full px-8 py-2 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white"
                     type="password"
                     placeholder="Mot de passe"
                     name="password"
@@ -139,7 +139,7 @@ const Login = () => {
                 {errorMessage && <p className="error">{errorMessage}</p>}
                 <button
                   type="submit"
-                  className="mt-5 tracking-wide font-semibold bg-blue-360 text-gray-100 w-full py-4 rounded-lg transition-all duration-300 ease-in-out flex items-center justify-center focus:shadow-outline focus:outline-none"
+                  className="mt-3 tracking-wide font-semibold bg-blue-360 text-gray-100 w-full h-12 py-2 rounded-lg transition-all duration-300 ease-in-out flex items-center justify-center focus:shadow-outline focus:outline-none"
                   disabled={loading}
                 >
                   {loading ? "Connexion..." : "Connexion"}

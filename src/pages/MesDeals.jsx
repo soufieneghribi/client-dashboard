@@ -17,6 +17,7 @@ const MesDeals = () => {
   // Get data from Redux store
   const { offre = [], loading, error } = useSelector((state) => state.offre);
   const { Userprofile } = useSelector((state) => state.user);
+  const auth = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -65,20 +66,23 @@ const MesDeals = () => {
 
   return (
     <>
-      <nav className="bg-orange-360 flex flex-row justify-end">
-        <div className="border bg-white px-2 py-2 m-2 rounded-2xl shadow-xl text-center font-bold text-sm font-limon-milk">
+    <div>
+     {auth.isLoggedIn ? (
+      <nav className="bg-orange-360 flex flex-row justify-end h-16">
+        <div className="border bg-white p-2 m-1 rounded-xl shadow-xl text-center font-medium text-sm font-limon-milk">
           <p>Cagnotte</p>
           <p>{Userprofile ? Userprofile.cagnotte_balance : "Chargement..." } DT</p>
         </div>
       </nav>
+    ):""}
 
       {/* Carousel Section */}
-      <div className="relative w-full h-auto my-8">
-        <div className="overflow-hidden rounded-lg">
+      <div className="relative  overflow-hidden shadow-lg ">
+        <div className=" rounded-lg">
           <img
             src={images[currentIndex]}
             alt={`Slide ${currentIndex + 1}`}
-            className="w-full h-auto"
+            className=" h-[150px] sm:h-[180px] md:h-[250px] lg:h-[350px] xl:h-[400px] w-full object-cover"
           />
         </div>
 
@@ -109,8 +113,10 @@ const MesDeals = () => {
       </div>
 
       {/* Flash Sale Timer & Deals */}
-      {deal.length > 0 ? (
-        <div className="grid grid-cols-2  gap-2  bg-white w-full sm:w-1/2 lg:w-full xl:w-full">
+      {auth.isLoggedIn && (
+
+      deal.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2  bg-white w-full sm:h-20 md:h-full ">
           {deal.map((el) => {
             const timeLeft = calculateTimeLeft(el.date_fin); 
             if (el.type_offre === "deal_depense") {
@@ -131,7 +137,9 @@ const MesDeals = () => {
           <p className="text-blue-950 font-semibold">Aucune offre active</p>
           <p className="text-orange-360 font-medium">Venez vérifier plus tard!</p>
         </div>
-      )}
+      )
+    )}
+    </div>
     </>
   );
 };

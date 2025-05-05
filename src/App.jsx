@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Route, Routes, Outlet } from "react-router-dom";
+import 'bootstrap/dist/css/bootstrap.min.css';
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import Login from "./pages/Login";
@@ -11,19 +12,10 @@ import Footer from "./components/Footer";
 
 function App() {
     return (
-        // <Router>
-        //     <Header />
-        //     <Routes>
-        //         <Route path="/login" element={<Login />} />
-        //         <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
-        //         <Route path="/products" element={<PrivateRoute><Products /></PrivateRoute>} />
-        //         <Route path="*" element={<NotFound />} />
-        //     </Routes>
-        // </Router>
+    
         <div>
-    <Toaster/>
+        <Toaster/>
         <Header/>
-        
         <Outlet/>
         <Footer/>
        

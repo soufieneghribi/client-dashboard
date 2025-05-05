@@ -13,6 +13,7 @@ import offreReducer from "./slices/offre.js"
 import anniversaireReducer from "./slices/anniversaire.js";
 import dealMarqueReducer from "./slices/dealMarque.js"
 import orderReducer from "./slices/order.js"
+import searchReducer from "./slices/search.js"
 const store = configureStore({
     reducer: {
         user: userReducer,
@@ -28,6 +29,7 @@ const store = configureStore({
         anniversaire:anniversaireReducer,
         marque:dealMarqueReducer,
         order:orderReducer,
+        search:searchReducer,
         
 
     },

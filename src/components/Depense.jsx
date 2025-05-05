@@ -59,42 +59,39 @@ const Depense = ({Time }) => {
       {filteredDeals.length >0 &&(
         filteredDeals.map((el) => (
           el.objectif_3 !== el.compteur_objectif?(
-         <div key={el.ID_deal} className="flex flex-col justify-between w-full h-full p-4 bg-gray-50 shadow-md rounded-lg">
-            <Timer flashSaleTimeLeft={Time}/>
+         <div key={el.ID_deal} className="flex flex-col justify-between w-full   bg-gray-50 shadow-md rounded-lg">
+            <Timer flashSaleTimeLeft={Time} />
         
           <div
             key={el.ID_deal} // Use unique ID instead of index
-            className="flex flex-row justify-start m-8 items-center bg-gray-100"
+            className="flex flex-row justify-start m-2 items-center bg-gray-100"
           >
-            <div className="w-full rounded-lg overflow-hidden shadow-lg bg-white">
+            <div className="w-full h-80 rounded-lg overflow-hidden shadow-lg bg-white flex flex-col">
               {/* Button Section */}
               <div className="flex items-end justify-end">
-                <button className="p-4 bg-purple-600 rounded-xl mx-4 my-2 text-white font-semibold">
+                <button className="p-2 bg-purple-600 rounded-xl mx-4 my-1 text-white md:font-semibold sm:font-normal">
                   Dépense
                 </button>
               </div>
 
               {/* Image Section */}
-              <div className="flex flex-row justify-between mt-4">
+              <div className="flex flex-row justify-between mt-1">
                 <img
                   src={moneyGainImage}
                   alt="Deal"
-                  className="w-48 h-48 object-cover p-2"
+                  className="w-32 h-32 object-cover p-1"
                 />
-                <div className="font-bold text-base p-4 text-center">
+                <div className="md:font-bold sm:font-mono text-base p-2 text-center">
                   <p>Gagné jusqu'à</p>
-                  <p className="text-orange-360">{el.gain_objectif_3} Dt</p>
+                  <p className="font-bold text-orange-360">{el.gain_objectif_3} Dt</p>
                   <p>si vous atteignez l'objectif</p>
                 </div>
               </div>
 
               {/* Progress Bar Section */}
-              <div className="p-4 mb-28">
-                <div className="text-lg font-semibold text-gray-700">Dépense</div>
-                <div className="w-full rounded-full h-10 mt-2 relative border-2 border-black ">
-                  
+              <div className="p-1 ">
+                <div className="w-full rounded-full h-10 mt-2 relative border-2 border-black ">  
                     <div className="">
-                      
                       {/* Gain Objective Markers */}
                       {el.compteur_objectif >= el.objectif_1?(
                         <>
@@ -104,7 +101,7 @@ const Depense = ({Time }) => {
                           transform: "translateX(-50%) translateY(-50%)",
                           background: "linear-gradient(to right, #d19e1d, #ffd86e, #e3a812)",
                         }}
-                        className="text-white rounded-full w-10 h-10 absolute top-1/2 transform -translate-y-1/2 flex items-center justify-center text-lg font-semibold"
+                        className="text-white rounded-full w-10 h-10 absolute top-1/2 transform -translate-y-1/2 flex items-center justify-center md:text-lg sm:text-sm font-semibold"
                       >
                         {el.gain_objectif_1}dt
                       </span>
@@ -226,8 +223,8 @@ const Depense = ({Time }) => {
                     className="bg-green-500 h-9 rounded-full"
                     style={{ width: `${objectif}` }}
                   ></div>
-                  <div className="mt-16">
-                   <i className="fas fa-gift p-2 mt-4"></i> Mes achats: {el.compteur_objectif}
+                  <div className="mt-8">
+                   <i className="fas fa-gift p-2 mt-4  font-meduim text-base"></i> Mes achats: {el.compteur_objectif} dt
                   </div>
                 </div>
               </div>

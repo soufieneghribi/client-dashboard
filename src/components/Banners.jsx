@@ -14,6 +14,7 @@ const Banners = () => {
 
   // Group banners into slides
   const slides = banners.reduce((acc, banner, index) => {
+    
     const slideIndex = Math.floor(index / itemsPerSlide);
     if (!acc[slideIndex]) {
       acc[slideIndex] = [];
@@ -21,6 +22,8 @@ const Banners = () => {
     acc[slideIndex].push(banner);
     return acc;
   }, []);
+  console.log(slides)
+  
 
   // Handle the previous slide
   const prevSlide = () => {
@@ -50,17 +53,22 @@ const Banners = () => {
         {/* Carousel wrapper */}
         <div className="">
           {slides.map((slide, slideIndex) => (
+            
             <div
               key={slideIndex}
               className={`duration-700 ease-in-out ${currentIndex === slideIndex ? "block" : "hidden"} `}
             >
               {slide.map((banner) => (
+                <div>
                 <img
                   key={banner.id} // Assuming banners have a unique id
-                  src={banner.image_path ? `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}` : 'https://via.placeholder.com/150'}
+                  src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}`}
                   alt={banner.title || "Banner Image"}
                   className="h-[150px] sm:h-[180px] md:h-[250px] lg:h-[350px] xl:h-[400px] w-full object-cover"/>
-              ))}
+                  
+                  </div>
+                ))}
+              
             </div>
           ))}
         </div>

@@ -92,7 +92,7 @@ const Categories = () => {
               } justify-center`}
             >
               {slide.map((category) => {
-                const imageUrl = `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${category.picture}`;
+                const imageUrl = `${category.picture}`;
                 return (
                   <div
                     key={category.id}
@@ -101,7 +101,7 @@ const Categories = () => {
                     onMouseLeave={handleMouseLeave}
                   >
                     <img
-                      src={imageUrl}
+                      src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${imageUrl}`}
                       alt={category.name || `Image of ${category.title}`}
                       className="object-contain w-full h-32 md:h-40 lg:h-48 rounded-md"
                     />

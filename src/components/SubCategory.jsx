@@ -89,7 +89,7 @@ const SubCategory = ({ data }) => {
                       <img
                         loading="lazy"
                         className="w-32 h-32 object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-500"
-                        src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${subcategory.picture}`}
+                        src={`${subcategory.picture}`}
                         alt={subcategory.title || 'Subcategory'}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-4">

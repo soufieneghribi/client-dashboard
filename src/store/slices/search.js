@@ -7,7 +7,7 @@ export const SearchProduct = createAsyncThunk(
   async (query, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `https://tn360-lqd25ixbvq-ew.a.run.app/api/v1/products/search?query=${encodeURIComponent(query)}`
+        `https://tn360-lqd25ixbvq-ew.a.run.app/api/v1/products/search?query=${query}`
       );
       return response.data;
     } catch (error) {
@@ -21,7 +21,7 @@ export const SearchProduct = createAsyncThunk(
 const searchSlice = createSlice({
   name: "search",
   initialState: {
-    searchResults: [],
+    searchResults: [],   // <-- ici on a renommé pour plus de clarté
     loading: false,
     error: null,
     lastQuery: ""
@@ -30,6 +30,7 @@ const searchSlice = createSlice({
     clearSearch: (state) => {
       state.searchResults = [];
       state.lastQuery = "";
+      state.error = null;
     }
   },
   extraReducers: (builder) => {
@@ -40,7 +41,7 @@ const searchSlice = createSlice({
       })
       .addCase(SearchProduct.fulfilled, (state, action) => {
         state.loading = false;
-        state.searchResults = action.payload.products || [];
+        state.searchResults = action.payload; // <-- utiliser searchResults ici
         state.lastQuery = action.meta.arg;
       })
       .addCase(SearchProduct.rejected, (state, action) => {

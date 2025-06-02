@@ -18,13 +18,12 @@ import Categories from "./components/Categories";
 import SubCategory from "./components/SubCategory";
 import Catalogue from "./pages/Catalogue";
 import "./styles/index.css"
-
 import CartShopping from "./pages/CartShopping";
 import Favoris from "./pages/Favoris";
 import Profile from "./pages/Profile";
-
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Orders from "./pages/Commandes";
+import SearchResult from "./components/SearchResult";
 
 
 
@@ -47,6 +46,8 @@ const router = createBrowserRouter(
         <Route path="/sub-category" element={<SubCategory />} />
         <Route path="/products" element={<Products />} />
         <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/search" element={<SearchResult />} />
+
 
         <Route path="*" element={<NotFound />} />
       </Route>

@@ -118,7 +118,7 @@ console.log(newItem)
         {/* Image Carousel */}
         
               <img
-                  src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.img}` }
+                  src={`${product.img}` }
                   alt={`${product.name}`}
                   className=" w-auto mx-auto h-96 sm:h-20 md:h-56 mb-2 object-contain"
                 />

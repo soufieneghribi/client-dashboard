@@ -130,7 +130,7 @@ const Catalogue = () => {
             className="border rounded-xl p-4 shadow hover:shadow-lg transition"
           >
             <img
-              src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${data.img}`}
+              src={`${data.img}`}
               alt={data.name}
               className="w-full h-40 object-cover rounded-md"
             />

@@ -140,13 +140,13 @@ const Categories = () => {
   
     {/* Sous-catégories avec animation */}
     {show && subCategory.length > 0 && (
-     
-        <SubCategory data={subCategory} categorie={categoryTitle}  id="example-collapse-text"
-        className=" transition-opacity duration-500 ease-in-out opacity-100 "
-        onMouseEnter={() => clearTimeout(hoverTimeout)}
-        onMouseLeave={handleMouseLeave} 
+     <div id="example-collapse-text"
+     className=" transition-opacity duration-500 ease-in-out opacity-100 "
+     onMouseEnter={() => clearTimeout(hoverTimeout)}
+     onMouseLeave={handleMouseLeave} >
+        <SubCategory data={subCategory} categorie={categoryTitle}  
         />
-     
+     </div>
     )}
   </div>
   );

@@ -76,7 +76,7 @@ const DealMarque = ({Time  }) => {
               {/* Image Section */}
               <div className="flex flex-row justify-between mt-1">
                 <img
-                  src={el.upload_marque_picture}
+                  src={el.marqueLogo}
                   alt="Deal"
                   className="w-32 h-32 object-cover p-1"
                 />

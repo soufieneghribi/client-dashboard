@@ -77,7 +77,7 @@ const Profile = () => {
               <div className="flex flex-col items-center text-center gap-4">
 
                 <img
-                  src={`${Userprofile?.image}`}
+                  src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${Userprofile?.image}`}
                   alt="Profile"
                   className="w-32 h-32 rounded-full object-cover shadow-xl "
                   onError={(e) =>

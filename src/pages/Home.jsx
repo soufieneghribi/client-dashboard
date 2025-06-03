@@ -12,7 +12,7 @@ const Home = () => {
     return (
         <div className="home-container">
             
-            <section className="grid w-full">
+            <section className="grid w-full ">
                 {/* Categories and Banners */}
                 
                 <Banners  />
@@ -21,14 +21,14 @@ const Home = () => {
                 <div className="flex flex-row justify-evenly">
                     {/* Deals Section */}
                     <div
-                        className="border rounded-2xl shadow-xl m-2 w-full h-40 bg-[url('../assets/mydealsImg.png')] bg-blue-360 bg-contain bg-no-repeat bg-center hover:scale-105 transition-transform duration-300 hover:brightness-150"
+                        className="border rounded-2xl shadow-xl w-full h-40 bg-[url('../assets/mydealsImg.png')] bg-blue-360 bg-contain bg-no-repeat bg-center hover:scale-105 transition-transform duration-300 hover:brightness-150"
                         onClick={() => navigate('/MesDeals')}
                         aria-label="Go to My Deals"
                     >
                     </div>
                     {/* Recommended Section */}
                     <div
-                        className="border rounded-2xl shadow-xl m-2 w-full h-40 bg-[url('../assets/recommnededImg.png')] bg-orange-360 bg-contain bg-no-repeat bg-center hover:scale-105 transition-transform duration-300 hover:brightness-150"
+                        className="border rounded-2xl shadow-xl w-full h-40 bg-[url('../assets/recommnededImg.png')] bg-orange-360 bg-contain bg-no-repeat bg-center hover:scale-105 transition-transform duration-300 hover:brightness-150"
                         onClick={() => navigate('/Catalogue')}
                         aria-label="Go to Catalogue"
                     >

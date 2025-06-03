@@ -19,30 +19,41 @@ const Header = () => {
 
   const auth = useSelector((state) => state.auth);
   const { searchResults, loading: searchLoading, error: searchError } = useSelector((state) => state.search);
-
+  const [query, setQuery] = useState('');
   const debouncedSearch = useCallback(
     debounce((query) => {
       if (query.trim()) dispatch(searchProduct(query));
     }, 300),
     [dispatch]
   );
-
+  
   const handleSearchChange = (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    if (!query) dispatch(clearSearch());
-    else debouncedSearch(query);
+    const value = e.target.value;
+    
+    setSearchQuery(value);
+    setQuery(searchQuery);
+    if (!value.trim()) {
+      dispatch(clearSearch());  
+    } else {
+      debouncedSearch(value);
+      dispatch(clearSearch());
+     }
   };
 
   const handleSearchSubmit = () => {
     debouncedSearch.flush();
-    if (searchQuery.trim()) {
-      navigate(`/search?query=${(searchQuery)}`);
+    if (query.trim()) {
+      dispatch(clearSearch());
+      setSearchQuery('');
+      setQuery('');
     }
   };
+  console.log(searchQuery)
+  console.log(query)
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') handleSearchSubmit();
+   
   };
 
   useEffect(() => {

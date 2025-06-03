@@ -37,7 +37,7 @@ const Categories = () => {
   function getItemsPerRow() {
     if (window.innerWidth < 720) return 1;
     if (window.innerWidth >= 720 && window.innerWidth < 1024) return 3;
-    return 6;
+    return 5;
   }
 
   const filteredCategories = categories.filter(
@@ -76,14 +76,14 @@ const Categories = () => {
   };
 
   return (
-    <div className="w-full overflow-hidden">
+    <div className="w-full overflow-hidden ">
     {loading ? (
       <p className="text-center text-gray-500">Loading categories...</p>
     ) : error ? (
       <p className="text-center text-red-500">Error fetching categories.</p>
     ) : categories.length > 0 && (
-      <div className="relative mx-auto rounded-lg">
-        <div className="relative h-64 md:h-80 mx-4">
+      <div className="relative mx-auto rounded-lg mb-0">
+        <div className="mx-2 mb-5">
           {slides.map((slide, slideIndex) => (
             <div
               key={slideIndex}
@@ -94,40 +94,41 @@ const Categories = () => {
               {slide.map((category) => {
                 const imageUrl = `${category.picture}`;
                 return (
-                  <div
-                    key={category.id}
-                    className="bg-white p-3 rounded-lg shadow-md w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/6 m-2"
+                  <div key={category.id}
+                  className="bg-blue-360 mt-4 mr-2 bg-cover bg-center h-36 rounded-lg shadow-md w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/3  relative"
+                  style={{
+                    backgroundImage: `url(https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${imageUrl})`,
+                  }}
                     onMouseEnter={() => handleMouseEnter(category.id, category.title)}
                     onMouseLeave={handleMouseLeave}
                   >
-                    <img
-                      src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${imageUrl}`}
-                      alt={category.name || `Image of ${category.title}`}
-                      className="object-contain w-full h-32 md:h-40 lg:h-48 rounded-md"
-                    />
-                    <button className="text-sm md:text-base lg:text-lg font-semibold text-gray-800 mt-2 block text-center">
-                      {category.title.length > 12 ?category.title.slice(0, 12) + "..." : category.title}
-                    </button>
+                    
+                    <div className=" absolute bottom-0 w-full bg-white/80 backdrop-blur-sm py-2 text-center rounded-b-lg">
+                       <span className="text-sm md:text-base lg:text-lg font-semibold text-gray-800">
+                        {category.title.length > 12 ? category.title.slice(0, 12) + "..." : category.title}
+                       </span>
+                    </div>
                   </div>
                 );
               })}
             </div>
           ))}
         </div>
+        
   
         {/* Boutons de navigation affichés uniquement si plusieurs slides */}
         {slides.length > 1 && (
           <>
             <button
               type="button"
-              className="flex absolute top-1/3 sm:top-1/3 lg:top-0 -left-2  items-center justify-center w-10  h-12 sm:h-16 lg:h-72  bg-blue-360  text-white rounded-full hover:bg-gray-300 focus:outline-none transition z-10"
+              className="flex absolute top-1/3 sm:top-1/3 lg:top-0 -left-2  items-center justify-center w-10  h-12 sm:h-16 lg:h-48  bg-blue-360  text-white rounded-full hover:bg-gray-300 focus:outline-none transition z-10"
               onClick={prevSlide}
             >
               <i class="fa-solid fa-caret-left"></i>
             </button>
             <button
               type="button"
-              className="flex absolute top-1/3 sm:top-1/3 lg:top-0  -right-2 items-center justify-center w-10 h-12 sm:h-16 lg:h-72 bg-blue-360  text-white rounded-full hover:bg-gray-300 focus:outline-none transition z-10"
+              className="flex absolute top-1/3 sm:top-1/3 lg:top-0  -right-2 items-center justify-center w-10 h-12 sm:h-16 lg:h-48 bg-blue-360  text-white rounded-full hover:bg-gray-300 focus:outline-none transition z-10"
               onClick={nextSlide}
             >
              <i class="fa-solid fa-caret-right"></i>          
@@ -139,14 +140,13 @@ const Categories = () => {
   
     {/* Sous-catégories avec animation */}
     {show && subCategory.length > 0 && (
-      <div
-        id="example-collapse-text"
-        className="transition-opacity duration-500 ease-in-out opacity-100"
+     
+        <SubCategory data={subCategory} categorie={categoryTitle}  id="example-collapse-text"
+        className=" transition-opacity duration-500 ease-in-out opacity-100 "
         onMouseEnter={() => clearTimeout(hoverTimeout)}
-        onMouseLeave={handleMouseLeave}
-      >
-        <SubCategory data={subCategory} categorie={categoryTitle} />
-      </div>
+        onMouseLeave={handleMouseLeave} 
+        />
+     
     )}
   </div>
   );

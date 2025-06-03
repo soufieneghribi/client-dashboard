@@ -68,10 +68,10 @@ const SubCategory = ({ data }) => {
   }, [currentIndex]);
 
   return (
-    <div className="container mx-auto ">
+    <div className="container mx-auto  ">
       {/* Slides */}
       <div className="relative">
-        <div className="relative h-[200px] sm:h-[500px] lg:h-[200px] xl:h-[200px]">
+        <div className="relative  h-[200px] sm:h-[500px] lg:h-[200px] xl:h-[200px] ">
           {slides.map((subcategoryGroup, slideIndex) => (
             <div
               key={slideIndex}
@@ -88,8 +88,8 @@ const SubCategory = ({ data }) => {
                     <div className="relative">
                       <img
                         loading="lazy"
-                        className="w-32 h-32 object-cover rounded-t-lg group-hover:scale-105 transition-transform duration-500"
-                        src={`${subcategory.picture}`}
+                        className="w-40 h-32 object-cover object-center rounded-t-lg group-hover:scale-105 transition-transform duration-500"
+                        src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${subcategory.picture}`}
                         alt={subcategory.title || 'Subcategory'}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-4">

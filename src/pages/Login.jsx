@@ -19,7 +19,13 @@ const Login = () => {
   const dispatch = useDispatch(); // Hook to dispatch Redux actions
   const navigate = useNavigate(); // React Router hook to navigate
   const { token, isLoggedIn } = useSelector((state) => state.auth); // Redux state
+  const [show, setShow] = useState(false)
+  const showHandler= () => {
+    setShow(!show)
+    console.log(show)
+  }
 
+ 
   useEffect(() => {
     // Redirect user if already logged in
     if (isLoggedIn || token) {
@@ -73,6 +79,7 @@ const Login = () => {
       }
     }
   };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -117,14 +124,26 @@ const Login = () => {
 
                 <div className="relative mt-3">
                   <input
+                    type={show===true? "text":"password"}
+                    id="password"
                     className="w-full px-8 py-2 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-gray-400 focus:bg-white"
-                    type="password"
                     placeholder="Mot de passe"
                     name="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
                   <i className="fa-solid fa-lock absolute left-3 top-1/3 text-orange-360"></i>
+                  <button
+  type="button"
+  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2"
+  onClick={showHandler}
+>
+  {show ? (
+    <i className="fa-solid fa-eye" />
+  ) : (
+    <i className="fa-solid fa-eye-slash" />
+  )}
+</button>
                 </div>
 
                 <div className="flex justify-end mt-3">

@@ -63,7 +63,7 @@ const ProductsBySubCategory = () => {
       </nav>
 
       <div>
-        <h1 className="m-10 text-blue-360 font-bold text-3xl mb-8">{subTitle}</h1>
+        <h1 className=" text-blue-360 font-bold text-3xl mb-2">{subTitle}</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mb-8 m-8">
           {currentProducts.map((product) => {
             const price = parseFloat(product.price) || 0;  // Ensure price is a valid number
@@ -71,7 +71,7 @@ const ProductsBySubCategory = () => {
             return (
               <div
                 key={product.id}
-                className="border rounded-xl p-4 shadow hover:shadow-lg transition grid grid-cols-1"
+                className="border rounded-xl p-2 shadow hover:shadow-lg transition grid grid-cols-1"
               >
                 <div>
                   <img

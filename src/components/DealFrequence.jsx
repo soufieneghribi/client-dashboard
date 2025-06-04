@@ -48,7 +48,7 @@ const DealFrequence = ({Time }) => {
             transform: "translateX(-50%) translateY(-50%)",
             background: "linear-gradient(to right, #d19e1d, #ffd86e, #e3a812)",
           }}
-          className="text-white rounded-full w-10 h-10 absolute top-1/2 transform -translate-y-1/2 flex items-center justify-center text-base font-semibold"
+          className="text-white rounded-full w-10 h-10 absolute top-1/2 transform -translate-y-1/2 flex items-center justify-center text-sm font-meduim"
         >
           {i}
         </span>
@@ -57,7 +57,7 @@ const DealFrequence = ({Time }) => {
           left: `${((i / deals.objectif_frequence) * 100)-i}%`, // Position it at 25% of the container's width
           background: "blue", // Set background color to blue
          }}
-          className="text-white rounded-full w-12 h-12 absolute top-full mt-2 transform -translate-x-1/2 flex items-center justify-center text-base font-semibold">
+          className="text-white rounded-full w-6 h-6 absolute top-full  transform -translate-x-1/2 flex items-center justify-center text-sm font-medium">
          {parseInt(deals.panier_moyen)} dt
        </span>
        </div>
@@ -83,7 +83,7 @@ const DealFrequence = ({Time }) => {
           background: "blue", // Set background color to blue
          }}
           className="text-white rounded-full w-12 h-12 absolute top-full mt-2 transform -translate-x-1/2 flex items-center justify-center text-base font-semibold">
-         {parseInt(deals.panier_moyen)} dt
+         {parseInt(deals.panier_moyen)}dt
        </span>
        </div>
       );
@@ -99,38 +99,37 @@ const DealFrequence = ({Time }) => {
       {filteredDeals.length > 0 &&(
         filteredDeals.map((el) => (
           el.objectif_frequence !== el.compteur_frequence?(
-          <div key={el.ID_deal}  className="flex flex-col justify-between w-full h-full p-4 bg-gray-50 shadow-md rounded-lg">
+          <div key={el.ID_deal}  className="flex flex-col justify-between w-full h-full  bg-gray-50 shadow-md rounded-lg">
           <Timer flashSaleTimeLeft={Time}/>
           
-          <div key={el.ID_deal} className="flex justify-start m-8 items-center bg-gray-100">
-            <div className="w-full rounded-lg overflow-hidden shadow-lg bg-white">
+          <div key={el.ID_deal} className="flex flex-row justify-start m-2 items-center bg-gray-100">
+            <div className="w-full h-80 rounded-lg overflow-hidden shadow-lg bg-white flex flex-col">
               {/* Button Section */}
               <div className="flex items-end justify-end">
-                <button className="p-4 bg-purple-600 rounded-xl mx-4 my-2 text-white font-semibold">
+                <button className="p-2 bg-purple-600 rounded-xl mx-3 mt-1 text-white font-semibold sm:font-normal">
                   Fréquence
                 </button>
               </div>
 
               {/* Image Section */}
-              <div className="flex flex-row justify-between mt-4">
+              <div className="flex flex-row justify-between ">
                 <img
                   src={frequencesImg}
                   alt="Deal"
-                  className="w-48 h-48 object-cover p-2"
+                  className="w-32 h-24 object-cover p-1"
                 />
-                <div className="font-bold text-base p-4 text-center">
-                  <p>Gagné </p>
-                  <p className="text-orange-360">{el.gain} Dt</p>
+                <div className="md:font-bold sm:font-mono text-base  text-center">
+                  <p>Gagné {el.gain}Dt</p>
+                  
                   <p>si vous atteignez l'objectif</p>
                   <p className="text-orange-360">
-                    {parseInt(el.objectif_frequence)} visites avec un montant minimum par commande {parseInt(el.panier_moyen)} Dt
+                    {parseInt(el.objectif_frequence)} visites avec un montant minimum par commande {parseInt(el.panier_moyen)}Dt
                   </p>
                 </div>
               </div>
 
               {/* Progress Bar Section */}
-              <div className="p-4 mb-28">
-                <div className="text-lg font-semibold text-gray-700">Fréquence</div>
+              <div className="px-2 mb-32">
                 <div className="w-full rounded-full h-10 mt-2 relative border-2 border-black">
                   {/* Dynamic Markers */}
                   {renderMarkers(el)}
@@ -142,8 +141,8 @@ const DealFrequence = ({Time }) => {
                   ></div>
 
                   {/* Visits Count */}
-                  <div className="mt-16">
-                    <i className="fas fa-gift p-2 mt-4"></i> Mes visites : {parseInt(el.compteur_frequence)}
+                  <div className="mt-8">
+                    <i className="fas fa-gift p-2 mt-4"></i> Mes visites : {parseInt(el.compteur_frequence)}dt
                   </div>
                 </div>
               </div>

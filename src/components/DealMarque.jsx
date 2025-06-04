@@ -14,7 +14,7 @@ const DealMarque = ({Time  }) => {
   const { Userprofile } = useSelector((state) => state.user);
   const [objectif, setObjectif] = useState("");
   const [gain, setGain] = useState("");
-  
+  console.log(marque)
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -58,14 +58,14 @@ const DealMarque = ({Time  }) => {
       {filteredDeals.length >0 &&(
         filteredDeals.map((el) => (
           el.objectif_3 !== el.compteur_objectif?(
-         <div key={el.ID_deal_marque} className="flex flex-col justify-between w-full   bg-gray-50 shadow-md rounded-lg">
+         <div key={el.ID_deal_marque} className="flex flex-col justify-between w-full bg-gray-50 shadow-md rounded-lg">
             <Timer flashSaleTimeLeft={Time} />
         
           <div
             key={el.ID_deal_marque} // Use unique ID instead of index
             className="flex flex-row justify-start m-2 items-center bg-gray-100"
           >
-            <div className="w-full h-96  rounded-lg overflow-hidden shadow-lg bg-white flex flex-col">
+            <div className="w-full h-80 rounded-lg overflow-hidden shadow-lg bg-white flex flex-col">
               {/* Button Section */}
               <div className="flex items-end justify-end">
                 <button className="p-2 bg-purple-600 rounded-xl mx-4 my-1 text-white font-semibold sm:font-normal">
@@ -76,20 +76,20 @@ const DealMarque = ({Time  }) => {
               {/* Image Section */}
               <div className="flex flex-row justify-between mt-1">
                 <img
-                  src={el.marqueLogo}
+                  src={el.marque?.marqueLogo}
                   alt="Deal"
                   className="w-32 h-32 object-cover p-1"
                 />
-                <div className="font-bold sm:font-normal text-base p-4 text-center">
+                <div className="md:font-bold sm:font-mono text-base p-2 text-center">
                   <p>Gagné jusqu'à</p>
-                  <p className=" font-bold text-orange-360 ">{el.gain_objectif_3} Dt</p>
+                  <p className="font-bold text-orange-360">{el.gain_objectif_3} Dt</p>
                   <p>si vous atteignez l'objectif</p>
                 </div>
               </div>
 
               {/* Progress Bar Section */}
               <div className="p-1">
-                <div className="w-full rounded-full h-10 mt-2 relative border-2 border-black ">
+                <div className="w-full rounded-full h-10 mt-2 relative border-2 border-black">
                   <div className="">
                       
                       {/* Gain Objective Markers */}
@@ -225,7 +225,7 @@ const DealMarque = ({Time  }) => {
                     
                   ></div>
                   <div className="mt-8">
-                   <i className="fas fa-gift p-2 mt-4  "></i>Mes achats: {gain}
+                   <i className="fas fa-gift p-2 mt-4  font-meduim text-base"></i>Mes achats: {gain} DT
                   </div>
                 </div>
               </div>

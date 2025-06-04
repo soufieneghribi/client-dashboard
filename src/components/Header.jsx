@@ -175,7 +175,7 @@ const Header = () => {
                   <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                     <i className="fas fa-cog mr-2" /> Settings
                   </Link>
-                  <Link to="/orders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                  <Link to="/Mes-Commandes" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                     <i className="fas fa-shopping-bag mr-2" /> Orders
                   </Link>
                   <button
@@ -222,7 +222,7 @@ const Header = () => {
               {auth.isLoggedIn ? (
                 <>
                   <Link to="/profile" className="block py-2 text-sm">Profile</Link>
-                  <Link to="/orders" className="block py-2 text-sm">Orders</Link>
+                  <Link to="/Mes-Commandes" className="block py-2 text-sm">Orders</Link>
                   <button onClick={() => dispatch(logout())} className="block py-2 text-sm text-left w-full">
                     Logout
                   </button>

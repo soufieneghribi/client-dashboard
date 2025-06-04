@@ -4,14 +4,14 @@ import { fetchAllProduct } from "../store/slices/product.js";
 import { useNavigate } from "react-router-dom";
 
 const Catalogue = () => {
-  const { product = [], loading, error } = useSelector((state) => state.product);
+  const { product = {}, loading, error } = useSelector((state) => state.product);
   const allProducts = product.products || [];
   const [showWheel, setShowWheel] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const productsPerPage = 8; // Number of products per page
+  const productsPerPage = 8;
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -19,7 +19,6 @@ const Catalogue = () => {
     dispatch(fetchAllProduct());
   }, [dispatch]);
 
-  // Spin the wheel logic
   const spinWheel = () => {
     if (spinning) return;
 
@@ -37,47 +36,44 @@ const Catalogue = () => {
     }, 5000);
   };
 
-  // Pagination logic
   const totalPages = Math.ceil(allProducts.length / productsPerPage);
   const startIndex = (currentPage - 1) * productsPerPage;
   const currentProducts = allProducts.slice(startIndex, startIndex + productsPerPage);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
-      setCurrentPage((prevPage) => prevPage + 1);
+      setCurrentPage((prev) => prev + 1);
     }
   };
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
-      setCurrentPage((prevPage) => prevPage - 1);
+      setCurrentPage((prev) => prev - 1);
     }
   };
 
-  if (loading) return <p>Loading products...</p>;
-  if (error) return <p>Error loading products: {error}</p>;
+  if (loading) return <p>Chargement des produits...</p>;
+  if (error) return <p>Erreur lors du chargement: {error}</p>;
 
   return (
     <div className="catalogue">
       <h1 className="text-blue-500 font-bold text-3xl m-10">Catalogue</h1>
 
-      {/* Spin the Wheel Button */}
       <div className="flex justify-end m-4">
         <button
           onClick={() => setShowWheel(true)}
           className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700"
         >
-          Play to Win a Discount!
+          Joue pour une remise !
         </button>
       </div>
 
-      {/* Spinning Wheel Popup */}
       {showWheel && (
         <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-8 rounded shadow-lg text-center">
-            <h2 className="text-2xl font-bold mb-4">Spin the Wheel for a Discount!</h2>
+            <h2 className="text-2xl font-bold mb-4">Tourne la roue pour gagner !</h2>
             <div
-              className={`relative border-4 border-gray-300 rounded-full`}
+              className="relative border-4 border-gray-300 rounded-full"
               style={{
                 width: "300px",
                 height: "300px",
@@ -103,44 +99,56 @@ const Catalogue = () => {
               className="mt-6 bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-700"
               disabled={spinning}
             >
-              {spinning ? "Spinning..." : "Spin the Wheel"}
+              {spinning ? "En cours..." : "Tourner la roue"}
             </button>
             <button
               onClick={() => setShowWheel(false)}
               className="block mt-4 text-red-500 underline"
             >
-              Close
+              Fermer
             </button>
           </div>
         </div>
       )}
 
-      {/* Result after spinning */}
       {result && (
         <div className="mt-4 text-xl text-green-600 font-bold text-center">
-          🎉 You won: <span className="text-red-500">{result}% Discount!</span>
+          🎉 Vous avez gagné : <span className="text-red-500">{result}% de réduction !</span>
         </div>
       )}
 
-      {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-8">
-        {currentProducts.map((data) => (
+        {currentProducts.map((product) => (
           <div
-            key={data.id}
+            key={product.id}
             className="border rounded-xl p-4 shadow hover:shadow-lg transition"
           >
             <img
-              src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${data.img}`}
-              alt={data.name}
+              src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.img}`}
+              alt={product.name}
               className="w-full h-40 object-cover rounded-md"
             />
-            <h3 className="mt-4 text-lg font-semibold">{data.name}</h3>
-            <p className="text-gray-600">Price: ${data.price}</p>
+            <h3 className="text-center text-lg sm:text-base font-semibold text-gray-800 ">{product.name.length > 12 ?product.name.slice(0, 12) + "..." : product.name}</h3>
+            {result ? (
+              <p className="text-gray-600">
+                Prix: <span className="font-normal center">${product.price}</span>
+                <span className="text-red-500 ml-2">
+                  ${(product.price * (1 - result / 100)).toFixed(2)}
+                </span>
+              </p>
+            ) : (
+              <p className="text-gray-600 font-medium text-center">Prix: ${product.price}</p>
+            )}
+            <button
+              onClick={() => navigate(`/produit/${product.id}`)}
+              className="bg-orange-360 text-white text-center px-2 py-2 rounded hover:bg-orange-500 w-full mx-auto cursor-pointer"
+            >
+              Voir Détails
+            </button>
           </div>
         ))}
       </div>
 
-      {/* Pagination Controls */}
       <div className="flex justify-center items-center space-x-4 mt-6">
         <button
           onClick={handlePrevPage}
@@ -149,10 +157,10 @@ const Catalogue = () => {
           }`}
           disabled={currentPage === 1}
         >
-          Previous
+          Précédent
         </button>
         <span className="text-lg">
-          Page {currentPage} of {totalPages}
+          Page {currentPage} sur {totalPages}
         </span>
         <button
           onClick={handleNextPage}
@@ -161,7 +169,7 @@ const Catalogue = () => {
           }`}
           disabled={currentPage === totalPages}
         >
-          Next
+          Suivant
         </button>
       </div>
     </div>

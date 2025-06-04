@@ -110,7 +110,7 @@ const ProductsBySubCategory = () => {
                   alt={product.name}
                   className="w-auto mx-auto h-20 sm:h-20 md:h-20 object-contain rounded-t-xl mb-2 duration-500"
                 />
-                <h1 className="text-center text-lg sm:text-base font-semibold text-gray-800">{product.name}</h1>
+                <h1 className="text-center text-lg sm:text-base font-semibold text-gray-800">{product.name.length > 12 ?product.name.slice(0, 12) + "..." : product.name}</h1>
 
                 {Number(subId) === 2 || Number(subId) === 3 ? (
                   <div className="flex flex-row m-2 justify-around">
@@ -143,7 +143,7 @@ const ProductsBySubCategory = () => {
             );
           })}
         </div>
-
+        {product.length>0 && totalPages >1 ?(
         <div className="flex justify-center items-center my-4">
           <button
             onClick={handlePreviousPage}
@@ -173,6 +173,7 @@ const ProductsBySubCategory = () => {
             Suivant
           </button>
         </div>
+        ) :("")}
       </div>
     </div>
   );

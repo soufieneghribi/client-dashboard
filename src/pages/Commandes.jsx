@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaSpinner, FaCheckCircle, FaTimesCircle, FaRegClock } from "react-icons/fa";
+import {
+  FaSpinner,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaRegClock,
+} from "react-icons/fa";
 import { fetchOrder } from "../store/slices/order";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
@@ -15,6 +20,8 @@ const Commandes = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [itemsPerRow, setItemsPerRow] = useState(getItemsPerRow());
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 4;
 
   useEffect(() => {
     const handleResize = () => {
@@ -40,6 +47,18 @@ const Commandes = () => {
     return matchesStatus && matchesDateFrom && matchesDateTo;
   });
 
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const startIndex = (currentPage - 1) * ordersPerPage;
+  const currentOrders = filteredOrders.slice(startIndex, startIndex + ordersPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
   useEffect(() => {
     if (!auth_token) {
       toast.error("Vous devez être connecté pour voir vos commandes.");
@@ -52,7 +71,7 @@ const Commandes = () => {
   return (
     <div className="order-list p-8 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-extrabold mb-4 text-center text-blue-360">Vos commandes</h1>
-      
+
       <div className="mb-2 bg-white p-2 rounded-lg shadow-xl max-w-4xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-4">
@@ -79,13 +98,13 @@ const Commandes = () => {
         </div>
       </div>
 
-      {filteredOrders.length === 0 ? (
+      {currentOrders.length === 0 ? (
         <div className="text-center text-gray-600">
           <p className="text-lg font-medium">Aucune commande trouvée.</p>
         </div>
       ) : (
         <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${itemsPerRow} gap-8`}>
-          {filteredOrders.map((orders) => (
+          {currentOrders.map((orders) => (
             <div
               key={orders.id}
               className="order-card bg-white border border-gray-300 p-6 rounded-xl shadow-lg transform transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-xl"
@@ -95,35 +114,57 @@ const Commandes = () => {
               </h2>
               <div className="mb-4">
                 <p className="text-lg text-gray-600 font-medium">
-                  Montant Total:{orders.order_amount} DT
+                  Montant Total: {orders.order_amount} DT
                 </p>
                 <p className="text-sm text-gray-500 font-medium">
-                  Date:{new Date(orders.created_at).toLocaleDateString()}
+                  Date: {new Date(orders.created_at).toLocaleDateString()}
                 </p>
               </div>
               <div className="mb-2">
                 <div className="flex items-center flex-row justify-between">
                   <OrderStatusBadge status={orders.order_status} />
                   <button
-                onClick={() => navigate(`/order/${orders.id}`)} // Redirect to order details page
-                className=" px-2 py-1 bg-blue-360 text-white font-normal text-sm rounded-lg hover:bg-blue-360 transition-all duration-300"
-              >
-                Voir les détails
-              </button>
+                    onClick={() => navigate(`/order/${orders.id}`)}
+                    className="px-2 py-1 bg-blue-360 text-white font-normal text-sm rounded-lg hover:bg-blue-360 transition-all duration-300"
+                  >
+                    Voir les détails
+                  </button>
                 </div>
               </div>
-
-             
             </div>
           ))}
         </div>
       )}
 
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-4 mt-8">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded-lg text-white ${
+              currentPage === 1 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-360 hover:bg-blue-500'
+            }`}
+          >
+            Précédent
+          </button>
+          <span className="text-gray-600 font-semibold">
+            Page {currentPage} sur {totalPages}
+          </span>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded-lg text-white ${
+              currentPage === totalPages ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-360 hover:bg-blue-500'
+            }`}
+          >
+            Suivant
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-// OrderStatusBadge component to style the order status
 const OrderStatusBadge = ({ status }) => {
   switch (status) {
     case "success":

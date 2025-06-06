@@ -56,7 +56,7 @@ const Profile = () => {
     <div className=" w-full min-h-screen flex justify-center items-center p-6">
       <div className="bg-white shadow-xl rounded-3xl p-8 w-full md:w-2/3 lg:w-1/2 border border-gray-200">
         <div className="flex items-center justify-between border-b pb-4 mb-6">
-          <h2 className="text-4xl font-bold text-gray-800">My Profile</h2>
+          <h2 className="text-xl font-bold text-gray-800">My Profile</h2>
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
@@ -73,28 +73,28 @@ const Profile = () => {
           <p className="text-red-500 text-center">{error}</p>
         ) : (
           <div>
-            <div className="flex flex-col md:flex-row items-center justify-between mb-8 space-y-4 md:space-y-0">
-              <div className="flex flex-col items-center text-center">
+            <div className="flex flex-col md:flex-row items-center justify-between mb-2 space-y-4 md:space-y-0">
+              <div className="flex flex-col items-center text-center gap-4">
 
                 <img
                   src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${Userprofile?.image}`}
                   alt="Profile"
-                  className="w-32 h-32 rounded-full object-cover mb-4 shadow-xl hover:scale-110 transition-all duration-300 ease-in-out"
+                  className="w-32 h-32 rounded-full object-cover shadow-xl "
                   onError={(e) =>
                     (e.target.src =
                       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZXNuwvzjUvZEQzX5xm0TJllYkRjXwOUlirQ&s")
                   }
                 />
                 <div>
-                  <p className="text-2xl font-semibold text-gray-800">{Userprofile?.nom_et_prenom}</p>
+                  <p className="text-lg font-semibold text-gray-800">{Userprofile?.nom_et_prenom}</p>
                   <p className="text-gray-600 text-lg">{Userprofile?.email}</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-6 w-full md:w-3/4 ">
+              <div className="grid grid-cols-3 gap-2 object-fill md:w-3/4 ">
                 <div className="flex flex-col items-center">
                   <div
-                    className="border rounded-3xl shadow-xl bg-blue-360  bg-cover w-full h-32 flex items-end justify-center transition-all duration-300 ease-in-out transform hover:scale-105"
+                    className="border rounded-3xl shadow-xl bg-blue-360 bg-contain md:bg-cover bg-no-repeat w-full h-32 flex items-end justify-center transition-all duration-300 ease-in-out transform hover:scale-105"
                     style={{ backgroundImage: `url(${jackpotImage})` }}
                   >
                     <p className="text-white text-lg font-bold">{Userprofile?.cagnotte_balance}</p>
@@ -102,14 +102,14 @@ const Profile = () => {
                 </div>
                 <div className="flex flex-col items-center">
                   <img
-                    className="border rounded-3xl shadow-xl w-full h-32 object-cover transition-all duration-300 ease-in-out transform hover:scale-105  bg-orange-360"
+                    className="border rounded-3xl shadow-xl bg-contain md:bg-cover bg-no-repeat w-full h-32  transition-all duration-300 ease-in-out transform hover:scale-105  bg-orange-360"
                     src="./src/assets/levelup.png"
                     alt="Level Up"
                   />
                 </div>
                 <div className="flex flex-col items-center">
                   <img
-                    className="border rounded-3xl shadow-xl w-full h-32 object-cover transition-all duration-300 ease-in-out transform hover:scale-105 bg-blue-360"
+                    className="border rounded-3xl shadow-xl bg-contain md:bg-cover bg-no-repeat w-full h-32 transition-all duration-300 ease-in-out transform hover:scale-105 bg-blue-360"
                     src="./src/assets/superdeals.png"
                     alt="Super Deals"
                     onClick={() => navigate("/MesDeals")}
@@ -119,7 +119,7 @@ const Profile = () => {
             </div>
 
             <div>
-              <p className="text-blue-360 text-3xl font-bold mb-6">Informations personnelles</p>
+              <p className="text-blue-360 text-lg font-bold mb-6">Informations personnelles</p>
               {isEditing ? (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

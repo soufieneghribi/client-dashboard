@@ -14,6 +14,7 @@ const Banners = () => {
 
   // Group banners into slides
   const slides = banners.reduce((acc, banner, index) => {
+    
     const slideIndex = Math.floor(index / itemsPerSlide);
     if (!acc[slideIndex]) {
       acc[slideIndex] = [];
@@ -21,70 +22,59 @@ const Banners = () => {
     acc[slideIndex].push(banner);
     return acc;
   }, []);
+  console.log(slides)
+  
 
+  // Handle the previous slide
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
 
+  // Handle the next slide
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
+
+  // Auto-transition the slides every 3 seconds
+  useEffect(() => {
+    const slideTimeout = setTimeout(() => {
+      nextSlide(); // Move to the next slide after 3 seconds
+    }, 3000); // Change slide every 3 seconds (3000 ms)
+
+    return () => clearTimeout(slideTimeout); // Cleanup the timeout when component unmounts or when the currentIndex changes
+  }, [currentIndex]); // Depend on currentIndex so the slide changes after each transition
 
   if (loading) return <p>Loading banners...</p>;
   if (error) return <p>Failed to load banners. Please try again.</p>;
 
   return (
-    <div className="w-full mx-auto">
-      <div id="default-carousel" className="relative rounded-lg overflow-hidden shadow-lg">
+    <div>
+      <div id="default-carousel" className="overflow-hidden shadow-lg ">
         {/* Carousel wrapper */}
-        <div className="relative h-auto md:h-auto">
+        <div className="">
           {slides.map((slide, slideIndex) => (
+            
             <div
               key={slideIndex}
-              className={`duration-700 ease-in-out ${currentIndex === slideIndex ? "block" : "hidden"}`}
+              className={`duration-700 ease-in-out ${currentIndex === slideIndex ? "block" : "hidden"} `}
             >
               {slide.map((banner) => (
+                <div>
                 <img
-                src={banner.image_path ? `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}` : 'https://via.placeholder.com/150'}
-                alt={banner.title || "Banner Image"}
-                className="w-full h-96 object-cover"
-              />
-              ))}
+                  key={banner.id} // Assuming banners have a unique id
+                  src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}`}
+                  alt={banner.title || "Banner Image"}
+                  className="h-[150px] sm:h-[180px] md:h-[250px] lg:h-[350px] xl:h-[400px] w-full object-cover"/>
+                  
+                  </div>
+                ))}
+              
             </div>
           ))}
         </div>
 
-        {/* Slider indicators */}
-        <div className="flex absolute bottom-5 left-1/2 z-30 -translate-x-1/2 space-x-2">
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              className={`w-3 h-3 rounded-full ${currentIndex === idx ? "bg-blue-500" : "bg-gray-300"}`}
-              onClick={() => setCurrentIndex(idx)}
-            ></button>
-          ))}
-        </div>
+        
 
-        {/* Slider controls */}
-        <button
-          type="button"
-          className="flex absolute top-1/2 left-3 z-40 items-center justify-center w-10 h-10 bg-gray-200/50 rounded-full hover:bg-gray-300 focus:outline-none transition"
-          onClick={prevSlide}
-        >
-          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
-          </svg>
-        </button>
-        <button
-          type="button"
-          className="flex absolute top-1/2 right-3 z-40 items-center justify-center w-10 h-10 bg-gray-200/50 rounded-full hover:bg-gray-300 focus:outline-none transition"
-          onClick={nextSlide}
-        >
-          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-        </button>
       </div>
     </div>
   );

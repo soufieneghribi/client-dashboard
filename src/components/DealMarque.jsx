@@ -12,9 +12,9 @@ const DealMarque = ({Time  }) => {
 
   const { marque = [], loading, error } = useSelector((state) => state.marque);
   const { Userprofile } = useSelector((state) => state.user);
-  const [objectif, setObjectif] = useState(0);
-  const [gain, setGain] = useState(0);
-  
+  const [objectif, setObjectif] = useState("");
+  const [gain, setGain] = useState("");
+  console.log(marque)
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -31,19 +31,19 @@ const DealMarque = ({Time  }) => {
     if (filteredDeals.length > 0 ) {
       filteredDeals.map ((deals)=>{
       // Handle goal progression with >= for better range matching
-      if (deals.compteur_objectif >= deals.objectif_3) {
+      if (deals.compteur_objectif == 3.00) {
         setObjectif("100%");
         setGain(deals.gain_objectif_3);
-      } else if (deals.compteur_objectif >= deals.objectif_2 && deals.compteur_objectif < deals.objectif_3) {
+      } else if (deals.compteur_objectif == 2.00 ) {
         setObjectif("50%");
         setGain(deals.gain_objectif_2);
-      } else if (deals.compteur_objectif >= deals.objectif_1 && deals.compteur_objectif < deals.objectif_2 ) {
+      } else if (deals.compteur_objectif == 1.00 ) {
         setObjectif("25%");
         setGain(deals.gain_objectif_1);
       } else {
         // Handle case where no objectives are met yet
-        setObjectif(0);
-        setGain(0);
+        setObjectif("0");
+        setGain("0");
       }
     })
     }
@@ -58,41 +58,39 @@ const DealMarque = ({Time  }) => {
       {filteredDeals.length >0 &&(
         filteredDeals.map((el) => (
           el.objectif_3 !== el.compteur_objectif?(
-         <div key={el.ID_deal_marque} className="flex flex-col justify-between w-full h-full p-4 bg-gray-50 shadow-md rounded-lg">
+         <div key={el.ID_deal_marque} className="flex flex-col justify-between w-full bg-gray-50 shadow-md rounded-lg">
             <Timer flashSaleTimeLeft={Time} />
         
           <div
             key={el.ID_deal_marque} // Use unique ID instead of index
-            className="flex flex-row justify-start m-8 items-center bg-gray-100"
+            className="flex flex-row justify-start m-2 items-center bg-gray-100"
           >
-            <div className="w-full rounded-lg overflow-hidden shadow-lg bg-white">
+            <div className="w-full h-80 rounded-lg overflow-hidden shadow-lg bg-white flex flex-col">
               {/* Button Section */}
               <div className="flex items-end justify-end">
-                <button className="p-4 bg-purple-600 rounded-xl mx-4 my-2 text-white font-semibold">
+                <button className="p-2 bg-purple-600 rounded-xl mx-4 my-1 text-white font-semibold sm:font-normal">
                   Marque
                 </button>
               </div>
 
               {/* Image Section */}
-              <div className="flex flex-row justify-between mt-4">
+              <div className="flex flex-row justify-between mt-1">
                 <img
-                  src={el.upload_marque_picture}
+                  src={el.marque?.marqueLogo}
                   alt="Deal"
-                  className="w-48 h-48 object-cover p-2"
+                  className="w-32 h-32 object-cover p-1"
                 />
-                <div className="font-bold text-base p-4 text-center">
+                <div className="md:font-bold sm:font-mono text-base p-2 text-center">
                   <p>Gagné jusqu'à</p>
-                  <p className="text-orange-360">{el.gain_objectif_3} Dt</p>
+                  <p className="font-bold text-orange-360">{el.gain_objectif_3} Dt</p>
                   <p>si vous atteignez l'objectif</p>
                 </div>
               </div>
 
               {/* Progress Bar Section */}
-              <div className="p-4 mb-28">
-                <div className="text-lg font-semibold text-gray-700">Marque</div>
-                <div className="w-full rounded-full h-10 mt-2 relative border-2 border-black ">
-                  
-                    <div className="">
+              <div className="p-1">
+                <div className="w-full rounded-full h-10 mt-2 relative border-2 border-black">
+                  <div className="">
                       
                       {/* Gain Objective Markers */}
                       {el.compteur_objectif >= el.objectif_1?(
@@ -223,10 +221,11 @@ const DealMarque = ({Time  }) => {
 
                   <div
                     className="bg-green-500 h-9 rounded-full"
-                    style={{ width: `${objectif}` }}
+                    style={{ width: objectif }}
+                    
                   ></div>
-                  <div className="mt-16">
-                   <i className="fas fa-gift p-2 mt-4"></i> Mes achats: {el.compteur_objectif}
+                  <div className="mt-8">
+                   <i className="fas fa-gift p-2 mt-4  font-meduim text-base"></i>Mes achats: {gain} DT
                   </div>
                 </div>
               </div>

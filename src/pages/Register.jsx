@@ -279,7 +279,7 @@ console.log(user)
                       <option value="Divorce" >Divorce</option>
                       </select>
                     
-                      {user.situation_familiale !== "Célebataire" && user.situation_familiale !== "" ? (
+                      {user.situation_familiale != "Célebataire" && user.situation_familiale != "" ? (
 
                         <div>
                         <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Enfants</label>
@@ -287,7 +287,7 @@ console.log(user)
                            id="enfants"
                            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                            required
-                           defaultValue={user.enfants}
+                           value={user.enfants}
                            onChange={changeHandler}>
                              <option value=""></option>
                              <option value="0">0</option>
@@ -298,128 +298,40 @@ console.log(user)
                          
                              </select>
                              </div>
-                      ) : ("")}
+                      ) : user.enfants=""}
                       </div>
                     )}
               </div>
               <div>
               {currentStep === 3  &&  (
-                <div className='flex flex-col w-full py-8'>
-                    <div class="pb-10">
-                   <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white font-limon-milk">
-                      Confirmation
-                    </h1>
-                    </div>
-                    <h2>Vérifiez vos informations avant de soumettre.</h2>
-                  {user.situation_familiale!=='celebataire' && (
-                   user.enfants ==="1" ?(
-                     <div className='flex flex-col  gap-3 pt-2 '>
-                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"> Nom des enfants</label>
-                    <input
-                    type="text"
-                    name="nom_enfant_1"
-                    id="enfant1"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 "
-                    placeholder="Nom de l'Enfant 1"
-                    required
-                    onChange={changeHandler}
-                  /> 
-                  </div>):
-                  user.enfants ==="2" ? (
-                    <div className='flex flex-col  gap-3 pt-2 '>
-                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"> Nom des enfants</label>
-                    <input
-                    type="text"
-                    name="nom_enfant_1"
-                    id="enfant1"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 "
-                    placeholder="Nom de l'Enfant 1"
-                    required
-                    onChange={changeHandler}
-                  />
-                  <input
-                    type="text"
-                    name="nom_enfant_2"
-                    id="enfant2"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    placeholder="Nom de l'Enfant 2"
-                    required
-                    onChange={changeHandler}
-                  />
-                   </div>): 
-                    user.enfants==="3"?( 
-                    <div className='flex flex-col  gap-3 pt-2'>
-                     <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"> Nom des enfants</label>
-                     <input 
-                   type="text"
-                    name="nom_enfant_1"
-                     id="enfant1"
-                     className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                     placeholder="Nom de l'Enfant 1"
-                     required
-                     onChange={changeHandler}
-                   />
-                   <input 
-                     type="text"
-                     name="nom_enfant_2"
-                     id="enfant2"
-                     className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                     placeholder="Nom de l'Enfant 2"
-                     required
-                    onChange={changeHandler}
-                  />
-                   <input
-                     type="text"
-                     name="nom_enfant_3"
-                     id="enfant3"
-                     className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                     placeholder="Nom de l'Enfant 3"
-                     required
-                     onChange={changeHandler}
-                   />
-                  </div>):
-                   user.enfants==="4" ?(
-                     <div className='flex flex-col  gap-3 pt-2'>
-                      <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"> Nom des enfants</label>
-                      <input 
-                     type="text"
-                      name="nom_enfant_1"
-                      id="enfant1"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Nom de l'Enfant 1"
-                      required
-                      onChange={changeHandler}
-                    />
-                    <input 
-                      type="text"
-                      name="nom_enfant_2"
-                      id="enfant2"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Nom de l'Enfant 2"
-                      required
-                      onChange={changeHandler}
-                    />
-                    <input 
-                      type="text"
-                      name="nom_enfant_3"
-                      id="enfant3"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Nom de l'Enfant 3"
-                      required
-                      onChange={changeHandler}
-                    />
-                    <input
-                      type="text"
-                      name="nom_enfant_4"
-                      id="enfant4"
-                      className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Nom de l'Enfant 4"
-                      required
-                     onChange={changeHandler}
-                   />
-                   </div> 
-                   ):"")}
-                  
+  <div className='flex flex-col w-full py-8'>
+    <div className="pb-10">
+      <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white font-limon-milk">
+        Confirmation
+      </h1>
+    </div>
+    <h2>Vérifiez vos informations avant de soumettre.</h2>
+
+    {user.situation_familiale !== 'celebataire' && user.enfants && (
+      <div className='flex flex-col gap-3 pt-2'>
+        <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+          Nom des enfants
+        </label>
+        {Array.from({ length: parseInt(user.enfants) }, (_, index) => (
+          <input
+            key={index}
+            type="text"
+            name={`nom_enfant_${index + 1}`}
+            id={`enfant${index + 1}`}
+            className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            placeholder={`Nom de l'Enfant ${index + 1}`}
+            required
+            onChange={changeHandler}
+          />
+        ))}
+      </div>
+    )}
+                
                   
                <div className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg px-2 py-2 mt-2 w-full'>
                <input

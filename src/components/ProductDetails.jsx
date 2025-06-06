@@ -88,17 +88,17 @@ console.log(newItem)
   }
 
   return (
-    <div className="container mx-auto my-8 px-4 py-8">
+    <div className="container mx-auto  px-4 ">
       {/* Hero Section with Gradient Background */}
-      <div className="relative my-10 mb-4 bg-gradient-to-r from-blue-500 to-green-500 text-white py-12 px-6 rounded-lg shadow-xl">
+      <div className="relative mb-4 bg-gradient-to-r from-blue-500 to-green-500 text-white py-6 px-6 rounded-lg shadow-xl">
         <div className="absolute inset-0 bg-black opacity-40"></div>
-        <div className="relative z-10 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">{product.name}</h1>
-          <p className="text-lg">{product.description}</p>
+        <div className="relative z-10 text-center ">
+          <h1 className="text-2xl md:text-2xl font-bold mb-4">{product.name}</h1>
+          <p className="sm:text-sm">{product.description}</p>
         </div>
       </div>
 
-      {/* Flash Sale Timer */}
+      {/* Flash Sale Timer
       {flashSaleTimeLeft > 0 && (
         <div className="bg-red-500 text-white text-center py-3 rounded-md mb-6">
           <h2 className="text-xl font-semibold">Flash Sale! Hurry Up!</h2>
@@ -111,34 +111,24 @@ console.log(newItem)
             </p>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Product Details Section */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-0 items-center bg-white rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 ">
         {/* Image Carousel */}
-        <div className="flex justify-center">
-         
-              <div >
-                <img
+        
+              <img
                   src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.img}` }
                   alt={`${product.name}`}
-                  className="max-w-full h-auto rounded-lg shadow-lg transition-transform transform hover:scale-105"
+                  className=" w-auto mx-auto h-96 sm:h-20 md:h-56 mb-2 object-contain"
                 />
-              </div>
-           
-          
-        </div>
+         
 
         {/* Product Information */}
-        <div className="bg-white p-8 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300">
-          <div className="relative">
-            {product.isNew && (
-              <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                New
-              </div>
-            )}
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Prix</h2>
-            <div className="flex items-center gap-4 mb-4">
+        <div className="max-w-full h-full px-8 py-2">
+          
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Prix</h2>
+            <div className="flex items-center gap-2 mb-2">
               {isEligibleForDiscount ? (
                 <>
                   <p className="line-through text-gray-500">{totalPrice} DT</p>
@@ -150,7 +140,7 @@ console.log(newItem)
             </div>
 
             {/* Quantity Selector */}
-            <h3 className="text-lg text-orange-500 font-semibold mb-2">Quantité</h3>
+            <h3 className="text-lg sm:text-sm md:text-lg text-orange-500 font-bold mb-2">Quantité</h3>
             <div className="flex items-center gap-4 mb-4">
               <button
                 onClick={decrementQuantity}
@@ -175,17 +165,17 @@ console.log(newItem)
             >
               {isAdded ? (
                 <>
-                  <FaShoppingCart className="mr-2" />
+                 <i class="fa-solid fa-cart-shopping"></i>
                   Produit ajouté
                 </>
               ) : (
                 <>
-                  <FaShoppingCart className="mr-2" />
+                 <i class="fa-solid fa-cart-shopping mr-2"></i>
                   Ajouter au Panier
                 </>
               )}
             </button>
-          </div>
+          
         </div>
       </section>
 

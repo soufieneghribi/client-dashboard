@@ -9,7 +9,6 @@ const ProductRecommande = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [show, setShow] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
 
@@ -18,19 +17,14 @@ const ProductRecommande = () => {
   }, [dispatch]);
 
   const productHandler = (id, type_id) => {
-    setShow(!show);
     navigate(`/product/${id}`, {
       state: { subId: type_id },
     });
   };
 
-  // Calculate total pages
   const totalPages = Math.ceil(products.length / itemsPerPage);
-
-  // Slice products for the current page
   const currentProducts = products.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Handle pagination
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -49,94 +43,116 @@ const ProductRecommande = () => {
     }
   };
 
-  if (loading) return <p className="text-center text-gray-500">Loading recommended products...</p>;
-  if (error) return <p className="text-center text-red-500">Failed to load recommended products. Please try again.</p>;
+  if (loading) return (
+    <div className="flex justify-center items-center py-8">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-360"></div>
+    </div>
+  );
+  
+  if (error) return (
+    <div className="text-center py-8">
+      <p className="text-red-500 bg-red-50 p-4 rounded-lg">Erreur de chargement des produits recommandés</p>
+    </div>
+  );
 
   return (
-    <div className="w-full mx-auto px-2 py-1 ">
-    <h1 className="text-center font-bold text-blue-360 mb-8 sm:text-lg md:text-xl lg:text-2xl">Recommandé</h1>
+    <div className="w-full mx-auto px-4 py-6 bg-gray-50 rounded-2xl">
+      {/* Header avec design moderne */}
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Produits Recommandés</h1>
+        <div className="w-20 h-1 bg-gradient-to-r from-blue-360 to-orange-360 mx-auto rounded-full"></div>
+      </div>
 
-    {/* Products Grid */}
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-4 mb-8">
-      {currentProducts?.map((product) => {
-        const discountedPrice = (product.price * 0.9).toFixed(2); // Calculate discounted price
+      {/* Products Grid avec design carte */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {currentProducts?.map((product) => {
+          const discountedPrice = (product.price * 0.9).toFixed(2);
 
-        return (
-          <div key={product.id} className="transform hover:scale-105 transition duration-300 ease-in-out">
-            <div className=" border rounded-xl p-1 shadow-xl hover:shadow-xl transition-all bg-white bg-opacity-60 hover:bg-opacity-100 ">
-              {/* Image with fade-in effect */}
-              <img
-                src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.img}`}
-                alt={product.name}
-                className="w-auto mx-auto h-20 sm:h-20 md:h-20 object-cover rounded-t-xl mb-2 duration-500  "
-              />
-              <div className="text-center">
-                <h2 className="text-lg sm:text-base font-semibold text-gray-800">{product.name.length > 12 ?product.name.slice(0, 12) + "..." : product.name}</h2>
-                <p className="text-sm text-gray-500">Avec remise</p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2  mt-2">
-                <div className="flex flex-col justify-center items-center text-orange-360">
-                  <i className="fa-regular fa-money-bill-1 px-1"></i>
-                  <del className="font-normal sm:text-xs lg:text-base">{product.price}dt</del>
-                </div>
-
-                <div className="relative flex items-center justify-center top-0 left-0 bg-red-500 text-white text-xs rounded-full ">
+          return (
+            <div 
+              key={product.id} 
+              className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden"
+            >
+              {/* Badge promotion */}
+              <div className="relative">
+                <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
                   -10%
                 </div>
-
-                <div className="flex flex-col justify-center items-center text-green-500 font-normal sm:text-xs lg:text-base">
-                  <i className="fa-regular fa-money-bill-1 px-1"></i>
-                  {discountedPrice}dt
-                </div>
+                <img
+                  src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.img}`}
+                  alt={product.name}
+                  className="w-full h-48 object-cover transition duration-500 hover:scale-105"
+                  onError={(e) => {
+                    e.target.src = "/default-image.jpg";
+                  }}
+                />
               </div>
 
-              <div className="mt-4">
+              {/* Product Info */}
+              <div className="p-4">
+                <h2 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2 h-14">
+                  {product.name}
+                </h2>
+                
+                {/* Prix */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col">
+                    <span className="text-sm text-gray-500 line-through">
+                      {product.price} DT
+                    </span>
+                    <span className="text-xl font-bold text-green-600">
+                      {discountedPrice} DT
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    Économisez 10%
+                  </div>
+                </div>
+
+                {/* Bouton */}
                 <button
-                  className="w-full bg-blue-360 text-white py-2 rounded-lg hover:bg-blue-500 transition duration-200 transform hover:scale-105 shadow-md focus:outline-none sm:text-sm"
+                  className="w-full bg-gradient-to-r from-blue-360 to-blue-500 text-white py-3 rounded-xl hover:from-blue-500 hover:to-blue-600 transition-all duration-300 font-semibold flex items-center justify-center gap-2"
                   onClick={() => productHandler(product.id, product.type_id)}
                 >
+                  <i className="fa-solid fa-eye"></i>
                   Voir détails
                 </button>
               </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
-
-    {/* Pagination Controls */}
-    <div className="flex justify-center space-x-4 mb-2">
-      <button
-        onClick={prevPage}
-        className="px-3 py-2 bg-blue-360 text-white text-xs sm:text-xs md:text-base rounded-full hover:bg-blue-500 transition duration-300"
-        disabled={currentPage === 1}
-      >
-        <i className="fa-solid fa-chevron-left"></i> Previous
-      </button>
-
-      {/* Page Numbers */}
-      <div className="flex space-x-2">
-        {Array.from({ length: totalPages }, (_, index) => (
-          <button
-            key={index}
-            onClick={() => goToPage(index + 1)}
-            className={`px-2 sm:px-3 sm:py-2  md:px-4 md:py-2 rounded-lg text-sm font-medium ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            {index + 1}
-          </button>
-        ))}
+          );
+        })}
       </div>
 
-      <button
-        onClick={nextPage}
-        className="px-3 py-2 bg-blue-360 text-white text-xs sm:text-xs md:text-base rounded-full hover:bg-blue-500 transition duration-300"
-        disabled={currentPage === totalPages}
-      >
-        Next <i className="fa-solid fa-chevron-right"></i>
-      </button>
+      {/* Pagination améliorée */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2">
+          <button
+            onClick={prevPage}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center gap-2"
+          >
+            <i className="fa-solid fa-chevron-left text-sm"></i>
+            Précédent
+          </button>
+
+          {/* Indicateur de page */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">
+              Page {currentPage} sur {totalPages}
+            </span>
+          </div>
+
+          <button
+            onClick={nextPage}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center gap-2"
+          >
+            Suivant
+            <i className="fa-solid fa-chevron-right text-sm"></i>
+          </button>
+        </div>
+      )}
     </div>
-  </div>
   );
 };
 

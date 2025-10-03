@@ -8,9 +8,13 @@ import Cookies from "js-cookie";
 const ProductsBySubCategory = () => {
   const location = useLocation();
   const { product = {}, loading, error } = useSelector((state) => state.product);
+  const { categories } = useSelector((state) => state.categorie);
   const allProducts = product.products || [];
   const dispatch = useDispatch();
-  const { subId, subTitle } = location.state || {};
+  
+  const subId = location.state?.subId;
+  const [subTitle, setSubTitle] = useState(location.state?.subTitle || "Produits");
+  
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -18,8 +22,16 @@ const ProductsBySubCategory = () => {
   useEffect(() => {
     if (subId) {
       dispatch(fetchProduct(subId));
+      
+      // Si pas de titre dans location.state, le récupérer depuis Redux
+      if (!location.state?.subTitle && categories && categories.length > 0) {
+        const category = categories.find((cat) => cat.id === parseInt(subId));
+        if (category) {
+          setSubTitle(category.title);
+        }
+      }
     }
-  }, [dispatch, subId]);
+  }, [dispatch, subId, categories, location.state]);
 
   const totalPages = Math.ceil(allProducts.length / itemsPerPage);
   const currentProducts = allProducts.slice(
@@ -78,8 +90,9 @@ const ProductsBySubCategory = () => {
     navigate("/cart-shopping");
   };
 
-  if (loading) return <p>Chargement des données...</p>;
-  if (error) return <p>Erreur : {error}</p>;
+  if (loading) return <p className="text-center py-8">Chargement des données...</p>;
+  if (error) return <p className="text-center py-8 text-red-500">Erreur : {error}</p>;
+  if (!subId) return <p className="text-center py-8">Aucune catégorie sélectionnée</p>;
 
   return (
     <div>
@@ -88,7 +101,7 @@ const ProductsBySubCategory = () => {
         <i className=" fa-solid fa-chevron-right p-1"></i>
         <Link to={`/categories`}>Catégories</Link>
         <i className="fa-solid fa-chevron-right p-1"></i>
-        <Link to={`/products`}>{subTitle}</Link>
+        <span>{subTitle}</span>
       </nav>
 
       <div>
@@ -101,7 +114,7 @@ const ProductsBySubCategory = () => {
               <div key={product.id} className="border rounded-xl p-1 shadow-xl hover:shadow-xl transition-all bg-white bg-opacity-60 hover:bg-opacity-100">
                 <div className="flex justify-end">
                   <button onClick={() => addToCartHandler(product)} className='p-2 bg-green-100 hover:bg-green-200 rounded-full transition'>
-                  <i className="fa fa-cart-plus text-xl text-green-600" aria-hidden="true"></i>
+                    <i className="fa fa-cart-plus text-xl text-green-600" aria-hidden="true"></i>
                   </button>
                 </div>
 
@@ -110,7 +123,9 @@ const ProductsBySubCategory = () => {
                   alt={product.name}
                   className="w-auto mx-auto h-20 sm:h-20 md:h-20 object-contain rounded-t-xl mb-2 duration-500"
                 />
-                <h1 className="text-center text-lg sm:text-base font-semibold text-gray-800">{product.name.length > 12 ?product.name.slice(0, 12) + "..." : product.name}</h1>
+                <h1 className="text-center text-lg sm:text-base font-semibold text-gray-800">
+                  {product.name.length > 12 ? product.name.slice(0, 12) + "..." : product.name}
+                </h1>
 
                 {Number(subId) === 2 || Number(subId) === 3 ? (
                   <div className="flex flex-row m-2 justify-around">
@@ -143,37 +158,38 @@ const ProductsBySubCategory = () => {
             );
           })}
         </div>
-        {product.length>0 && totalPages >1 ?(
-        <div className="flex justify-center items-center my-4">
-          <button
-            onClick={handlePreviousPage}
-            disabled={currentPage === 1}
-            className="px-4 py-2 mx-1 rounded bg-blue-360 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            Précédent
-          </button>
-          {[...Array(totalPages).keys()].map((page) => (
+        
+        {allProducts.length > 0 && totalPages > 1 && (
+          <div className="flex justify-center items-center my-4">
             <button
-              key={page}
-              onClick={() => handlePageClick(page + 1)}
-              className={`px-4 py-2 mx-1 rounded ${
-                currentPage === page + 1
-                  ? 'bg-blue-700 text-white'
-                  : 'bg-gray-200 hover:bg-gray-300'
-              }`}
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+              className="px-4 py-2 mx-1 rounded bg-blue-360 text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {page + 1}
+              Précédent
             </button>
-          ))}
-          <button
-            onClick={handleNextPage}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 mx-1 rounded bg-blue-360 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            Suivant
-          </button>
-        </div>
-        ) :("")}
+            {[...Array(totalPages).keys()].map((page) => (
+              <button
+                key={page}
+                onClick={() => handlePageClick(page + 1)}
+                className={`px-4 py-2 mx-1 rounded ${
+                  currentPage === page + 1
+                    ? 'bg-blue-700 text-white'
+                    : 'bg-gray-200 hover:bg-gray-300'
+                }`}
+              >
+                {page + 1}
+              </button>
+            ))}
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 mx-1 rounded bg-blue-360 text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              Suivant
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

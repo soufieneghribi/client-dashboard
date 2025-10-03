@@ -8,7 +8,7 @@ export const fetchOffre = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        "https://tn360-122923924979.europe-west1.run.app/api/v1/offre"
+        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/offre"
       );
       return response.data;
     } catch (err) {
@@ -22,7 +22,7 @@ export const fetchOffreById = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        "https://tn360-122923924979.europe-west1.run.app/api/v1/offre/",id
+        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/offre/",id
       );
       return response.data;
     } catch (err) {

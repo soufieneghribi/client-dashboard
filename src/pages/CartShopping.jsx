@@ -18,20 +18,7 @@ const CartShopping = () => {
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
-  const cagnotteComfirmation = () => {
-    if (Userprofile.cagnotte_balance >= subtotal) {
-      const panier = 0;
-      const updatedBalance = Userprofile.cagnotte_balance - subtotal;
-      dispatch(updateCagnotteInDB(updatedBalance));  // Dispatch to update the balance in the database
-      toast.success("Votre cagnotte a été utilisée pour régler votre commande !");
-    } else {
-      const panier = subtotal - Userprofile.cagnotte_balance;
-      const updatedBalance = 0;
-      dispatch(updateCagnotteInDB(updatedBalance));  // Dispatch to update the balance to 0
-      toast.success("Votre cagnotte a été utilisée partiellement !");
-    }
-    setShow(false);  // Close the modal after confirmation
-  };
+
 
   const Annuler = () => {
     setShow(false);  // Close the modal without making changes
@@ -93,22 +80,73 @@ const CartShopping = () => {
     quantity: el.quantity,
   }));
 
-  // Handle checkout
-  const handleCheckout = () => {
-    if (cartItems.length === 0) {
-      toast.error("Votre panier est vide");
-      return;
-    }
+ // Dans CartShopping.jsx - MODIFIER la fonction handleCheckout
+const handleCheckout = () => {
+  if (cartItems.length === 0) {
+    toast.error("Votre panier est vide");
+    return;
+  }
 
-    if (!auth.isLoggedIn) {
-      toast.error("Vous devez être connecté pour effectuer une commande.");
-      navigate("/login");
-      return;
-    }
-    toast.success("Commande validée ! Merci pour votre achat.");
-    Cookies.remove("cart");
-    navigate("/order-confirmation", { state: { orderDetails, subtotal, totalTTC } });
+  if (!auth.isLoggedIn) {
+    toast.error("Vous devez être connecté pour effectuer une commande.");
+    navigate("/login");
+    return;
+  }
+
+  // ✅ CORRECTION : Calculer la déduction cagnotte
+  const cagnotteDeduction = calculateCagnotteDeduction();
+  
+  // ✅ CORRECTION : Transmettre TOUTES les données nécessaires
+  const checkoutData = {
+    orderDetails: cartItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: parseFloat(item.price === 0 ? item.Initialprice : item.price),
+      quantity: parseInt(item.quantity),
+      total: parseFloat(item.total)
+    })),
+    subtotal: parseFloat(subtotal),
+    deliveryFee: parseFloat(delivery), // ✅ Utiliser le même calcul
+    totalTTC: parseFloat(totalTTC),
+    cagnotteDeduction: parseFloat(cagnotteDeduction) // ✅ Ajouter la déduction
   };
+
+  console.log("🛒 Données transmises à OrderConfirmation:", checkoutData);
+  
+  toast.success("Commande validée ! Merci pour votre achat.");
+  Cookies.remove("cart");
+  navigate("/order-confirmation", { state: checkoutData });
+};
+
+// ✅ AJOUTER cette fonction pour calculer la déduction cagnotte
+const calculateCagnotteDeduction = () => {
+  if (!Userprofile?.cagnotte_balance) return 0;
+  
+  const cagnotteBalance = parseFloat(Userprofile.cagnotte_balance);
+  const cartSubtotal = parseFloat(subtotal);
+  
+  // La déduction ne peut pas dépasser le sous-total
+  return Math.min(cagnotteBalance, cartSubtotal);
+};
+
+// ✅ MODIFIER la fonction cagnotteComfirmation pour stocker la déduction
+const cagnotteComfirmation = () => {
+  const deduction = calculateCagnotteDeduction();
+  
+  if (Userprofile.cagnotte_balance >= subtotal) {
+    const updatedBalance = Userprofile.cagnotte_balance - subtotal;
+    dispatch(updateCagnotteInDB(updatedBalance));
+    toast.success("Votre cagnotte a été utilisée pour régler votre commande !");
+  } else {
+    const updatedBalance = 0;
+    dispatch(updateCagnotteInDB(updatedBalance));
+    toast.success("Votre cagnotte a été utilisée partiellement !");
+  }
+  
+  // ✅ Stocker la déduction pour la réutiliser au checkout
+  localStorage.setItem('cagnotte_deduction', deduction.toString());
+  setShow(false);
+};
 
   // Handle quantity update
   const handleQuantityUpdate = (itemId, newQuantity) => {

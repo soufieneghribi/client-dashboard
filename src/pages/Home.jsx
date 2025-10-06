@@ -6,13 +6,14 @@ import Banners from "../components/Banners";
 import Popular from "../components/Popular";
 import FeaturedRecipes from "../components/FeaturedRecipes";
 import { useNavigate } from "react-router-dom";
+import { Container, Row, Col } from 'react-bootstrap';
 
 const Home = () => {
   const navigate = useNavigate();
 
   return (
     <div className="home-container">
-      <section className="grid w-full">
+      <Container fluid>
         {/* Bannière principale */}
         <Banners />
 
@@ -20,31 +21,32 @@ const Home = () => {
         <Categories />
 
         {/* Deals & Catalogue */}
-        <div className="grid grid-cols-2 gap-4 px-4 mt-6">
-          {/* Deals */}
-          <div
-            className="relative border rounded-2xl shadow-lg h-40 bg-cover bg-center overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300"
-            style={{ backgroundImage: "url('../assets/mydealsImg.png')" }}
-            onClick={() => navigate("/MesDeals")}
-          >
-            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-              <span className="text-lg font-bold text-white">Mes Deals</span>
+        <Row className="mt-4 px-2">
+          <Col xs={6}>
+            <div
+              className="position-relative border rounded-3 shadow h-40 bg-cover bg-center overflow-hidden cursor-pointer hover-scale transition-transform"
+              style={{ backgroundImage: "url('../assets/mydealsImg.png')", height: '160px' }}
+              onClick={() => navigate("/MesDeals")}
+            >
+              <div className="position-absolute top-0 start-0 w-100 h-100 bg-black bg-opacity-20 d-flex align-items-center justify-content-center">
+                <span className="fs-5 fw-bold text-white">Mes Deals</span>
+              </div>
             </div>
-          </div>
-
-          {/* Catalogue */}
-          <div
-            className="relative border rounded-2xl shadow-lg h-40 bg-cover bg-center overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300"
-            style={{ backgroundImage: "url('../assets/recommnededImg.png')" }}
-            onClick={() => navigate("/Catalogue")}
-          >
-            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-              <span className="text-lg font-bold text-white">Catalogue</span>
+          </Col>
+          <Col xs={6}>
+            <div
+              className="position-relative border rounded-3 shadow h-40 bg-cover bg-center overflow-hidden cursor-pointer hover-scale transition-transform"
+              style={{ backgroundImage: "url('../assets/recommnededImg.png')", height: '160px' }}
+              onClick={() => navigate("/Catalogue")}
+            >
+              <div className="position-absolute top-0 start-0 w-100 h-100 bg-black bg-opacity-20 d-flex align-items-center justify-content-center">
+                <span className="fs-5 fw-bold text-white">Catalogue</span>
+              </div>
             </div>
-          </div>
-        </div>
+          </Col>
+        </Row>
 
-        {/* Nos recettes du jour - NOUVELLE SECTION */}
+        {/* Nos recettes du jour */}
         <FeaturedRecipes />
 
         {/* Produits populaires */}
@@ -52,7 +54,7 @@ const Home = () => {
 
         {/* Produits recommandés */}
         <ProductRecommande />
-      </section>
+      </Container>
     </div>
   );
 };

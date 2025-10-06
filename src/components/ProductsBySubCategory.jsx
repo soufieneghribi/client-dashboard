@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { fetchProduct } from '../store/slices/product';
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
+import { Container, Row, Col, Card, Button, Breadcrumb, Badge, Pagination } from 'react-bootstrap';
 
 const ProductsBySubCategory = () => {
   const location = useLocation();
@@ -17,13 +18,12 @@ const ProductsBySubCategory = () => {
   
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 12;
 
   useEffect(() => {
     if (subId) {
       dispatch(fetchProduct(subId));
       
-      // Si pas de titre dans location.state, le récupérer depuis Redux
       if (!location.state?.subTitle && categories && categories.length > 0) {
         const category = categories.find((cat) => cat.id === parseInt(subId));
         if (category) {
@@ -90,109 +90,141 @@ const ProductsBySubCategory = () => {
     navigate("/cart-shopping");
   };
 
-  if (loading) return <p className="text-center py-8">Chargement des données...</p>;
-  if (error) return <p className="text-center py-8 text-red-500">Erreur : {error}</p>;
-  if (!subId) return <p className="text-center py-8">Aucune catégorie sélectionnée</p>;
+  if (loading) return (
+    <Container className="d-flex justify-content-center align-items-center min-vh-100">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Chargement...</span>
+      </div>
+    </Container>
+  );
+  
+  if (error) return (
+    <Container className="py-5">
+      <div className="alert alert-danger">Erreur : {error}</div>
+    </Container>
+  );
+  
+  if (!subId) return (
+    <Container className="py-5">
+      <p className="text-center text-muted">Aucune catégorie sélectionnée</p>
+    </Container>
+  );
 
   return (
-    <div>
-      <nav className="text-orange-360 text-base hover:font-semibold p-2">
-        <Link to="/">Accueil</Link>
-        <i className=" fa-solid fa-chevron-right p-1"></i>
-        <Link to={`/categories`}>Catégories</Link>
-        <i className="fa-solid fa-chevron-right p-1"></i>
-        <span>{subTitle}</span>
-      </nav>
+    <Container fluid className="py-4">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb className="mb-4">
+        <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/" }}>
+          Accueil
+        </Breadcrumb.Item>
+        <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/categories" }}>
+          Catégories
+        </Breadcrumb.Item>
+        <Breadcrumb.Item active>{subTitle}</Breadcrumb.Item>
+      </Breadcrumb>
 
-      <div>
-        <h1 className="text-blue-360 font-bold text-3xl mb-2">{subTitle}</h1>
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-8 m-8">
-          {currentProducts.map((product) => {
-            const price = parseFloat(product.price) || 0;
+      {/* Page Title */}
+      <h1 className="text-primary fw-bold mb-4 display-6">{subTitle}</h1>
 
-            return (
-              <div key={product.id} className="border rounded-xl p-1 shadow-xl hover:shadow-xl transition-all bg-white bg-opacity-60 hover:bg-opacity-100">
-                <div className="flex justify-end">
-                  <button onClick={() => addToCartHandler(product)} className='p-2 bg-green-100 hover:bg-green-200 rounded-full transition'>
-                    <i className="fa fa-cart-plus text-xl text-green-600" aria-hidden="true"></i>
-                  </button>
+      {/* Products Grid */}
+      <Row xs={2} sm={3} md={4} lg={5} xl={6} className="g-3 g-md-4 mb-4">
+        {currentProducts.map((product) => {
+          const price = parseFloat(product.price) || 0;
+
+          return (
+            <Col key={product.id}>
+              <Card className="h-100 shadow-sm hover-card">
+                <div className="position-relative">
+                  <Card.Img
+                    variant="top"
+                    src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.img}`}
+                    alt={product.name}
+                    style={{ height: '150px', objectFit: 'contain' }}
+                    onError={(e) => {
+                      e.target.src = "/default-image.jpg";
+                    }}
+                  />
+                  <Button
+                    variant="success"
+                    size="sm"
+                    className="position-absolute top-0 end-0 m-2 rounded-circle"
+                    onClick={() => addToCartHandler(product)}
+                    style={{ width: '35px', height: '35px', padding: 0 }}
+                  >
+                    <i className="fa fa-cart-plus"></i>
+                  </Button>
                 </div>
 
-                <img
-                  src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.img}`}
-                  alt={product.name}
-                  className="w-auto mx-auto h-20 sm:h-20 md:h-20 object-contain rounded-t-xl mb-2 duration-500"
-                />
-                <h1 className="text-center text-lg sm:text-base font-semibold text-gray-800">
-                  {product.name.length > 12 ? product.name.slice(0, 12) + "..." : product.name}
-                </h1>
+                <Card.Body className="d-flex flex-column">
+                  <Card.Title className="small text-truncate mb-2" title={product.name}>
+                    {product.name}
+                  </Card.Title>
 
-                {Number(subId) === 2 || Number(subId) === 3 ? (
-                  <div className="flex flex-row m-2 justify-around">
-                    <div className="text-orange-360 grid">
-                      <i className="fa-regular fa-money-bill-1"></i>
-                      <p className="font-base"><del>{price.toFixed(2)} dt</del></p>
+                  {Number(subId) === 2 || Number(subId) === 3 ? (
+                    <div className="d-flex flex-column align-items-center gap-1 mb-2">
+                      <div className="text-decoration-line-through text-muted small">
+                        {price.toFixed(2)} dt
+                      </div>
+                      <Badge bg="success">-10%</Badge>
+                      <div className="text-warning fw-bold">
+                        {(price * 0.9).toFixed(2)} dt
+                      </div>
                     </div>
-                    <div className="text-green-600 grid">
-                      <i className="fa-solid fa-tags"></i>
-                      <span className="font-bold text-xl">10%</span>
+                  ) : (
+                    <div className="text-center text-warning fw-semibold mb-2">
+                      Prix : {price.toFixed(2)} dt
                     </div>
-                    <div className="text-orange-360 grid">
-                      <i className="fa-regular fa-money-bill-1"></i>
-                      <p className="font-bold text-lg">{(price * 0.9).toFixed(2)} dt</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-orange-360 flex justify-center">
-                    <p className="text-base font-medium">Prix : {price.toFixed(2)} dt</p>
-                  </div>
-                )}
+                  )}
 
-                <button
-                  className="bg-blue-360 text-white text-center px-2 py-2 rounded hover:bg-blue-700 w-full mx-auto cursor-pointer"
-                  onClick={() => handleDetails(product.id, subId)}
-                >
-                  Voir détails
-                </button>
-              </div>
-            );
-          })}
-        </div>
-        
-        {allProducts.length > 0 && totalPages > 1 && (
-          <div className="flex justify-center items-center my-4">
-            <button
-              onClick={handlePreviousPage}
-              disabled={currentPage === 1}
-              className="px-4 py-2 mx-1 rounded bg-blue-360 text-white hover:bg-blue-700 disabled:opacity-50"
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="mt-auto w-100"
+                    onClick={() => handleDetails(product.id, subId)}
+                  >
+                    Voir détails
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+          );
+        })}
+      </Row>
+
+      {/* Pagination Bootstrap */}
+      {allProducts.length > 0 && totalPages > 1 && (
+        <Pagination className="justify-content-center">
+          <Pagination.Prev
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+          />
+          {[...Array(totalPages).keys()].map((page) => (
+            <Pagination.Item
+              key={page}
+              active={currentPage === page + 1}
+              onClick={() => handlePageClick(page + 1)}
             >
-              Précédent
-            </button>
-            {[...Array(totalPages).keys()].map((page) => (
-              <button
-                key={page}
-                onClick={() => handlePageClick(page + 1)}
-                className={`px-4 py-2 mx-1 rounded ${
-                  currentPage === page + 1
-                    ? 'bg-blue-700 text-white'
-                    : 'bg-gray-200 hover:bg-gray-300'
-                }`}
-              >
-                {page + 1}
-              </button>
-            ))}
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 mx-1 rounded bg-blue-360 text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              Suivant
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+              {page + 1}
+            </Pagination.Item>
+          ))}
+          <Pagination.Next
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+          />
+        </Pagination>
+      )}
+
+      <style jsx>{`
+        .hover-card {
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .hover-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+      `}</style>
+    </Container>
   );
 };
 
-export default ProductsBySubCategory;
+export default ProductsBySubCategory

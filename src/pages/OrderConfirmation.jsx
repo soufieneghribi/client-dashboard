@@ -550,7 +550,7 @@ const OrderConfirmation = () => {
 
   const closeModal = () => {
     setModalIsOpen(false);
-    navigate("/orders");
+    navigate("/Mes-Commandes");
   };
 
   // Si l'authentification n'est pas encore vérifiée

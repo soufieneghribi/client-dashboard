@@ -23,7 +23,7 @@ import SearchResult from "./components/SearchResult";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import "./styles/index.css";
 import Contact from "./components/Contact";
-
+import OrderDetails from "./pages/OrderDetails";
 import RecipeDetails from "./pages/RecipeDetails";
 
 const router = createBrowserRouter(
@@ -64,6 +64,10 @@ const router = createBrowserRouter(
           path="/Mes-Commandes" 
           element={<ProtectedRoute><Orders/></ProtectedRoute>}
         />
+
+
+<Route path="/order/:orderId" element={<ProtectedRoute><OrderDetails/></ProtectedRoute>} />
+
 
 
         <Route path="/contact" element={<Contact />} />

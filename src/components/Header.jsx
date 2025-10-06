@@ -5,22 +5,19 @@ import { Link, useNavigate } from "react-router-dom";
 import { SearchProduct as searchProduct, clearSearch } from "../store/slices/search";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Company_Logo from "../assets/images/logo_0.png";
-import Offcanvas from 'react-bootstrap/Offcanvas';
+import { Navbar, Nav, Container, Form, Button, Dropdown, Badge, Offcanvas, InputGroup } from 'react-bootstrap';
 import debounce from 'lodash.debounce';
 
 const Header = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchRef = useRef(null);
-  const profileMenuRef = useRef(null);
 
   const auth = useSelector((state) => state.auth);
   const { searchResults, loading: searchLoading, error: searchError } = useSelector((state) => state.search);
 
-  // Fonction de recherche avec debounce
   const debouncedSearch = useCallback(
     debounce((query) => {
       if (query.trim()) {
@@ -51,17 +48,11 @@ const Header = () => {
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSearchSubmit(e);
-    }
-  };
-
   const navLinks = [
-    { path: "/", label: "Accueil" },
-    { path: "/categories", label: "Catégories" },
-    { path: "/MesDeals", label: "Offres" },
-    { path: "/contact", label: "Contact" }
+    { path: "/", label: "Accueil", icon: "fa-home" },
+    { path: "/categories", label: "Catégories", icon: "fa-th-large" },
+    { path: "/MesDeals", label: "Offres", icon: "fa-tag" },
+    { path: "/contact", label: "Contact", icon: "fa-envelope" }
   ];
 
   useEffect(() => {
@@ -86,403 +77,197 @@ const Header = () => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
         dispatch(clearSearch());
       }
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
-        setShowProfileMenu(false);
-      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [dispatch]);
 
-  const SearchResultsDropdown = () => (
-    <div className="absolute top-full left-0 right-0 bg-white shadow-lg mt-1 max-h-60 overflow-y-auto z-50 border border-gray-100 rounded-lg">
-      {searchResults.map((product) => (
-        <Link
-          key={product.id}
-          to={`/product/${product.id}`}
-          className="block px-4 py-3 hover:bg-gray-50 text-gray-700 border-b border-gray-100 last:border-b-0"
-          onClick={() => {
-            dispatch(clearSearch());
-            setSearchQuery('');
-          }}
-        >
-          <div className="flex items-center">
-            {product.image && (
-              <img 
-                src={product.image} 
-                alt={product.name}
-                className="w-8 h-8 object-cover rounded mr-3"
-              />
+  return (
+    <>
+      <Navbar bg="white" expand="lg" sticky="top" className="shadow-sm border-bottom py-2">
+        <Container fluid className="px-3 px-lg-4">
+          <Button
+            variant="link"
+            className="d-lg-none text-secondary p-0 border-0 me-3"
+            onClick={() => setShowMobileMenu(true)}
+          >
+            <i className="fas fa-bars fs-4"></i>
+          </Button>
+
+          <Navbar.Brand as={Link} to="/" className="me-lg-4">
+            <img src={Company_Logo} height="24" width="70" alt="Logo" />
+          </Navbar.Brand>
+
+          <Nav className="d-none d-lg-flex me-auto">
+            {navLinks.map((link) => (
+              <Nav.Link key={link.path} as={Link} to={link.path} className="fw-medium px-3 text-dark">
+                {link.label}
+              </Nav.Link>
+            ))}
+          </Nav>
+
+          <div className="d-none d-lg-block flex-grow-1 mx-4 position-relative" style={{ maxWidth: '500px' }} ref={searchRef}>
+            <Form onSubmit={handleSearchSubmit}>
+              <InputGroup>
+                <Form.Control
+                  placeholder="Rechercher un produit..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                />
+                <Button variant="outline-secondary" type="submit" disabled={searchLoading}>
+                  {searchLoading ? <span className="spinner-border spinner-border-sm"></span> : <i className="fas fa-search"></i>}
+                </Button>
+              </InputGroup>
+            </Form>
+
+            {searchQuery && Array.isArray(searchResults) && searchResults.length > 0 && (
+              <div className="position-absolute bg-white shadow-lg rounded mt-1 w-100" style={{ zIndex: 1000, maxHeight: '400px', overflowY: 'auto' }}>
+                {searchResults.map((product) => (
+                  <Link
+                    key={product.id}
+                    to={`/product/${product.id}`}
+                    className="d-flex align-items-center p-3 text-decoration-none text-dark border-bottom"
+                    onClick={() => {
+                      dispatch(clearSearch());
+                      setSearchQuery('');
+                    }}
+                    style={{ transition: 'background 0.2s' }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#f8f9fa'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                  >
+                    {product.image && (
+                      <img src={product.image} alt={product.name} className="me-3 rounded" style={{ width: '50px', height: '50px', objectFit: 'cover' }} />
+                    )}
+                    <div>
+                      <p className="mb-0 fw-medium">{product.name}</p>
+                      {product.price && <p className="mb-0 text-success small">{product.price} DT</p>}
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
-            <div>
-              <p className="font-medium text-sm">{product.name}</p>
-              {product.price && (
-                <p className="text-green-600 text-xs font-semibold">{product.price} €</p>
+          </div>
+
+          <div className="d-flex align-items-center gap-2">
+            {auth.isLoggedIn ? (
+              <Dropdown align="end" className="d-none d-lg-block">
+                <Dropdown.Toggle variant="link" className="text-secondary text-decoration-none p-2 border-0">
+                  <i className="fas fa-user-circle fs-4 me-1"></i>
+                  <i className="fas fa-chevron-down small"></i>
+                </Dropdown.Toggle>
+                <Dropdown.Menu className="shadow border-0">
+                  <Dropdown.Header className="small">
+                    <strong>{auth.user?.nom_et_prenom?.split(' ')[0] || "Utilisateur"}</strong>
+                  </Dropdown.Header>
+                  <Dropdown.Divider />
+                  <Dropdown.Item as={Link} to="/profile"><i className="fas fa-user me-2"></i> Mon Profil</Dropdown.Item>
+                  <Dropdown.Item as={Link} to="/settings"><i className="fas fa-cog me-2"></i> Paramètres</Dropdown.Item>
+                  <Dropdown.Item as={Link} to="/Mes-Commandes"><i className="fas fa-shopping-bag me-2"></i> Mes Commandes</Dropdown.Item>
+                  <Dropdown.Divider />
+                  <Dropdown.Item onClick={() => dispatch(logout())} className="text-danger">
+                    <i className="fas fa-sign-out-alt me-2"></i> Déconnexion
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            ) : (
+              <div className="d-none d-lg-flex gap-2">
+                <Button variant="outline-primary" size="sm" as={Link} to="/login">
+                  <i className="fas fa-right-to-bracket me-1"></i> Connexion
+                </Button>
+                <Button size="sm" as={Link} to="/inscrire" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: 'none' }} className="text-white">
+                  <i className="fas fa-user-plus me-1"></i> S'inscrire
+                </Button>
+              </div>
+            )}
+
+            
+            <Button variant="link" as={Link} to="/cart-shopping" className="position-relative text-secondary p-2">
+              <i className="fas fa-shopping-cart fs-4"></i>
+              <Badge bg="primary" pill className="position-absolute top-0 start-100 translate-middle" style={{ fontSize: '0.6rem' }}>3</Badge>
+            </Button>
+
+            <div className="d-lg-none">
+              {!auth.isLoggedIn && (
+                <>
+                  <Button variant="link" as={Link} to="/login" className="text-secondary p-2">
+                    <i className="fas fa-right-to-bracket fs-5"></i>
+                  </Button>
+                  <Button size="sm" as={Link} to="/inscrire" className="rounded-pill text-white" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: 'none' }}>
+                    <i className="fas fa-user-plus"></i>
+                  </Button>
+                </>
               )}
             </div>
           </div>
-        </Link>
-      ))}
-      {searchResults.length === 0 && !searchLoading && searchQuery && (
-        <div className="px-4 py-3 text-gray-500 text-sm text-center">
-          Aucun produit trouvé
-        </div>
-      )}
-    </div>
-  );
+        </Container>
+      </Navbar>
 
-  return (
-    <header className="w-full h-16 bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
-      <div className="container mx-auto px-4 h-full flex items-center justify-between">
+      <Offcanvas show={showMobileMenu} onHide={() => setShowMobileMenu(false)} placement="start">
+        <Offcanvas.Header closeButton className="border-bottom">
+          <Offcanvas.Title>
+            <img src={Company_Logo} height="22" alt="Logo" className="me-2" />
+            Menu
+          </Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+          <Form onSubmit={handleSearchSubmit} className="mb-4">
+            <InputGroup>
+              <Form.Control placeholder="Rechercher..." value={searchQuery} onChange={handleSearchChange} />
+              <Button variant="primary" type="submit"><i className="fas fa-search"></i></Button>
+            </InputGroup>
+          </Form>
 
-        {/* Left - Logo & Navigation */}
-        <div className="flex items-center space-x-8">
-          <button 
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="lg:hidden text-gray-600 hover:text-blue-600 transition-colors"
-            aria-label="Toggle navigation"
-          >
-            <i className={`fas text-lg ${showMobileMenu ? 'fa-times' : 'fa-bars'}`} />
-          </button>
-
-          <Link to="/" className="flex-shrink-0" aria-label="Home">
-            <img src={Company_Logo} className="h-10 w-auto" alt="Company Logo" />
-          </Link>
-
-          <nav className="hidden lg:flex items-center space-x-6">
+          <Nav className="flex-column mb-4">
             {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className="text-gray-700 hover:text-blue-600 font-medium text-sm transition-colors"
-              >
+              <Nav.Link key={link.path} as={Link} to={link.path} className="py-3 d-flex align-items-center text-dark" onClick={() => setShowMobileMenu(false)}>
+                <i className={`fas ${link.icon} me-3 text-primary`} style={{ width: '20px' }}></i>
                 {link.label}
-              </Link>
+              </Nav.Link>
             ))}
-          </nav>
-        </div>
+          </Nav>
 
-        {/* Center - Search Bar */}
-        <div className="flex-1 max-w-2xl mx-8 relative" ref={searchRef}>
-          <form onSubmit={handleSearchSubmit} className="relative">
-            <input
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm"
-              placeholder="Rechercher un produit..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              onKeyPress={handleKeyPress}
-              aria-label="Rechercher un produit"
-            />
-            <button
-              type="submit"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
-              disabled={searchLoading}
-              aria-label="Lancer la recherche"
-            >
-              {searchLoading ? (
-                <i className="fas fa-spinner fa-spin text-blue-600" />
-              ) : (
-                <i className="fas fa-search" />
-              )}
-            </button>
-          </form>
-          
-          {searchQuery && Array.isArray(searchResults) && searchResults.length > 0 && (
-            <SearchResultsDropdown />
-          )}
-          
-          {searchError && (
-            <div className="absolute top-full left-0 text-red-500 text-xs mt-1 bg-red-50 px-2 py-1 rounded">
-              {searchError}
-            </div>
-          )}
-        </div>
-
-        {/* Right - User Actions */}
-        <div className="flex items-center space-x-4">
-          {/* User Profile (Desktop) */}
+          <hr />
           {auth.isLoggedIn ? (
-            <div className="hidden lg:flex items-center space-x-3 relative" ref={profileMenuRef}>
-              <button
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="flex items-center space-x-1 text-gray-600 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-gray-50"
-                aria-label="Menu profil"
-              >
-                <i className="fas fa-user-circle text-xl" />
-                <i className="fas fa-chevron-down text-xs" />
-              </button>
-              
-              {showProfileMenu && (
-                <div className="absolute top-full right-0 mt-2 bg-white shadow-xl rounded-lg w-48 py-2 z-50 border border-gray-100">
-                  <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100 mb-1">
-                    Connecté en tant que <strong>{auth.user?.nom_et_prenom?.split(' ')[0] || "Utilisateur"}</strong>
-                  </div>
-                  <Link 
-                    to="/profile" 
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    onClick={() => setShowProfileMenu(false)}
-                  >
-                    <i className="fas fa-user mr-3 w-4 text-center" /> 
-                    Mon Profil
-                  </Link>
-                  <Link 
-                    to="/settings" 
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    onClick={() => setShowProfileMenu(false)}
-                  >
-                    <i className="fas fa-cog mr-3 w-4 text-center" /> 
-                    Paramètres
-                  </Link>
-                  <Link 
-                    to="/Mes-Commandes" 
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    onClick={() => setShowProfileMenu(false)}
-                  >
-                    <i className="fas fa-shopping-bag mr-3 w-4 text-center" /> 
-                    Mes Commandes
-                  </Link>
-                  <div className="border-t border-gray-100 my-1"></div>
-                  <button
-                    onClick={() => {
-                      dispatch(logout());
-                      setShowProfileMenu(false);
-                    }}
-                    className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <i className="fas fa-sign-out-alt mr-3 w-4 text-center" /> 
-                    Déconnexion
-                  </button>
-                </div>
-              )}
+            <div>
+              <p className="text-muted small mb-3">
+                <i className="fas fa-user-circle me-2"></i>
+                Connecté: <strong>{auth.user?.nom_et_prenom}</strong>
+              </p>
+              <Nav className="flex-column">
+                <Nav.Link as={Link} to="/profile" className="py-2 text-dark" onClick={() => setShowMobileMenu(false)}>
+                  <i className="fas fa-user me-3 text-primary" style={{ width: '20px' }}></i> Mon Profil
+                </Nav.Link>
+                <Nav.Link as={Link} to="/Mes-Commandes" className="py-2 text-dark" onClick={() => setShowMobileMenu(false)}>
+                  <i className="fas fa-shopping-bag me-3 text-primary" style={{ width: '20px' }}></i> Mes Commandes
+                </Nav.Link>
+                <Nav.Link onClick={() => { dispatch(logout()); setShowMobileMenu(false); }} className="py-2 text-danger">
+                  <i className="fas fa-sign-out-alt me-3" style={{ width: '20px' }}></i> Déconnexion
+                </Nav.Link>
+              </Nav>
             </div>
           ) : (
-            <div className="hidden lg:flex space-x-2">
-              {/* Login Button avec meilleure icône */}
-              <Link 
-                to="/login" 
-                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
-                aria-label="Connexion"
-                title="Connexion"
-              >
-                <i className="fas fa-right-to-bracket text-lg" />
-                <span className="text-sm">Connexion</span>
-              </Link>
-              {/* Register Button avec meilleure icône */}
-              <Link 
-                to="/inscrire" 
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md"
-                aria-label="S'inscrire"
-                title="S'inscrire"
-              >
-                <i className="fas fa-user-plus text-lg" />
-                <span className="text-sm">S'inscrire</span>
-              </Link>
+            <div className="d-grid gap-2">
+              <Button variant="outline-primary" as={Link} to="/login" onClick={() => setShowMobileMenu(false)}>
+                <i className="fas fa-right-to-bracket me-2"></i> Connexion
+              </Button>
+              <Button as={Link} to="/inscrire" onClick={() => setShowMobileMenu(false)} style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: 'none' }} className="text-white">
+                <i className="fas fa-user-plus me-2"></i> S'inscrire
+              </Button>
             </div>
           )}
 
-          {/* Wishlist & Cart */}
-          <div className="flex items-center space-x-2">
-            <Link 
-              to="/wishlist" 
-              className="text-gray-600 hover:text-red-500 p-2.5 rounded-lg hover:bg-gray-50 transition-colors relative"
-              aria-label="Liste de souhaits"
-            >
-              <i className="far fa-heart text-lg" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                0
-              </span>
-            </Link>
-            <Link 
-              to="/cart-shopping" 
-              className="text-gray-600 hover:text-blue-600 p-2.5 rounded-lg hover:bg-gray-50 transition-colors relative"
-              aria-label="Panier"
-            >
-              <i className="fas fa-shopping-cart text-lg" />
-              <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                3
-              </span>
-            </Link>
+          <hr />
+          <div className="d-flex gap-2">
+            <Button variant="outline-danger" as={Link} to="/wishlist" className="flex-fill" onClick={() => setShowMobileMenu(false)}>
+              <i className="far fa-heart me-2"></i> Favoris
+            </Button>
+            <Button variant="outline-primary" as={Link} to="/cart-shopping" className="flex-fill" onClick={() => setShowMobileMenu(false)}>
+              <i className="fas fa-shopping-cart me-2"></i> Panier
+            </Button>
           </div>
-
-          {/* Mobile Auth Icons */}
-          <div className="lg:hidden flex items-center space-x-2">
-            {auth.isLoggedIn ? (
-              <button
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="text-gray-600 hover:text-blue-600 p-2.5 rounded-lg hover:bg-gray-50 transition-colors"
-                aria-label="Menu profil"
-              >
-                <i className="fas fa-user-circle text-lg" />
-              </button>
-            ) : (
-              <>
-                <Link 
-                  to="/login" 
-                  className="text-gray-600 hover:text-blue-600 p-2.5 rounded-lg hover:bg-gray-50 transition-colors"
-                  aria-label="Connexion"
-                >
-                  <i className="fas fa-right-to-bracket text-lg" />
-                </Link>
-                <Link 
-                  to="/inscrire" 
-                  className="text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 p-2.5 rounded-lg transition-all duration-200 shadow-sm"
-                  aria-label="S'inscrire"
-                >
-                  <i className="fas fa-user-plus text-lg" />
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        <Offcanvas 
-          show={showMobileMenu} 
-          onHide={() => setShowMobileMenu(false)} 
-          placement="start" 
-          className="lg:hidden"
-        >
-          <Offcanvas.Header closeButton className="border-b border-gray-200">
-            <Offcanvas.Title className="flex items-center">
-              <img src={Company_Logo} className="h-8 w-auto mr-3" alt="Logo" />
-              Menu
-            </Offcanvas.Title>
-          </Offcanvas.Header>
-          <Offcanvas.Body>
-            {/* Navigation Mobile */}
-            <nav className="space-y-1 mb-6">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className="flex items-center py-3 px-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors font-medium"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  <i className={`fas fa-${link.path === '/' ? 'home' : link.path === '/categories' ? 'th-large' : link.path === '/MesDeals' ? 'tag' : 'envelope'} mr-3 w-5 text-center`} />
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-
-            {/* Auth Section Mobile */}
-            <div className="border-t border-gray-200 pt-4">
-              {auth.isLoggedIn ? (
-                <div className="space-y-1">
-                  <div className="px-4 py-2 text-sm text-gray-500">
-                    <i className="fas fa-user-circle mr-2" />
-                    Connecté en tant que <strong>{auth.user?.nom_et_prenom}</strong>
-                  </div>
-                  <Link 
-                    to="/profile" 
-                    className="flex items-center py-3 px-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    <i className="fas fa-user mr-3 w-5 text-center" />
-                    Mon Profil
-                  </Link>
-                  <Link 
-                    to="/Mes-Commandes" 
-                    className="flex items-center py-3 px-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    <i className="fas fa-shopping-bag mr-3 w-5 text-center" />
-                    Mes Commandes
-                  </Link>
-                  <button 
-                    onClick={() => {
-                      dispatch(logout());
-                      setShowMobileMenu(false);
-                    }}
-                    className="flex items-center w-full text-left py-3 px-4 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <i className="fas fa-sign-out-alt mr-3 w-5 text-center" />
-                    Déconnexion
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-2 px-4">
-                  <Link 
-                    to="/login" 
-                    className="flex items-center justify-center py-3 bg-white border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    <i className="fas fa-right-to-bracket mr-2" />
-                    Connexion
-                  </Link>
-                  <Link 
-                    to="/inscrire" 
-                    className="flex items-center justify-center py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all duration-200 font-medium shadow-md"
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    <i className="fas fa-user-plus mr-2" />
-                    S'inscrire
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Quick Actions Mobile */}
-            <div className="border-t border-gray-200 pt-4">
-              <div className="grid grid-cols-2 gap-2 px-4">
-                <Link 
-                  to="/wishlist" 
-                  className="flex items-center justify-center py-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  <i className="far fa-heart mr-2" />
-                  Favoris
-                </Link>
-                <Link 
-                  to="/cart-shopping" 
-                  className="flex items-center justify-center py-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium"
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  <i className="fas fa-shopping-cart mr-2" />
-                  Panier
-                </Link>
-              </div>
-            </div>
-          </Offcanvas.Body>
-        </Offcanvas>
-
-        {/* Mobile Profile Dropdown */}
-        {auth.isLoggedIn && showProfileMenu && (
-          <div className="lg:hidden absolute top-16 right-4 bg-white shadow-xl rounded-lg w-48 py-2 z-50 border border-gray-100">
-            <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100 mb-1">
-              <i className="fas fa-user-circle mr-2" />
-              {auth.user?.nom_et_prenom?.split(' ')[0] || "Utilisateur"}
-            </div>
-            <Link 
-              to="/profile" 
-              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-              onClick={() => setShowProfileMenu(false)}
-            >
-              <i className="fas fa-user mr-3 w-4 text-center" /> 
-              Mon Profil
-            </Link>
-            <Link 
-              to="/Mes-Commandes" 
-              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-              onClick={() => setShowProfileMenu(false)}
-            >
-              <i className="fas fa-shopping-bag mr-3 w-4 text-center" /> 
-              Mes Commandes
-            </Link>
-            <div className="border-t border-gray-100 my-1"></div>
-            <button
-              onClick={() => {
-                dispatch(logout());
-                setShowProfileMenu(false);
-              }}
-              className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <i className="fas fa-sign-out-alt mr-3 w-4 text-center" /> 
-              Déconnexion
-            </button>
-          </div>
-        )}
-      </div>
-    </header>
+        </Offcanvas.Body>
+      </Offcanvas>
+    </>
   );
 };
 

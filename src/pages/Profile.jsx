@@ -4,6 +4,7 @@ import { fetchUserProfile, updateUserProfile, changePassword } from "../store/sl
 import jackpotImage from "../assets/jackpotImage.png";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { Container, Row, Col, Card, Form, Button, Spinner, InputGroup } from 'react-bootstrap';
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -58,36 +59,63 @@ const Profile = () => {
     setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
   };
 
-  const togglePasswordVisibility = (field) => {
-    setShowPassword({
-      ...showPassword,
-      [field]: !showPassword[field]
-    });
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Remove empty fields and image field (don't update image through this form)
-    const cleanedData = Object.entries(formData).reduce((acc, [key, value]) => {
-      if (value !== "" && value !== null && key !== "image") {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
-
-    console.log("Sending profile data:", cleanedData);
+    // Nettoyer les données
+    const cleanedData = {};
+    Object.keys(formData).forEach(key => {
+      cleanedData[key] = formData[key] === "" ? null : formData[key];
+    });
     
-    dispatch(updateUserProfile(cleanedData))
-      .unwrap()
-      .then(() => {
-        setIsEditing(false);
-        toast.success("Profil mis à jour avec succès");
-      })
-      .catch((error) => {
-        console.error("Error updating profile:", error);
-        toast.error(error || "Erreur lors de la mise à jour du profil");
-      });
+    console.log("📤 Données nettoyées envoyées:", cleanedData);
+    
+    // Essayer différents formats de données
+    const dataAttempts = [
+      // Format 1: Données nettoyées
+      cleanedData,
+      // Format 2: Données minimales
+      {
+        nom_et_prenom: formData.nom_et_prenom,
+        email: formData.email
+      },
+      // Format 3: Format alternatif
+      {
+        name: formData.nom_et_prenom,
+        email: formData.email,
+        telephone: formData.tel,
+        birth_date: formData.date_de_naissance,
+        profession: formData.profession,
+        family_situation: formData.situation_familiale,
+        address: formData.address
+      }
+    ];
+    
+    const attemptUpdate = (attemptData, attemptNumber) => {
+      console.log(`🧪 Tentative ${attemptNumber}:`, attemptData);
+      
+      dispatch(updateUserProfile(attemptData))
+        .unwrap()
+        .then((response) => {
+          console.log(`✅ Tentative ${attemptNumber} réussie:`, response);
+          setIsEditing(false);
+          toast.success("Profil mis à jour avec succès");
+          dispatch(fetchUserProfile());
+        })
+        .catch((error) => {
+          console.error(`❌ Tentative ${attemptNumber} échouée`);
+          if (attemptNumber < dataAttempts.length) {
+            // Essayer la prochaine tentative après un court délai
+            setTimeout(() => attemptUpdate(dataAttempts[attemptNumber], attemptNumber + 1), 500);
+          } else {
+            console.error("❌ Toutes les tentatives ont échoué");
+            toast.error("Impossible de mettre à jour le profil. Vérifiez les données saisies.");
+          }
+        });
+    };
+    
+    // Commencer avec la première tentative
+    attemptUpdate(dataAttempts[0], 1);
   };
 
   const handlePasswordSubmit = (e) => {
@@ -114,13 +142,12 @@ const Profile = () => {
         toast.success("Mot de passe modifié avec succès");
       })
       .catch((error) => {
-        console.error("Error changing password:", error);
+        console.error("❌ Erreur changement mot de passe:", error);
         toast.error(error || "Erreur lors du changement de mot de passe");
       });
   };
 
   const cancelEdit = () => {
-    setIsEditing(false);
     if (Userprofile) {
       setFormData({
         nom_et_prenom: Userprofile.nom_et_prenom || "",
@@ -132,316 +159,297 @@ const Profile = () => {
         address: Userprofile.address || "",
       });
     }
+    setIsEditing(false);
   };
 
   const cancelPasswordChange = () => {
-    setIsChangingPassword(false);
     setPasswordData({
       new_password: "",
       new_password_confirmation: ""
     });
+    setIsChangingPassword(false);
   };
 
   if (loading && !Userprofile) {
     return (
-      <div className="w-full min-h-screen flex justify-center items-center">
+      <Container className="d-flex justify-content-center align-items-center min-vh-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-360 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement du profil...</p>
+          <Spinner animation="border" variant="primary" />
+          <p className="mt-3 text-muted">Chargement du profil...</p>
         </div>
-      </div>
+      </Container>
     );
   }
 
   return (
-    <div className="w-full min-h-screen flex justify-center items-center p-6">
-      <div className="bg-white shadow-xl rounded-3xl p-8 w-full md:w-2/3 lg:w-1/2 border border-gray-200">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b pb-4 mb-6">
-          <h2 className="text-xl font-bold text-gray-800">Mon Profil</h2>
-          <div className="flex space-x-4">
-            {!isEditing && !isChangingPassword && (
-              <>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="bg-gradient-to-r from-blue-360 to-orange-360 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-md transform hover:scale-105"
-                >
-                  Mettre à jour le profil
-                </button>
-                <button
-                  onClick={() => setIsChangingPassword(true)}
-                  className="bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300 ease-in-out shadow-md transform hover:scale-105"
-                >
-                  Changer le mot de passe
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Profile Content */}
-        <div>
-          {/* Profile Header Section */}
-          <div className="flex flex-col md:flex-row items-center justify-between mb-6 space-y-4 md:space-y-0">
-            {/* User Info */}
-            <div className="flex flex-col items-center text-center gap-4">
-              <img
-                src={
-                  Userprofile?.image
-                    ? `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${Userprofile.image}`
-                    : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZXNuwvzjUvZEQzX5xm0TJllYkRjXwOUlirQ&s"
-                }
-                alt="Profile"
-                className="w-32 h-32 rounded-full object-cover shadow-xl"
-                onError={(e) =>
-                  (e.target.src =
-                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZXNuwvzjUvZEQzX5xm0TJllYkRjXwOUlirQ&s")
-                }
-              />
-              <div>
-                <p className="text-lg font-semibold text-gray-800">
-                  {Userprofile?.nom_et_prenom || "Utilisateur"}
-                </p>
-                <p className="text-gray-600 text-lg">{Userprofile?.email || ""}</p>
+    <Container className="py-4">
+      <Row className="justify-content-center">
+        <Col xs={12} lg={10} xl={8}>
+          <Card className="shadow-lg border-0 rounded-3">
+            <Card.Header className="bg-white border-bottom py-3">
+              <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <h2 className="h4 mb-0 fw-bold">Mon Profil</h2>
+                {!isEditing && !isChangingPassword && (
+                  <div className="d-flex flex-column flex-sm-row gap-2">
+                    <Button variant="primary" size="sm" onClick={() => setIsEditing(true)}>
+                      <i className="bi bi-pencil me-2"></i>
+                      Mettre à jour
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={() => setIsChangingPassword(true)}>
+                      <i className="bi bi-key me-2"></i>
+                      Changer le mot de passe
+                    </Button>
+                  </div>
+                )}
               </div>
-            </div>
+            </Card.Header>
 
-            {/* Cards Section */}
-            <div className="grid grid-cols-3 gap-2 md:w-3/4">
-              <div className="flex flex-col items-center">
-                <div
-                  className="border rounded-3xl shadow-xl bg-blue-360 bg-contain md:bg-cover bg-no-repeat w-full h-32 flex items-end justify-center transition-all duration-300 ease-in-out transform hover:scale-105 cursor-pointer"
-                  style={{ backgroundImage: `url(${jackpotImage})` }}
-                >
-                  <p className="text-white text-lg font-bold mb-2">
-                    {Userprofile?.cagnotte_balance || 0}
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-col items-center">
-                <img
-                  className="border rounded-3xl shadow-xl bg-contain md:bg-cover bg-no-repeat w-full h-32 transition-all duration-300 ease-in-out transform hover:scale-105 bg-orange-360 cursor-pointer"
-                  src="./src/assets/levelup.png"
-                  alt="Level Up"
-                />
-              </div>
-              <div className="flex flex-col items-center">
-                <img
-                  className="border rounded-3xl shadow-xl bg-contain md:bg-cover bg-no-repeat w-full h-32 transition-all duration-300 ease-in-out transform hover:scale-105 bg-blue-360 cursor-pointer"
-                  src="./src/assets/superdeals.png"
-                  alt="Super Deals"
-                  onClick={() => navigate("/MesDeals")}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Personal Information Section */}
-          <div>
-            <p className="text-blue-360 text-lg font-bold mb-6">
-              Informations personnelles
-            </p>
-
-            {/* Change Password Form */}
-            {isChangingPassword ? (
-              <form onSubmit={handlePasswordSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 gap-6">
-                  {/* New Password */}
-                  <div className="flex flex-col">
-                    <label htmlFor="new_password" className="text-gray-700 font-medium mb-2">
-                      Nouveau mot de passe
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="new_password"
-                        name="new_password"
-                        type={showPassword.new ? "text" : "password"}
-                        value={passwordData.new_password}
-                        onChange={handlePasswordChange}
-                        className="w-full px-4 py-3 rounded-md border border-gray-300 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-                        required
-                        minLength="6"
-                        placeholder="Entrez votre nouveau mot de passe"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => togglePasswordVisibility("new")}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      >
-                        {showPassword.new ? "👁️" : "👁️‍🗨️"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Confirm New Password */}
-                  <div className="flex flex-col">
-                    <label
-                      htmlFor="new_password_confirmation"
-                      className="text-gray-700 font-medium mb-2"
-                    >
-                      Confirmer le nouveau mot de passe
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="new_password_confirmation"
-                        name="new_password_confirmation"
-                        type={showPassword.confirm ? "text" : "password"}
-                        value={passwordData.new_password_confirmation}
-                        onChange={handlePasswordChange}
-                        className="w-full px-4 py-3 rounded-md border border-gray-300 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-                        required
-                        minLength="6"
-                        placeholder="Confirmez votre nouveau mot de passe"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => togglePasswordVisibility("confirm")}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      >
-                        {showPassword.confirm ? "👁️" : "👁️‍🗨️"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-4 mt-8">
-                  <button
-                    type="button"
-                    onClick={cancelPasswordChange}
-                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold px-6 py-3 rounded-xl transition duration-300"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="bg-blue-360 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? "En cours..." : "Changer le mot de passe"}
-                  </button>
-                </div>
-              </form>
-            ) : isEditing ? (
-              /* Edit Profile Form */
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex flex-col">
-                    <label htmlFor="nom_et_prenom" className="text-gray-700 font-medium mb-2">
-                      Nom et Prénom
-                    </label>
-                    <input
-                      id="nom_et_prenom"
-                      name="nom_et_prenom"
-                      value={formData.nom_et_prenom}
-                      onChange={handleChange}
-                      className="px-4 py-3 rounded-md border border-gray-300 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-                      placeholder="Votre nom complet"
+            <Card.Body className="p-3 p-md-4">
+              {/* Profile Header - Section responsive */}
+              <Row className="mb-4">
+                <Col xs={12} md={4} className="text-center mb-3 mb-md-0">
+                  <div className="d-flex flex-column align-items-center">
+                    <img
+                      src={Userprofile?.image || ""}
+                      alt="Profile"
+                      className="rounded-circle img-fluid shadow"
+                      style={{ 
+                        width: '120px', 
+                        height: '120px', 
+                        objectFit: 'cover',
+                        minWidth: '120px'
+                      }}
+                      onError={(e) => {
+                        e.target.src = "";
+                      }}
                     />
+                    <h5 className="mt-3 mb-1 text-break">{Userprofile?.nom_et_prenom || "Utilisateur"}</h5>
+                    <p className="text-muted small text-break">{Userprofile?.email || ""}</p>
                   </div>
-                  <div className="flex flex-col">
-                    <label htmlFor="email" className="text-gray-700 font-medium mb-2">
-                      Email
-                    </label>
-                    <input
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      type="email"
-                      className="px-4 py-3 rounded-md border border-gray-300 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-                      placeholder="votre@email.com"
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label htmlFor="tel" className="text-gray-700 font-medium mb-2">
-                      Téléphone
-                    </label>
-                    <input
-                      id="tel"
-                      name="tel"
-                      value={formData.tel}
-                      onChange={handleChange}
-                      className="px-4 py-3 rounded-md border border-gray-300 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-                      placeholder="+216 XX XXX XXX"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label htmlFor="date_de_naissance" className="text-gray-700 font-medium mb-2">
-                      Date de naissance
-                    </label>
-                    <input
-                      id="date_de_naissance"
-                      name="date_de_naissance"
-                      value={formData.date_de_naissance}
-                      onChange={handleChange}
-                      type="date"
-                      className="px-4 py-3 rounded-md border border-gray-300 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-                    />
-                  </div>
-                  <div className="flex flex-col md:col-span-2">
-                    <label htmlFor="address" className="text-gray-700 font-medium mb-2">
-                      Adresse
-                    </label>
-                    <input
-                      id="address"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleChange}
-                      className="px-4 py-3 rounded-md border border-gray-300 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 ease-in-out"
-                      placeholder="Votre adresse complète"
-                    />
-                  </div>
-                </div>
+                </Col>
 
-                <div className="flex justify-end space-x-4 mt-8">
-                  <button
-                    type="button"
-                    onClick={cancelEdit}
-                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold px-6 py-3 rounded-xl transition duration-300"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="bg-gradient-to-r from-blue-360 to-orange-360 text-white font-bold px-6 py-3 rounded-xl transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? "En cours..." : "Sauvegarder"}
-                  </button>
+                <Col xs={12} md={8}>
+                  <Row className="g-2 g-sm-3">
+                    <Col xs={6} sm={4}>
+                     
+                    </Col>
+                   
+                    <Col xs={12} sm={4} className="mt-2 mt-sm-0">
+                  
+                    </Col>
+                  </Row>
+                </Col>
+              </Row>
+
+              <hr />
+
+              <h5 className="text-primary mb-3 mb-md-4">Informations personnelles</h5>
+
+              {/* Change Password Form */}
+              {isChangingPassword ? (
+                <Form onSubmit={handlePasswordSubmit}>
+                  <Row className="g-2 g-md-3">
+                    <Col xs={12} md={6}>
+                      <Form.Group className="mb-2 mb-md-3">
+                        <Form.Label className="fw-medium">Nouveau mot de passe *</Form.Label>
+                        <InputGroup>
+                          <Form.Control
+                            type={showPassword.new ? "text" : "password"}
+                            name="new_password"
+                            value={passwordData.new_password}
+                            onChange={handlePasswordChange}
+                            required
+                            minLength="6"
+                            placeholder="Nouveau mot de passe"
+                            size="sm"
+                          />
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            onClick={() => setShowPassword({...showPassword, new: !showPassword.new})}
+                          >
+                            <i className={`bi ${showPassword.new ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                          </Button>
+                        </InputGroup>
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Group className="mb-2 mb-md-3">
+                        <Form.Label className="fw-medium">Confirmer le mot de passe *</Form.Label>
+                        <InputGroup>
+                          <Form.Control
+                            type={showPassword.confirm ? "text" : "password"}
+                            name="new_password_confirmation"
+                            value={passwordData.new_password_confirmation}
+                            onChange={handlePasswordChange}
+                            required
+                            minLength="6"
+                            placeholder="Confirmer le mot de passe"
+                            size="sm"
+                          />
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            onClick={() => setShowPassword({...showPassword, confirm: !showPassword.confirm})}
+                          >
+                            <i className={`bi ${showPassword.confirm ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                          </Button>
+                        </InputGroup>
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <div className="d-flex justify-content-end gap-2 mt-3 mt-md-4">
+                    <Button variant="secondary" size="sm" onClick={cancelPasswordChange}>
+                      Annuler
+                    </Button>
+                    <Button variant="primary" size="sm" type="submit" disabled={loading}>
+                      {loading ? <Spinner animation="border" size="sm" /> : "Changer le mot de passe"}
+                    </Button>
+                  </div>
+                </Form>
+              ) : isEditing ? (
+                /* Edit Profile Form */
+                <Form onSubmit={handleSubmit}>
+                  <Row className="g-2 g-md-3">
+                    <Col xs={12} md={6}>
+                      <Form.Group className="mb-2 mb-md-3">
+                        <Form.Label className="fw-medium">Nom et Prénom *</Form.Label>
+                        <Form.Control
+                          name="nom_et_prenom"
+                          value={formData.nom_et_prenom}
+                          onChange={handleChange}
+                          placeholder="Votre nom complet"
+                          required
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Group className="mb-2 mb-md-3">
+                        <Form.Label className="fw-medium">Email *</Form.Label>
+                        <Form.Control
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          placeholder="votre@email.com"
+                          required
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Group className="mb-2 mb-md-3">
+                        <Form.Label className="fw-medium">Téléphone</Form.Label>
+                        <Form.Control
+                          name="tel"
+                          value={formData.tel}
+                          onChange={handleChange}
+                          placeholder="+216 XX XXX XXX"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Group className="mb-2 mb-md-3">
+                        <Form.Label className="fw-medium">Date de naissance</Form.Label>
+                        <Form.Control
+                          type="date"
+                          name="date_de_naissance"
+                          value={formData.date_de_naissance}
+                          onChange={handleChange}
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Group className="mb-2 mb-md-3">
+                        <Form.Label className="fw-medium">Profession</Form.Label>
+                        <Form.Control
+                          name="profession"
+                          value={formData.profession}
+                          onChange={handleChange}
+                          placeholder="Votre profession"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Group className="mb-2 mb-md-3">
+                        <Form.Label className="fw-medium">Situation familiale</Form.Label>
+                        <Form.Control
+                          name="situation_familiale"
+                          value={formData.situation_familiale}
+                          onChange={handleChange}
+                          placeholder="Votre situation familiale"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12}>
+                      <Form.Group className="mb-2 mb-md-3">
+                        <Form.Label className="fw-medium">Adresse</Form.Label>
+                        <Form.Control
+                          name="address"
+                          value={formData.address}
+                          onChange={handleChange}
+                          placeholder="Votre adresse complète"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <div className="d-flex justify-content-end gap-2 mt-3 mt-md-4">
+                    <Button variant="secondary" size="sm" onClick={cancelEdit}>
+                      Annuler
+                    </Button>
+                    <Button variant="primary" size="sm" type="submit" disabled={loading}>
+                      {loading ? <Spinner animation="border" size="sm" /> : "Sauvegarder"}
+                    </Button>
+                  </div>
+                </Form>
+              ) : (
+                /* Display Profile Information - Version responsive */
+                <div className="table-responsive">
+                  <table className="table table-borderless">
+                    <tbody>
+                      <tr className="border-bottom">
+                        <td className="fw-semibold text-muted" style={{ width: '140px' }}>Nom et Prénom:</td>
+                        <td className="text-break">{formData.nom_et_prenom || "Non renseigné"}</td>
+                      </tr>
+                      <tr className="border-bottom">
+                        <td className="fw-semibold text-muted">Email:</td>
+                        <td className="text-break">{formData.email || "Non renseigné"}</td>
+                      </tr>
+                      <tr className="border-bottom">
+                        <td className="fw-semibold text-muted">Téléphone:</td>
+                        <td className="text-break">{formData.tel || "Non renseigné"}</td>
+                      </tr>
+                      <tr className="border-bottom">
+                        <td className="fw-semibold text-muted">Adresse:</td>
+                        <td className="text-break">{formData.address || "Non renseigné"}</td>
+                      </tr>
+                      <tr className="border-bottom">
+                        <td className="fw-semibold text-muted">Date de naissance:</td>
+                        <td className="text-break">{formData.date_de_naissance || "Non renseigné"}</td>
+                      </tr>
+                      <tr className="border-bottom">
+                        <td className="fw-semibold text-muted">Profession:</td>
+                        <td className="text-break">{formData.profession || "Non renseigné"}</td>
+                      </tr>
+                      <tr>
+                        <td className="fw-semibold text-muted">Situation familiale:</td>
+                        <td className="text-break">{formData.situation_familiale || "Non renseigné"}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
-              </form>
-            ) : (
-              /* Display Profile Information */
-              <div className="space-y-4">
-                <div className="flex border-b pb-3">
-                  <span className="font-medium text-gray-700 w-48">Nom et Prénom:</span>
-                  <span className="text-gray-900">{formData.nom_et_prenom || "Non renseigné"}</span>
-                </div>
-                <div className="flex border-b pb-3">
-                  <span className="font-medium text-gray-700 w-48">Email:</span>
-                  <span className="text-gray-900">{formData.email || "Non renseigné"}</span>
-                </div>
-                <div className="flex border-b pb-3">
-                  <span className="font-medium text-gray-700 w-48">Téléphone:</span>
-                  <span className="text-gray-900">{formData.tel || "Non renseigné"}</span>
-                </div>
-                <div className="flex border-b pb-3">
-                  <span className="font-medium text-gray-700 w-48">Adresse:</span>
-                  <span className="text-gray-900">{formData.address || "Non renseigné"}</span>
-                </div>
-                <div className="flex border-b pb-3">
-                  <span className="font-medium text-gray-700 w-48">Date de naissance:</span>
-                  <span className="text-gray-900">
-                    {formData.date_de_naissance || "Non renseigné"}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
   );
 };
 

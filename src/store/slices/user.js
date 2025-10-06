@@ -7,28 +7,15 @@ import { logout } from "./authSlice";
 // Fonction pour récupérer le token de manière cohérente
 const getAuthToken = () => {
   try {
-    // MÊME ORDRE QUE authSlice.js :
-    // Priorité 1: localStorage
     const localToken = localStorage.getItem("token");
-    
-    // Priorité 2: Redux store
     const state = store.getState();
     const reduxToken = state?.auth?.token;
-    
-    // Priorité 3: Cookies
     const cookieToken = document.cookie
       .split('; ')
       .find(row => row.startsWith('auth_token='))
       ?.split('=')[1];
     
     const token = localToken || reduxToken || cookieToken;
-    
-    console.log("🔍 Recherche token user.js:", {
-      localStorage: !!localToken,
-      redux: !!reduxToken,
-      cookie: !!cookieToken,
-      final: !!token
-    });
     
     if (!token) {
       console.warn("❌ Aucun token d'authentification trouvé dans user.js");
@@ -41,6 +28,7 @@ const getAuthToken = () => {
     return null;
   }
 };
+
 // Test de validité du token
 const testTokenValidity = async (token) => {
   try {
@@ -56,7 +44,6 @@ const testTokenValidity = async (token) => {
       }
     );
     
-    // Vérifier que la réponse contient bien des données utilisateur
     if (response.data && (response.data.id || response.data.email || response.data.ID_client)) {
       console.log("✅ Token valide - Utilisateur:", response.data.nom_et_prenom || response.data.email);
       return true;
@@ -71,12 +58,10 @@ const testTokenValidity = async (token) => {
       message: error.message
     });
     
-    // Si c'est une erreur 401/403, le token est invalide
     if (error.response?.status === 401 || error.response?.status === 403) {
       return false;
     }
     
-    // Pour les autres erreurs (réseau, etc.), on considère le token comme valide
     console.warn("⚠️ Erreur réseau, on considère le token valide");
     return true;
   }
@@ -134,7 +119,6 @@ export const fetchUserProfile = createAsyncThunk(
         throw new Error("Token d'authentification non trouvé");
       }
 
-      // Tester d'abord la validité du token
       console.log("🔐 Test de validité du token...");
       const isValid = await testTokenValidity(token);
       if (!isValid) {
@@ -159,13 +143,10 @@ export const fetchUserProfile = createAsyncThunk(
       
       const errorMessage = error.response?.data?.message || error.message || "Erreur lors du chargement du profil";
       
-      // Si erreur 401/403, déconnecter l'utilisateur
       if (error.response?.status === 401 || error.response?.status === 403 || error.message.includes("Token invalide") || error.message.includes("Token non trouvé")) {
         console.log("🔒 Session expirée, déconnexion...");
         toast.error("Session expirée. Veuillez vous reconnecter.");
-        // Déclencher le logout
         dispatch(logout());
-        // Redirection après un délai
         setTimeout(() => {
           window.location.href = '/login';
         }, 2000);
@@ -180,7 +161,7 @@ export const fetchUserProfile = createAsyncThunk(
   }
 );
 
-// Update user profile
+// Update user profile - VERSION CORRIGÉE AVEC MEILLEURE GESTION D'ERREUR
 export const updateUserProfile = createAsyncThunk(
   "user/updateUserProfile",
   async (profileData, { rejectWithValue, dispatch }) => {
@@ -191,8 +172,9 @@ export const updateUserProfile = createAsyncThunk(
         throw new Error("Token d'authentification manquant");
       }
 
-      console.log("📡 Mise à jour du profil utilisateur...");
-      const { data } = await axios.post(
+      console.log("📡 Données envoyées pour mise à jour profil:", profileData);
+
+      const response = await axios.post(
         "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/auth/profile/update",
         profileData,
         {
@@ -203,19 +185,53 @@ export const updateUserProfile = createAsyncThunk(
           timeout: 15000
         }
       );
-      toast.success("Profil mis à jour avec succès");
-      return data;
-    } catch (error) {
-      console.error("❌ Erreur mise à jour profil:", error);
-      const errorMessage = error.response?.data?.message || error.message || "Erreur lors de la mise à jour du profil";
       
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        toast.error("Session expirée. Veuillez vous reconnecter.");
+      console.log("✅ Réponse succès mise à jour profil:", response.data);
+      toast.success("Profil mis à jour avec succès");
+      return response.data;
+    } catch (error) {
+      console.error("❌ Erreur COMPLÈTE mise à jour profil:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      
+      let errorMessage = "Erreur lors de la mise à jour du profil";
+      
+      if (error.response?.status === 422) {
+        // Gestion améliorée des erreurs 422
+        if (error.response?.data?.errors) {
+          const validationErrors = error.response.data.errors;
+          console.error("🚨 ERREURS DE VALIDATION DÉTAILLÉES:", validationErrors);
+          
+          // Extraire tous les messages d'erreur
+          const allErrorMessages = [];
+          Object.keys(validationErrors).forEach(field => {
+            validationErrors[field].forEach(msg => {
+              allErrorMessages.push(`${field}: ${msg}`);
+            });
+          });
+          
+          errorMessage = allErrorMessages.join(', ');
+          console.error("📝 Messages d'erreur formatés:", errorMessage);
+          toast.error(`Erreur: ${errorMessage}`);
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+          toast.error(errorMessage);
+        } else {
+          console.error("🚨 DONNÉES ERREUR 422:", error.response.data);
+          errorMessage = "Erreur de validation des données";
+          toast.error(errorMessage);
+        }
+      } else if (error.response?.status === 401 || error.response?.status === 403) {
+        errorMessage = "Session expirée. Veuillez vous reconnecter.";
+        toast.error(errorMessage);
         dispatch(logout());
         setTimeout(() => {
           window.location.href = '/login';
         }, 2000);
       } else {
+        errorMessage = error.response?.data?.message || error.message || "Erreur lors de la mise à jour du profil";
         toast.error(errorMessage);
       }
       
@@ -348,7 +364,6 @@ export const googleRegister = createAsyncThunk(
       const errorMessage = error.response?.data?.message || "Erreur lors de l'inscription Google";
       
       if (error.response?.status === 409) {
-        // Email déjà existant
         toast.error("Cet email est déjà utilisé. Veuillez vous connecter.");
       } else {
         toast.error(errorMessage);

@@ -1,7 +1,9 @@
 import axios from "axios";
 
+export const API_BASE_URL = "https://localhost:8000";
+
 const api = axios.create({
-  baseURL: "https://tn360-122923924979.europe-west1.run.app", // Replace with your Laravel API URL
+  baseURL: API_BASE_URL, // Replace with your Laravel API URL
   headers: {
     "Content-Type": "application/json",
   },

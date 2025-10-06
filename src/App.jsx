@@ -1,25 +1,28 @@
-import { BrowserRouter as Router, Route, Routes, Outlet } from "react-router-dom";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { Outlet } from "react-router-dom";
+import { fetchCategories } from "./store/slices/categorie";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import Home from "./pages/Home";
-import Products from "./pages/Products";
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
 import Header from "./components/Header";
-import PivateRoute from "./components/PrivateRoute";
-import "./styles/styles.css";
-import toast, { Toaster } from "react-hot-toast";
 import Footer from "./components/Footer";
+import toast, { Toaster } from "react-hot-toast";
+import "./styles/styles.css";
 
 function App() {
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        // Charger les catégories dès le démarrage de l'application
+        dispatch(fetchCategories());
+    }, [dispatch]);
+
     return (
-    
         <div>
-        <Toaster/>
-        <Header/>
-        <Outlet/>
-        <Footer/>
-       
-       </div>
+            <Toaster/>
+            <Header/>
+            <Outlet/>
+            <Footer/>
+        </div>
     );
 }
 

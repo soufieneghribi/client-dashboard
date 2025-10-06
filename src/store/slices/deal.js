@@ -8,7 +8,7 @@ export const fetchDealDepense = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        "https://tn360-122923924979.europe-west1.run.app/api/v1/dealDepense"
+        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/dealDepense"
       );
       return response.data; // Return data to be handled in the fulfilled case
     } catch (err) {

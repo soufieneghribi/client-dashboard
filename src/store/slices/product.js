@@ -4,7 +4,7 @@ import axios from "axios";
 export const fetchProduct= createAsyncThunk("product/fetchProduct", async(id_type, { rejectWithValue }) => {
     try {
         const response = await axios.get(
-       `https://tn360-122923924979.europe-west1.run.app/api/v1/products/type/${id_type}`
+       `https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/products/type/${id_type}`
       ); 
       return response.data; 
     } catch (error) {
@@ -14,7 +14,7 @@ export const fetchProduct= createAsyncThunk("product/fetchProduct", async(id_typ
 export const fetchProductById= createAsyncThunk("product/fetchProductById", async(idProduct, { rejectWithValue }) => {
   try {
       const response = await axios.get(
-     `https://tn360-122923924979.europe-west1.run.app/api/v1/products/product/${idProduct}`
+     `https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/products/product/${idProduct}`
     ); 
     return response.data; 
   } catch (error) {
@@ -24,7 +24,7 @@ export const fetchProductById= createAsyncThunk("product/fetchProductById", asyn
 export const fetchAllProduct= createAsyncThunk("product/fetchAllProduct", async(_, { rejectWithValue }) => {
   try {
       const response = await axios.get(
-     `https://tn360-122923924979.europe-west1.run.app/api/v1/products/allproducts`
+     `https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/products/allproducts`
     ); 
     return response.data; 
   } catch (error) {

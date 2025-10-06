@@ -5,76 +5,78 @@ import { fetchBanners } from "../store/slices/banners";
 const Banners = () => {
   const { banners = [], loading, error } = useSelector((state) => state.banners);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const itemsPerSlide = 1; // Number of items per slide
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(fetchBanners());
   }, [dispatch]);
 
-  // Group banners into slides
-  const slides = banners.reduce((acc, banner, index) => {
-    
-    const slideIndex = Math.floor(index / itemsPerSlide);
-    if (!acc[slideIndex]) {
-      acc[slideIndex] = [];
-    }
-    acc[slideIndex].push(banner);
-    return acc;
-  }, []);
-  console.log(slides)
-  
-
-  // Handle the previous slide
+  // Aller à la slide précédente
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
   };
 
-  // Handle the next slide
+  // Aller à la slide suivante
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
   };
 
-  // Auto-transition the slides every 3 seconds
+  // Auto-slide toutes les 3 secondes
   useEffect(() => {
-    const slideTimeout = setTimeout(() => {
-      nextSlide(); // Move to the next slide after 3 seconds
-    }, 3000); // Change slide every 3 seconds (3000 ms)
-
-    return () => clearTimeout(slideTimeout); // Cleanup the timeout when component unmounts or when the currentIndex changes
-  }, [currentIndex]); // Depend on currentIndex so the slide changes after each transition
+    const timer = setTimeout(nextSlide, 3000);
+    return () => clearTimeout(timer);
+  }, [currentIndex, banners.length]);
 
   if (loading) return <p>Loading banners...</p>;
   if (error) return <p>Failed to load banners. Please try again.</p>;
+  if (banners.length === 0) return <p>No banners found.</p>;
 
   return (
-    <div>
-      <div id="default-carousel" className="overflow-hidden shadow-lg ">
-        {/* Carousel wrapper */}
-        <div className="">
-          {slides.map((slide, slideIndex) => (
-            
-            <div
-              key={slideIndex}
-              className={`duration-700 ease-in-out ${currentIndex === slideIndex ? "block" : "hidden"} `}
-            >
-              {slide.map((banner) => (
-                <div>
-                <img
-                  key={banner.id} // Assuming banners have a unique id
-                  src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}`}
-                  alt={banner.title || "Banner Image"}
-                  className="h-[150px] sm:h-[180px] md:h-[250px] lg:h-[350px] xl:h-[400px] w-full object-cover"/>
-                  
-                  </div>
-                ))}
-              
-            </div>
-          ))}
-        </div>
+    <div className="relative w-full overflow-hidden">
+      {/* Slides container */}
+      <div
+        className="flex transition-transform duration-700 ease-in-out"
+        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+      >
+        {banners.map((banner) => (
+          <div key={banner.id} className="w-full flex-shrink-0">
+            <img
+              src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}`}
+              alt={banner.title || "Banner Image"}
+              className="w-full h-[400px] object-cover" 
+              // 👉 tu peux changer h-[400px] en ce que tu veux (ex: h-[250px], h-[600px], h-screen...)
+            />
+          </div>
+        ))}
+      </div>
 
-        
+      {/* Bouton précédent */}
+      <button
+        onClick={prevSlide}
+        className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition"
+      >
+        ❮
+      </button>
 
+      {/* Bouton suivant */}
+      <button
+        onClick={nextSlide}
+        className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition"
+      >
+        ❯
+      </button>
+
+      {/* Indicateurs */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        {banners.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`w-3 h-3 rounded-full transition ${
+              currentIndex === index ? "bg-white" : "bg-white/50 hover:bg-white/80"
+            }`}
+          />
+        ))}
       </div>
     </div>
   );

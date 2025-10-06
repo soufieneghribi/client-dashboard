@@ -7,7 +7,7 @@ export const fetchCategories = createAsyncThunk(
     "categorie/fetchCategories", async (_, { rejectWithValue }) => {
     try {
         const response = await axios.get(
-        "https://tn360-122923924979.europe-west1.run.app/api/v1/categories/article-types"
+        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/categories/article-types"
       ); 
       return response.data; 
     } catch (error) {

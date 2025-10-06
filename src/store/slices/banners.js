@@ -5,7 +5,7 @@ import axios from "axios";
 export const fetchBanners=createAsyncThunk("banners/fetchBanners", async (_, { rejectWithValue }) => {
     try {
         const response = await axios.get(
-        "https://tn360-122923924979.europe-west1.run.app/api/v1/banners/get-all"
+        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/banners/get-all"
       ); 
       return response.data; 
     } catch (error) {

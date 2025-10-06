@@ -8,7 +8,7 @@ export const fetchOrder = createAsyncThunk(
   async (auth_token, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        "https://tn360-122923924979.europe-west1.run.app/api/v1/customer/order/list",
+        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/customer/order/list",
         {
           headers: {
             Authorization: `Bearer ${auth_token}`, // Include the token in the header

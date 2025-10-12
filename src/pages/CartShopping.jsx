@@ -10,7 +10,7 @@ import { fetchUserProfile, updateCagnotteInDB } from "../store/slices/user";
 const CartShopping = () => {
   const [cartItems, setCartItems] = useState([]);
   const { Userprofile } = useSelector((state) => state.user);
-  const [show, setShow] = useState(false);  // Modal visibility state
+  const [show, setShow] = useState(false);
   const navigate = useNavigate();
   const auth = useSelector((state) => state.auth);
   const dispatch = useDispatch();
@@ -18,10 +18,8 @@ const CartShopping = () => {
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
-
-
   const Annuler = () => {
-    setShow(false);  // Close the modal without making changes
+    setShow(false);
   };
 
   // Load cart from cookies and manage user login
@@ -60,7 +58,7 @@ const CartShopping = () => {
   const calculateTotal = useMemo(() => {
     const subtotal = cartItems.reduce((acc, item) => acc + parseFloat(item.total), 0);
     const QTotal = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-    const delivery = QTotal >= 5 ? 0 : 5; // Free delivery for 5+ items
+    const delivery = QTotal >= 5 ? 0 : 5;
     const totalTTC = (subtotal + delivery).toFixed(2);
     return { subtotal, delivery, totalTTC };
   }, [cartItems]);
@@ -80,73 +78,66 @@ const CartShopping = () => {
     quantity: el.quantity,
   }));
 
- // Dans CartShopping.jsx - MODIFIER la fonction handleCheckout
-const handleCheckout = () => {
-  if (cartItems.length === 0) {
-    toast.error("Votre panier est vide");
-    return;
-  }
+  const handleCheckout = () => {
+    if (cartItems.length === 0) {
+      toast.error("Votre panier est vide");
+      return;
+    }
 
-  if (!auth.isLoggedIn) {
-    toast.error("Vous devez être connecté pour effectuer une commande.");
-    navigate("/login");
-    return;
-  }
+    if (!auth.isLoggedIn) {
+      toast.error("Vous devez être connecté pour effectuer une commande.");
+      navigate("/login");
+      return;
+    }
 
-  // ✅ CORRECTION : Calculer la déduction cagnotte
-  const cagnotteDeduction = calculateCagnotteDeduction();
-  
-  // ✅ CORRECTION : Transmettre TOUTES les données nécessaires
-  const checkoutData = {
-    orderDetails: cartItems.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: parseFloat(item.price === 0 ? item.Initialprice : item.price),
-      quantity: parseInt(item.quantity),
-      total: parseFloat(item.total)
-    })),
-    subtotal: parseFloat(subtotal),
-    deliveryFee: parseFloat(delivery), // ✅ Utiliser le même calcul
-    totalTTC: parseFloat(totalTTC),
-    cagnotteDeduction: parseFloat(cagnotteDeduction) // ✅ Ajouter la déduction
+    const cagnotteDeduction = calculateCagnotteDeduction();
+    
+    const checkoutData = {
+      orderDetails: cartItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: parseFloat(item.price === 0 ? item.Initialprice : item.price),
+        quantity: parseInt(item.quantity),
+        total: parseFloat(item.total)
+      })),
+      subtotal: parseFloat(subtotal),
+      deliveryFee: parseFloat(delivery),
+      totalTTC: parseFloat(totalTTC),
+      cagnotteDeduction: parseFloat(cagnotteDeduction)
+    };
+
+    console.log("🛒 Données transmises à OrderConfirmation:", checkoutData);
+    
+    toast.success("Commande validée ! Merci pour votre achat.");
+    Cookies.remove("cart");
+    navigate("/order-confirmation", { state: checkoutData });
   };
 
-  console.log("🛒 Données transmises à OrderConfirmation:", checkoutData);
-  
-  toast.success("Commande validée ! Merci pour votre achat.");
-  Cookies.remove("cart");
-  navigate("/order-confirmation", { state: checkoutData });
-};
+  const calculateCagnotteDeduction = () => {
+    if (!Userprofile?.cagnotte_balance) return 0;
+    
+    const cagnotteBalance = parseFloat(Userprofile.cagnotte_balance);
+    const cartSubtotal = parseFloat(subtotal);
+    
+    return Math.min(cagnotteBalance, cartSubtotal);
+  };
 
-// ✅ AJOUTER cette fonction pour calculer la déduction cagnotte
-const calculateCagnotteDeduction = () => {
-  if (!Userprofile?.cagnotte_balance) return 0;
-  
-  const cagnotteBalance = parseFloat(Userprofile.cagnotte_balance);
-  const cartSubtotal = parseFloat(subtotal);
-  
-  // La déduction ne peut pas dépasser le sous-total
-  return Math.min(cagnotteBalance, cartSubtotal);
-};
-
-// ✅ MODIFIER la fonction cagnotteComfirmation pour stocker la déduction
-const cagnotteComfirmation = () => {
-  const deduction = calculateCagnotteDeduction();
-  
-  if (Userprofile.cagnotte_balance >= subtotal) {
-    const updatedBalance = Userprofile.cagnotte_balance - subtotal;
-    dispatch(updateCagnotteInDB(updatedBalance));
-    toast.success("Votre cagnotte a été utilisée pour régler votre commande !");
-  } else {
-    const updatedBalance = 0;
-    dispatch(updateCagnotteInDB(updatedBalance));
-    toast.success("Votre cagnotte a été utilisée partiellement !");
-  }
-  
-  // ✅ Stocker la déduction pour la réutiliser au checkout
-  localStorage.setItem('cagnotte_deduction', deduction.toString());
-  setShow(false);
-};
+  const cagnotteComfirmation = () => {
+    const deduction = calculateCagnotteDeduction();
+    
+    if (Userprofile.cagnotte_balance >= subtotal) {
+      const updatedBalance = Userprofile.cagnotte_balance - subtotal;
+      dispatch(updateCagnotteInDB(updatedBalance));
+      toast.success("Votre cagnotte a été utilisée pour régler votre commande !");
+    } else {
+      const updatedBalance = 0;
+      dispatch(updateCagnotteInDB(updatedBalance));
+      toast.success("Votre cagnotte a été utilisée partiellement !");
+    }
+    
+    localStorage.setItem('cagnotte_deduction', deduction.toString());
+    setShow(false);
+  };
 
   // Handle quantity update
   const handleQuantityUpdate = (itemId, newQuantity) => {
@@ -165,68 +156,133 @@ const cagnotteComfirmation = () => {
   };
 
   return (
-    <div className="cart-container p-4 sm:p-8">
+    <div className="container py-4 py-md-5">
       {cartItems.length === 0 ? (
         <div className="text-center">
-          <p>Votre panier est vide.</p>
+          <p className="mb-4">Votre panier est vide.</p>
           <button
             onClick={() => navigate("/")}
-            className="mt-6 px-6 py-3 bg-orange-500 text-white rounded hover:bg-orange-600"
+            className="btn px-4 py-2 text-white"
+            style={{ backgroundColor: '#f97316' }}
           >
             Continuer vos achats
           </button>
         </div>
       ) : (
-        <div className="flex flex-col lg:flex-row lg:space-x-8">
+        <div className="row g-4">
           {/* Cart Items */}
-          <div className="flex-1">
-            <h2 className="text-xl font-bold mb-4">Panier</h2>
-            <div className="border rounded-lg overflow-hidden">
-              <div className="flex justify-between p-4 font-bold bg-gray-100">
-                <p className="flex-1">Produit</p>
-                <div className="flex w-1/2 justify-between">
-                  <p className="w-1/4 text-center">Prix</p>
-                  <p className="w-1/4 text-center">Quantité</p>
-                  <p className="w-1/4 text-center">Total</p>
-                  <p className="w-1/4 text-center"></p>
+          <div className="col-lg-8">
+            <h2 className="h4 fw-bold mb-4">Panier</h2>
+            <div className="border rounded overflow-hidden">
+              {/* Desktop Header - Hidden on mobile */}
+              <div className="d-none d-md-flex justify-content-between p-3 fw-bold bg-light">
+                <div className="flex-grow-1">Produit</div>
+                <div className="d-flex" style={{ width: '50%' }}>
+                  <div className="text-center" style={{ width: '25%' }}>Prix</div>
+                  <div className="text-center" style={{ width: '25%' }}>Quantité</div>
+                  <div className="text-center" style={{ width: '25%' }}>Total</div>
+                  <div className="text-center" style={{ width: '25%' }}></div>
                 </div>
               </div>
+
+              {/* Cart Items */}
               {cartItems.map((item, index) => (
-                <div key={index} className="flex justify-between items-center py-4 px-4 border-b">
-                  <p
-                    className="flex-1 cursor-pointer hover:underline"
-                    onClick={() =>
-                      navigate(`/product/${item.id}`, { state: { subId: item.subId } })
-                    }
-                  >
-                    {item.name}
-                  </p>
-                  <div className="flex w-1/2 justify-between">
-                    <p className="w-1/4 text-center">{item.price === 0 ? item.Initialprice : item.price} DT</p>
-                    <div className="w-1/4 flex items-center justify-center">
-                      <button
-                        onClick={() => handleQuantityUpdate(item.id, item.quantity - 1)}
-                        className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                      >
-                        -
-                      </button>
-                      <span className="mx-2">{item.quantity}</span>
-                      <button
-                        onClick={() => handleQuantityUpdate(item.id, item.quantity + 1)}
-                        className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                      >
-                        +
-                      </button>
+                <div key={index} className="border-bottom p-3">
+                  {/* Mobile Layout */}
+                  <div className="d-md-none">
+                    <p
+                      className="fw-bold mb-3 text-decoration-none text-primary cursor-pointer"
+                      onClick={() =>
+                        navigate(`/product/${item.id}`, { state: { subId: item.subId } })
+                      }
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {item.name}
+                    </p>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="text-muted">Prix:</span>
+                      <span className="fw-semibold">
+                        {item.price === 0 ? item.Initialprice : item.price} DT
+                      </span>
                     </div>
-                    <div className="w-1/4 flex items-center justify-center">
-                      <p>{item.total} DT</p>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="text-muted">Quantité:</span>
+                      <div className="btn-group" role="group">
+                        <button
+                          onClick={() => handleQuantityUpdate(item.id, item.quantity - 1)}
+                          className="btn btn-sm btn-outline-secondary"
+                        >
+                          -
+                        </button>
+                        <button className="btn btn-sm btn-outline-secondary" disabled>
+                          {item.quantity}
+                        </button>
+                        <button
+                          onClick={() => handleQuantityUpdate(item.id, item.quantity + 1)}
+                          className="btn btn-sm btn-outline-secondary"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="text-muted">Total:</span>
+                      <span className="fw-bold">{item.total} DT</span>
                     </div>
                     <button
-                      className="w-1/4 text-red-500 font-bold hover:underline ml-4"
+                      className="btn btn-sm btn-danger w-100"
                       onClick={() => handleRemoveItem(item.id)}
                     >
-                      X
+                      Supprimer
                     </button>
+                  </div>
+
+                  {/* Desktop Layout */}
+                  <div className="d-none d-md-flex justify-content-between align-items-center">
+                    <p
+                      className="flex-grow-1 mb-0 text-decoration-none text-primary"
+                      onClick={() =>
+                        navigate(`/product/${item.id}`, { state: { subId: item.subId } })
+                      }
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {item.name}
+                    </p>
+                    <div className="d-flex align-items-center" style={{ width: '50%' }}>
+                      <div className="text-center" style={{ width: '25%' }}>
+                        {item.price === 0 ? item.Initialprice : item.price} DT
+                      </div>
+                      <div className="text-center" style={{ width: '25%' }}>
+                        <div className="btn-group" role="group">
+                          <button
+                            onClick={() => handleQuantityUpdate(item.id, item.quantity - 1)}
+                            className="btn btn-sm btn-secondary"
+                          >
+                            -
+                          </button>
+                          <button className="btn btn-sm btn-secondary" disabled>
+                            {item.quantity}
+                          </button>
+                          <button
+                            onClick={() => handleQuantityUpdate(item.id, item.quantity + 1)}
+                            className="btn btn-sm btn-secondary"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <div className="text-center" style={{ width: '25%' }}>
+                        {item.total} DT
+                      </div>
+                      <div className="text-center" style={{ width: '25%' }}>
+                        <button
+                          className="btn btn-sm btn-link text-danger fw-bold text-decoration-none"
+                          onClick={() => handleRemoveItem(item.id)}
+                        >
+                          X
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -234,77 +290,99 @@ const cagnotteComfirmation = () => {
           </div>
 
           {/* Cart Totals */}
-          <div className="w-full lg:w-1/3 mt-8 lg:mt-0">
-            <div className="p-4 border rounded shadow-lg">
-              <h2 className="text-xl font-bold text-blue-360 mb-4">Panier Total</h2>
-              <div className="flex justify-between py-2">
-                <p>Montant global :</p>
-                <p>{subtotal.toFixed(2)} DT</p>
-              </div>
-              <div className="flex justify-between py-2">
-                <p>Livraison :</p>
-                <p>{delivery.toFixed(2)} DT</p>
-              </div>
-              <hr className="my-2" />
-              <div className="flex justify-between py-2 font-bold text-lg">
-                <p>Total TTC :</p>
-                <p>{totalTTC} DT</p>
-              </div>
-              <div className="flex flex-row justify-around">
-                <button
-                  onClick={handleCheckout}
-                  className="mt-6 w-1/2 px-6 py-3 m-2 bg-orange-500 text-white font-medium rounded hover:bg-orange-600"
-                >
-                  Commander
-                </button>
-                <button
-                  onClick={handleShow}
-                  className="mt-6 w-1/2 px-6 py-3 m-2 bg-orange-500 text-white font-medium rounded hover:bg-orange-600"
-                >
-                  Cagnotte Balance
-                </button>
+          <div className="col-lg-4">
+            <div className="card shadow-sm">
+              <div className="card-body">
+                <h2 className="h5 fw-bold mb-4" style={{ color: '#3b82f6' }}>Panier Total</h2>
+                <div className="d-flex justify-content-between py-2">
+                  <span>Montant global :</span>
+                  <span>{subtotal.toFixed(2)} DT</span>
+                </div>
+                <div className="d-flex justify-content-between py-2">
+                  <span>Livraison :</span>
+                  <span>{delivery.toFixed(2)} DT</span>
+                </div>
+                <hr />
+                <div className="d-flex justify-content-between py-2 fw-bold fs-5">
+                  <span>Total TTC :</span>
+                  <span>{totalTTC} DT</span>
+                </div>
+                
+                <div className="row g-2 mt-3">
+                  <div className="col-6">
+                    <button
+                      onClick={handleCheckout}
+                      className="btn w-100 fw-medium text-white"
+                      style={{ backgroundColor: '#f97316' }}
+                    >
+                      Commander
+                    </button>
+                  </div>
+                  <div className="col-6">
+                    <button
+                      onClick={handleShow}
+                      className="btn w-100 fw-medium text-white"
+                      style={{ backgroundColor: '#f97316' }}
+                    >
+                      Cagnotte Balance
+                    </button>
+                  </div>
+                </div>
 
                 <Modal
                   isOpen={show}
                   onRequestClose={handleClose}
                   contentLabel="Confirmation de commande"
-                  className="modal-content p-8 max-w-lg mx-auto bg-white rounded-lg shadow-lg"
-                  overlayClassName="modal-overlay fixed inset-0 flex justify-center items-center bg-black bg-opacity-50"
+                  className="modal-content p-4 mx-auto bg-white rounded shadow-lg"
+                  overlayClassName="modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+                  style={{
+                    content: {
+                      maxWidth: '500px',
+                      margin: '0 1rem'
+                    },
+                    overlay: {
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      zIndex: 1050
+                    }
+                  }}
                 >
-                  <h2 className="text-2xl font-bold mb-4">Mon Cagnotte Balance</h2>
-                  <div className="mt-4 font-medium">
-                    <div className="flex flex-row justify-between">
-                      <p>Total du panier :</p>  
-                      <p>{subtotal.toFixed(2)} DT</p>
+                  <h2 className="h4 fw-bold mb-4">Mon Cagnotte Balance</h2>
+                  <div className="mt-4 fw-medium">
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Total du panier :</span>  
+                      <span>{subtotal.toFixed(2)} DT</span>
                     </div>
-                    <div className="flex flex-row justify-between">
-                      <p>Cagnotte Balance :</p>  
-                      <p> {Userprofile?.cagnotte_balance} DT</p>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Cagnotte Balance :</span>  
+                      <span>{Userprofile?.cagnotte_balance} DT</span>
                     </div>
-                    
                   </div>
-                  <div className="flex flex-row justify-between">
+                  <div className="d-flex justify-content-between gap-2 mt-4">
                     <button
                       onClick={Annuler}
-                      className="mt-6 px-6 py-2 bg-orange-360 text-white rounded-2xl"
+                      className="btn flex-fill rounded-pill text-white"
+                      style={{ backgroundColor: '#f97316' }}
                     >
                       Annuler
                     </button>
                     <button
                       onClick={cagnotteComfirmation}
-                      className="mt-6 px-6 py-2 bg-blue-360 text-white rounded-2xl"
+                      className="btn flex-fill rounded-pill text-white"
+                      style={{ backgroundColor: '#3b82f6' }}
                     >
                       Confirmer
                     </button>
                   </div>
                 </Modal>
+
+                <button
+                  onClick={() => navigate("/")}
+                  className="btn w-100 mt-3 fw-medium"
+                  style={{ backgroundColor: '#e5e7eb', color: '#1f2937' }}
+                >
+                  Continuer vos achats
+                </button>
               </div>
-              <button
-                onClick={() => navigate("/")}
-                className="mt-4 w-full px-6 py-3 bg-gray-200 text-gray-800 font-medium rounded hover:bg-gray-300"
-              >
-                Continuer vos achats
-              </button>
             </div>
           </div>
         </div>

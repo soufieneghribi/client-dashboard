@@ -20,8 +20,9 @@ const Commandes = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const ordersPerPage = 8; // Augmenté pour mieux gérer le responsive
+  const ordersPerPage = 8;
 
+  // Filtrer les commandes selon les critères
   const filteredOrders = order.filter((orders) => {
     const matchesStatus = statusFilter ? orders.order_status === statusFilter : true;
     const matchesDateFrom = dateFrom ? new Date(orders.created_at) >= new Date(dateFrom) : true;
@@ -29,6 +30,7 @@ const Commandes = () => {
     return matchesStatus && matchesDateFrom && matchesDateTo;
   });
 
+  // Pagination
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
   const startIndex = (currentPage - 1) * ordersPerPage;
   const currentOrders = filteredOrders.slice(startIndex, startIndex + ordersPerPage);
@@ -56,7 +58,7 @@ const Commandes = () => {
         Vos commandes
       </h1>
 
-      {/* Filtres */}
+      {/* Section Filtres */}
       <div className="mb-4 sm:mb-6 bg-white p-3 sm:p-4 rounded-lg shadow-xl max-w-6xl mx-auto">
         <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row justify-between items-start sm:items-center">
           {/* Filtre par statut */}
@@ -176,6 +178,7 @@ const Commandes = () => {
   );
 };
 
+// Composant badge de statut de commande
 const OrderStatusBadge = ({ status }) => {
   const baseClasses = "px-3 py-1 text-xs sm:text-sm font-semibold text-white rounded-lg flex items-center justify-center sm:justify-start";
   

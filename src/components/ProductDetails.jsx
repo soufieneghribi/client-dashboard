@@ -22,13 +22,11 @@ import {
 } from "react-icons/fa";
 
 const ProductDetails = () => {
-  // Hooks
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { id } = useParams();
   
-  // State
   const { subId } = location.state || {};
   const { product = {}, loading, error } = useSelector((state) => state.product);
   const [quantity, setQuantity] = useState(1);
@@ -36,14 +34,26 @@ const ProductDetails = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
 
-  // Effects
+  const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
+
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    return `${IMAGE_BASE_URL}/${imageUrl}`;
+  };
+
+  const handleImageError = (e) => {
+    e.target.style.display = 'none';
+  };
+
   useEffect(() => {
     if (id) {
       dispatch(fetchProductById(id));
     }
   }, [dispatch, id]);
 
-  // Calculer les prix
   const totalPrice = ((product.price || 0) * quantity).toFixed(2);
   const isEligibleForDiscount = [2, 3].includes(Number(subId));
   const discountedPrice = isEligibleForDiscount
@@ -53,7 +63,6 @@ const ProductDetails = () => {
     ? (totalPrice - discountedPrice).toFixed(2) 
     : 0;
 
-  // Handlers
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
   
   const decrementQuantity = () => {
@@ -100,12 +109,10 @@ const ProductDetails = () => {
       setIsAdded(true);
       toast.success("Produit ajouté au panier !");
       
-      // Réinitialiser l'état après 2 secondes
       setTimeout(() => {
         setIsAdded(false);
       }, 2000);
       
-      // Rediriger vers le panier
       setTimeout(() => {
         navigate("/cart-shopping");
       }, 1500);
@@ -128,7 +135,7 @@ const ProductDetails = () => {
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${productUrl}`,
       twitter: `https://twitter.com/intent/tweet?url=${productUrl}&text=${productName}`,
       whatsapp: `https://wa.me/?text=${productName}%20${productUrl}`,
-      instagram: productUrl // Instagram ne supporte pas le partage direct via URL
+      instagram: productUrl
     };
 
     if (platform === "instagram") {
@@ -141,7 +148,6 @@ const ProductDetails = () => {
     setShowShareMenu(false);
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-20">
@@ -153,7 +159,6 @@ const ProductDetails = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="container mx-auto px-4 py-20">
@@ -172,7 +177,6 @@ const ProductDetails = () => {
     );
   }
 
-  // No product found
   if (!product || !product.id) {
     return (
       <div className="container mx-auto px-4 py-20">
@@ -194,7 +198,6 @@ const ProductDetails = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-6 sm:py-8">
-        {/* Breadcrumb / Back Button */}
         <button
           onClick={() => navigate(-1)}
           className="mb-4 flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors font-medium"
@@ -203,7 +206,6 @@ const ProductDetails = () => {
           <span>Retour</span>
         </button>
 
-        {/* Hero Section */}
         <div className="relative mb-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-8 px-6 rounded-2xl shadow-xl overflow-hidden">
           <div className="absolute inset-0 bg-black opacity-20"></div>
           <div className="relative z-10 text-center max-w-3xl mx-auto">
@@ -216,20 +218,17 @@ const ProductDetails = () => {
           </div>
         </div>
 
-        {/* Product Details Section */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
-          {/* Image Section */}
           <div className="relative bg-gray-50 rounded-xl overflow-hidden">
-            <img
-              src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.img}`}
-              alt={product.name}
-              className="w-full h-64 sm:h-80 lg:h-96 object-contain"
-              onError={(e) => {
-                e.target.src = "https://via.placeholder.com/500x500?text=Image+Non+Disponible";
-              }}
-            />
+            {getImageUrl(product.img) && (
+              <img
+                src={getImageUrl(product.img)}
+                alt={product.name}
+                className="w-full h-64 sm:h-80 lg:h-96 object-contain"
+                onError={handleImageError}
+              />
+            )}
             
-            {/* Favorite Button */}
             <button
               onClick={toggleFavorite}
               className="absolute top-4 right-4 bg-white p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
@@ -241,7 +240,6 @@ const ProductDetails = () => {
               )}
             </button>
 
-            {/* Discount Badge */}
             {isEligibleForDiscount && (
               <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg">
                 -10% OFF
@@ -249,9 +247,7 @@ const ProductDetails = () => {
             )}
           </div>
 
-          {/* Product Information */}
           <div className="flex flex-col justify-between space-y-6">
-            {/* Price Section */}
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl">
               <h2 className="text-lg font-semibold text-gray-700 mb-3">Prix</h2>
               <div className="flex items-baseline gap-3 flex-wrap">
@@ -271,7 +267,6 @@ const ProductDetails = () => {
               </div>
             </div>
 
-            {/* Quantity Selector */}
             <div>
               <h3 className="text-lg font-semibold text-gray-700 mb-3">
                 Quantité
@@ -296,7 +291,6 @@ const ProductDetails = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="space-y-3">
               <button
                 onClick={addToCartHandler}
@@ -311,7 +305,6 @@ const ProductDetails = () => {
                 {isAdded ? "Produit ajouté !" : "Ajouter au Panier"}
               </button>
 
-              {/* Share Button */}
               <div className="relative">
                 <button
                   onClick={() => setShowShareMenu(!showShareMenu)}
@@ -321,7 +314,6 @@ const ProductDetails = () => {
                   Partager ce produit
                 </button>
 
-                {/* Share Menu */}
                 {showShareMenu && (
                   <div className="absolute top-full mt-2 left-0 right-0 bg-white rounded-xl shadow-2xl border-2 border-gray-100 p-4 z-10">
                     <div className="grid grid-cols-4 gap-3">
@@ -366,15 +358,35 @@ const ProductDetails = () => {
                 )}
               </div>
             </div>
-
-          
           </div>
         </section>
-
-      
       </div>
     </div>
   );
 };
 
 export default ProductDetails;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

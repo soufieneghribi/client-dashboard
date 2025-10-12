@@ -20,6 +20,20 @@ const ProductsBySubCategory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
+  const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
+
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    return `${IMAGE_BASE_URL}/${imageUrl}`;
+  };
+
+  const handleImageError = (e) => {
+    e.target.style.display = 'none';
+  };
+
   useEffect(() => {
     if (subId) {
       dispatch(fetchProduct(subId));
@@ -112,7 +126,6 @@ const ProductsBySubCategory = () => {
 
   return (
     <Container fluid className="py-4">
-      {/* Breadcrumb Navigation */}
       <Breadcrumb className="mb-4">
         <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/" }}>
           Accueil
@@ -123,27 +136,26 @@ const ProductsBySubCategory = () => {
         <Breadcrumb.Item active>{subTitle}</Breadcrumb.Item>
       </Breadcrumb>
 
-      {/* Page Title */}
       <h1 className="text-primary fw-bold mb-4 display-6">{subTitle}</h1>
 
-      {/* Products Grid */}
       <Row xs={2} sm={3} md={4} lg={5} xl={6} className="g-3 g-md-4 mb-4">
         {currentProducts.map((product) => {
           const price = parseFloat(product.price) || 0;
+          const imageUrl = getImageUrl(product.img);
 
           return (
             <Col key={product.id}>
               <Card className="h-100 shadow-sm hover-card">
                 <div className="position-relative">
-                  <Card.Img
-                    variant="top"
-                    src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.img}`}
-                    alt={product.name}
-                    style={{ height: '150px', objectFit: 'contain' }}
-                    onError={(e) => {
-                      e.target.src = "/default-image.jpg";
-                    }}
-                  />
+                  {imageUrl && (
+                    <Card.Img
+                      variant="top"
+                      src={imageUrl}
+                      alt={product.name}
+                      style={{ height: '150px', objectFit: 'contain' }}
+                      onError={handleImageError}
+                    />
+                  )}
                   <Button
                     variant="success"
                     size="sm"
@@ -191,7 +203,6 @@ const ProductsBySubCategory = () => {
         })}
       </Row>
 
-      {/* Pagination Bootstrap */}
       {allProducts.length > 0 && totalPages > 1 && (
         <Pagination className="justify-content-center">
           <Pagination.Prev
@@ -227,4 +238,4 @@ const ProductsBySubCategory = () => {
   );
 };
 
-export default ProductsBySubCategory
+export default ProductsBySubCategory;

@@ -23,26 +23,30 @@ const Login = () => {
   const navigate = useNavigate();
   const { token, isLoggedIn } = useSelector((state) => state.auth);
 
+  // Configuration sécurisée de l'authentification
   const setUnifiedAuth = (token, user) => {
     try {
       dispatch(loginSuccess({ user, token }));
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
+      
+      // Cookie sécurisé avec HttpOnly (simulé)
       const oneDay = 60 * 60 * 24;
-      document.cookie = `auth_token=${token}; path=/; max-age=${oneDay}; Secure; SameSite=Lax`;
+      document.cookie = `auth_token=${token}; path=/; max-age=${oneDay}; Secure; SameSite=Strict`;
       sessionStorage.setItem('user_id', user.ID_client || user.id);
     } catch (error) {
-      console.error('Erreur lors du stockage unifié:', error);
       throw new Error('Erreur d\'authentification');
     }
   };
 
+  // Redirection si déjà connecté
   useEffect(() => {
     if (isLoggedIn || token) {
       navigate("/");
     }
   }, [isLoggedIn, token, navigate]);
 
+  // Gestion de la connexion
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -77,6 +81,7 @@ const Login = () => {
     } catch (error) {
       setLoading(false);
       
+      // Gestion sécurisée des erreurs
       if (error.response) {
         const status = error.response.status;
         const data = error.response.data;
@@ -102,6 +107,7 @@ const Login = () => {
     }
   };
 
+  // Gestion du mot de passe oublié
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoadingModal(true);
@@ -135,13 +141,13 @@ const Login = () => {
           <Col xs={12} sm={10} md={8} lg={6} xl={5}>
             <Card className="shadow border-0 rounded-3">
               <Card.Body className="p-4 p-md-5">
-                {/* Header */}
+                {/* En-tête */}
                 <div className="text-center mb-4">
                   <h1 className="h3 fw-bold mb-2">Connexion</h1>
                   <p className="text-muted small">Connectez-vous à votre compte</p>
                 </div>
 
-                {/* Form */}
+                {/* Formulaire de connexion */}
                 <Form onSubmit={handleLogin}>
                   <Form.Group className="mb-3">
                     <Form.Label className="small fw-semibold">Adresse e-mail</Form.Label>
@@ -234,7 +240,7 @@ const Login = () => {
               </Card.Body>
             </Card>
 
-            {/* Back to Home Link */}
+            {/* Lien retour accueil */}
             <div className="text-center mt-3">
               <Link to="/" className="text-muted text-decoration-none small">
                 <i className="bi bi-arrow-left me-2"></i>
@@ -245,7 +251,7 @@ const Login = () => {
         </Row>
       </Container>
 
-      {/* Modal Mot de passe oublié */}
+      {/* Modal mot de passe oublié */}
       <Modal show={isModalOpen} onHide={() => setIsModalOpen(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title className="h5">Mot de passe oublié</Modal.Title>

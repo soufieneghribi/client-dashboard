@@ -10,13 +10,11 @@ import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 
 /**
- * RecipeDetails Component
+ * RecipeDetails Component - Bootstrap Responsive Version
  * DISPLAYS detailed information about a recipe including ingredients,
  * instructions, and allows adding all ingredients to cart with adjustable servings
  * 
- * ✅ FIXED CALCULATION ISSUES
- * ✅ PROPER UNIT CONVERSION
- * ✅ CORRECT FIELD MAPPING
+ * 
  */
 const RecipeDetails = () => {
   // ==================== Hooks ====================
@@ -42,13 +40,6 @@ const RecipeDetails = () => {
    * FIXED VERSION: Proper unit conversion and quantity calculation
    */
   const calculateArticleQuantityNeeded = useCallback((adjustedRecipeQuantity, unit, article) => {
-    console.log('🔍 calculateArticleQuantityNeeded called:', {
-      adjustedRecipeQuantity,
-      unit,
-      quantity_per_unit: article.quantity_per_unit,
-      articleName: article.name
-    });
-    
     // Normalize unit to lowercase
     const normalizedUnit = (unit || '').toLowerCase().trim();
     
@@ -60,15 +51,8 @@ const RecipeDetails = () => {
       const articlesNeeded = adjustedRecipeQuantity / quantityPerUnit;
       const result = Math.ceil(articlesNeeded);
       
-      console.log('✅ Using quantity_per_unit:', {
-        calculation: `${adjustedRecipeQuantity} / ${quantityPerUnit} = ${articlesNeeded}`,
-        rounded: result
-      });
-      
       return result;
     }
-    
-    console.log('⚠️ No quantity_per_unit, using fallback for unit:', normalizedUnit);
     
     // ✅ FIXED: Handle unit conversions properly
     switch (normalizedUnit) {
@@ -133,12 +117,16 @@ const RecipeDetails = () => {
   };
 
   const handleImageError = (e) => {
-    console.log('❌ Image failed:', e.target.src);
     e.target.style.display = 'none';
   };
 
   // ==================== Effects ====================
   
+  // ✅ FIXED: Scroll to top when component mounts or ID changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   useEffect(() => {
     if (id) {
       dispatch(fetchRecipeDetails(id));
@@ -176,17 +164,7 @@ const RecipeDetails = () => {
     // ✅ USE pivot.unit for recipe unit
     const unit = article.pivot?.unit || article.unit;
     
-    console.log('📦 getArticlesNeeded:', {
-      articleName: article.name,
-      adjustedRecipeQuantity,
-      unit,
-      quantity_per_unit: article.quantity_per_unit,
-      pivot: article.pivot
-    });
-    
     const result = calculateArticleQuantityNeeded(adjustedRecipeQuantity, unit, article);
-    
-    console.log('📦 getArticlesNeeded result:', result);
     
     return result;
   }, [getAdjustedRecipeQuantity, calculateArticleQuantityNeeded]);
@@ -282,16 +260,18 @@ const RecipeDetails = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-360"></div>
+      <div className="container-fluid min-vh-100 d-flex justify-content-center align-items-center">
+        <div className="spinner-border text-primary" role="status" style={{ width: '4rem', height: '4rem' }}>
+          <span className="visually-hidden">Loading...</span>
+        </div>
       </div>
     );
   }
 
   if (!recipe) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <p className="text-gray-600">Recette non trouvée</p>
+      <div className="container-fluid min-vh-100 d-flex justify-content-center align-items-center">
+        <p className="text-secondary fs-5">Recette non trouvée</p>
       </div>
     );
   }
@@ -306,243 +286,244 @@ const RecipeDetails = () => {
   const recipeServings = recipe.recipe?.servings || recipe.servings;
   const recipeArticles = recipe.recipe?.articles || recipe.articles;
 
-  // ==================== Debug Info ====================
-  console.log('🔍 RECIPE DEBUG:', {
-    recipe,
-    servings,
-    recipeServings,
-    totalPrice,
-    articles: recipeArticles?.map(article => ({
-      name: article.name,
-      pivot: article.pivot,
-      quantity_per_unit: article.quantity_per_unit,
-      adjustedQuantity: getAdjustedRecipeQuantity(article),
-      articlesNeeded: getArticlesNeeded(article)
-    }))
-  });
-
   // ==================== Render ====================
   return (
-    <div className="min-h-screen bg-gray-50 py-4 px-3 sm:py-6 sm:px-4 md:py-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden">
-        
-        {/* Hero Image Section */}
-        <div className="relative h-48 sm:h-64 md:h-80 lg:h-96">
-          {recipeImageUrl && (
-            <img
-              src={recipeImageUrl}
-              alt={recipeName}
-              className="w-full h-full object-cover"
-              onError={handleImageError}
-            />
-          )}
-          
-          <button
-            onClick={() => navigate(-1)}
-            className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-white rounded-full p-1.5 sm:p-2 shadow-lg hover:bg-gray-100 transition-colors duration-200"
-            aria-label="Retour"
-          >
-            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-
-          <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-blue-600 text-white px-4 py-2 rounded-full font-bold shadow-lg">
-            {totalPrice} DT
-          </div>
-
-          <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 bg-purple-600 text-white px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            {servings} portions
-          </div>
-        </div>
-
-        {/* Content Section */}
-        <div className="p-4 sm:p-6">
-          
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 sm:mb-4">
-            {recipeName}
-          </h1>
-          
-          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4 mb-4 sm:mb-6 text-gray-700">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-sm sm:text-base">
-                <strong className="font-semibold">Temps:</strong> {recipePrepTime} min
-              </span>
-            </div>
-          </div>
-
-          <p className="text-gray-700 text-sm sm:text-base mb-6 sm:mb-8 leading-relaxed">
-            {recipeDescription}
-          </p>
-
-          {/* Adjust Portions Section */}
-          <div className="mb-6 sm:mb-8 bg-gradient-to-r from-blue-50 to-purple-50 p-4 sm:p-6 rounded-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-800">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Ajuster les portions
-              </h2>
-            </div>
-            
-            <div className="flex items-center justify-center gap-4">
-              <p className="text-sm text-gray-600">Nombre de portions:</p>
-              <div className="flex items-center gap-3">
+    <div className="container-fluid bg-light min-vh-100 py-3 py-md-4 py-lg-5">
+      <div className="container">
+        <div className="row justify-content-center">
+          <div className="col-12 col-xl-10">
+            <div className="card shadow-lg border-0 rounded-3">
+              
+              {/* Hero Image Section */}
+              <div className="position-relative" style={{ height: '250px' }}>
+                {recipeImageUrl && (
+                  <img
+                    src={recipeImageUrl}
+                    alt={recipeName}
+                    className="w-100 h-100 rounded-top-3"
+                    onError={handleImageError}
+                    style={{ objectFit: 'cover' }}
+                  />
+                )}
+                
                 <button
-                  onClick={() => adjustServings(false)}
-                  disabled={servings <= 1}
-                  className="w-10 h-10 bg-white rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-md"
+                  onClick={() => navigate(-1)}
+                  className="btn btn-light rounded-circle position-absolute top-0 start-0 m-3 shadow"
+                  style={{ width: '40px', height: '40px', padding: '0' }}
+                  aria-label="Retour"
                 >
-                  <span className="text-xl font-bold text-gray-700">−</span>
-                </button>
-                <span className="text-2xl font-bold text-blue-600 min-w-[3rem] text-center">
-                  {servings}
-                </span>
-                <button
-                  onClick={() => adjustServings(true)}
-                  className="w-10 h-10 bg-white rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center shadow-md"
-                >
-                  <span className="text-xl font-bold text-gray-700">+</span>
-                </button>
-              </div>
-            </div>
-            
-            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-blue-600 bg-blue-100 p-2 rounded-lg">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Les quantités et le prix seront ajustés automatiquement</span>
-            </div>
-          </div>
-
-          {/* Ingrédients */}
-          {recipeArticles && recipeArticles.length > 0 && (
-            <div className="mb-6 sm:mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
-                  <svg className="w-6 h-6 inline mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                   </svg>
-                  Ingrédients
-                </h2>
-                <div className="bg-purple-100 px-3 py-1 rounded-full">
-                  <span className="text-sm font-semibold text-purple-700">
-                    {recipeArticles.length} ingrédient(s)
+                </button>
+
+                <div className="position-absolute bottom-0 start-0 m-3">
+                  <span className="badge bg-primary rounded-pill fs-6 fw-bold px-4 py-2 shadow">
+                    {totalPrice} DT
+                  </span>
+                </div>
+
+                <div className="position-absolute bottom-0 end-0 m-3">
+                  <span className="badge rounded-pill fs-6 fw-bold px-3 py-2 shadow d-flex align-items-center gap-2" style={{ backgroundColor: '#7c3aed' }}>
+                    <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    {servings} portions
                   </span>
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-4 sm:p-5">
-                <div className="space-y-3 sm:space-y-4">
-                  {recipeArticles.map((article, index) => {
-                    const adjustedRecipeQuantity = getAdjustedRecipeQuantity(article);
-                    const articlesNeeded = getArticlesNeeded(article);
-                    const originalQuantity = parseFloat(article.pivot?.quantity || article.quantity || 0);
-                    const recipeUnit = article.pivot?.unit || article.unit || "ml";
-                    const articlePrice = parseFloat(article.price || 0);
-                    const itemTotal = (articlePrice * articlesNeeded).toFixed(2);
-                    const imageUrl = getImageUrl(article.img);
+              {/* Content Section */}
+              <div className="card-body p-3 p-md-4 p-lg-5">
+                
+                <h1 className="display-5 fw-bold text-dark mb-3 mb-md-4">
+                  {recipeName}
+                </h1>
+                
+                <div className="d-flex flex-column flex-sm-row flex-wrap gap-3 mb-4 text-secondary">
+                  <div className="d-flex align-items-center gap-2">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>
+                      <strong className="fw-semibold">Temps:</strong> {recipePrepTime} min
+                    </span>
+                  </div>
+                </div>
 
-                    return (
-                      <div key={index} className="flex items-center gap-3 bg-white p-3 sm:p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-blue-600 font-bold text-sm">{index + 1}</span>
-                        </div>
-                        
-                        {imageUrl && (
-                          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                            <img
-                              src={imageUrl}
-                              alt={article.name}
-                              className="w-full h-full object-cover"
-                              onError={handleImageError}
-                              loading="lazy"
-                            />
-                          </div>
-                        )}
+                <p className="text-secondary mb-4 mb-md-5 lh-base">
+                  {recipeDescription}
+                </p>
 
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-800 text-sm sm:text-base truncate">
-                            {article.name}
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-600">
-                            Recette: {formatQuantity(adjustedRecipeQuantity)} {recipeUnit}
-                            {servings !== recipeServings && (
-                              <span className="text-xs text-gray-400 ml-1">
-                                (original: {formatQuantity(originalQuantity)} {recipeUnit})
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-xs text-blue-600 font-medium">
-                            Articles: {articlesNeeded} unité(s)
-                          </p>
-                          {/* Debug info */}
-                          <p className="text-xs text-gray-400">
-                            quantity_per_unit: {article.quantity_per_unit} | unit: {recipeUnit}
-                          </p>
-                        </div>
+                {/* Adjust Portions Section */}
+                <div className="card border-0 mb-4 mb-md-5" style={{ background: 'linear-gradient(to right, #dbeafe, #f3e8ff)' }}>
+                  <div className="card-body p-3 p-md-4">
+                    <div className="d-flex align-items-center justify-content-between mb-4">
+                      <h2 className="h5 fw-bold text-dark mb-0">
+                        <svg width="24" height="24" className="me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Ajuster les portions
+                      </h2>
+                    </div>
+                    
+                    <div className="d-flex align-items-center justify-content-center gap-3 flex-wrap">
+                      <p className="small text-secondary mb-0">Nombre de portions:</p>
+                      <div className="d-flex align-items-center gap-3">
+                        <button
+                          onClick={() => adjustServings(false)}
+                          disabled={servings <= 1}
+                          className="btn btn-light rounded-circle shadow-sm"
+                          style={{ width: '40px', height: '40px', padding: '0' }}
+                        >
+                          <span className="fs-4 fw-bold">−</span>
+                        </button>
+                        <span className="fs-3 fw-bold text-primary" style={{ minWidth: '3rem', textAlign: 'center' }}>
+                          {servings}
+                        </span>
+                        <button
+                          onClick={() => adjustServings(true)}
+                          className="btn btn-light rounded-circle shadow-sm"
+                          style={{ width: '40px', height: '40px', padding: '0' }}
+                        >
+                          <span className="fs-4 fw-bold">+</span>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    
+                  </div>
+                </div>
 
-                        <div className="text-right ml-2 flex-shrink-0">
-                          <p className="font-bold text-blue-600 text-sm sm:text-base whitespace-nowrap">
-                            {itemTotal} DT
-                          </p>
-                          {articlesNeeded > 1 && (
-                            <p className="text-xs text-gray-400">
-                              {articlePrice.toFixed(2)} DT/u
-                            </p>
-                          )}
+                {/* Ingrédients */}
+                {recipeArticles && recipeArticles.length > 0 && (
+                  <div className="mb-4 mb-md-5">
+                    <div className="d-flex align-items-center justify-content-between mb-3">
+                      <h2 className="h4 fw-bold text-dark mb-0">
+                        <svg width="24" height="24" className="me-2 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Ingrédients
+                      </h2>
+                      <span className="badge bg-light border rounded-pill px-3 py-2" style={{ color: '#7c3aed' }}>
+                        {recipeArticles.length} ingrédient(s)
+                      </span>
+                    </div>
+
+                    <div className="card border-0 bg-light">
+                      <div className="card-body p-3 p-md-4">
+                        <div className="d-flex flex-column gap-3">
+                          {recipeArticles.map((article, index) => {
+                            const adjustedRecipeQuantity = getAdjustedRecipeQuantity(article);
+                            const articlesNeeded = getArticlesNeeded(article);
+                            const originalQuantity = parseFloat(article.pivot?.quantity || article.quantity || 0);
+                            const recipeUnit = article.pivot?.unit || article.unit || "ml";
+                            const articlePrice = parseFloat(article.price || 0);
+                            const itemTotal = (articlePrice * articlesNeeded).toFixed(2);
+                            const imageUrl = getImageUrl(article.img);
+
+                            return (
+                              <div key={index} className="card border-0 shadow-sm">
+                                <div className="card-body p-2 p-sm-3">
+                                  <div className="row align-items-center g-2">
+                                    {/* Number Badge */}
+                                    <div className="col-auto">
+                                      <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
+                                        <span className="text-primary fw-bold small">{index + 1}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Image */}
+                                    {imageUrl && (
+                                      <div className="col-auto">
+                                        <img
+                                          src={imageUrl}
+                                          alt={article.name}
+                                          className="rounded"
+                                          style={{ width: '60px', height: '60px', objectFit: 'cover' }}
+                                          onError={handleImageError}
+                                          loading="lazy"
+                                        />
+                                      </div>
+                                    )}
+
+                                    {/* Content - Takes remaining space */}
+                                    <div className="col">
+                                      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start">
+                                        <div className="mb-2 mb-sm-0" style={{ flex: 1 }}>
+                                          <p className="fw-semibold text-dark mb-1 fs-6">
+                                            {article.name}
+                                          </p>
+                                          <p className="text-secondary mb-1" style={{ fontSize: '0.85rem' }}>
+                                            Recette: {formatQuantity(adjustedRecipeQuantity)} {recipeUnit}
+                                          </p>
+                                          <p className="text-primary fw-medium mb-1" style={{ fontSize: '0.85rem' }}>
+                                            Articles: {articlesNeeded} unité(s)
+                                          </p>
+                                        </div>
+
+                                        {/* Price - Right aligned on desktop, below on mobile */}
+                                        <div className="text-end text-sm-end ms-sm-3">
+                                          <p className="fw-bold text-primary mb-0 fs-5">
+                                            {itemTotal} DT
+                                          </p>
+                                          {articlesNeeded > 1 && (
+                                            <p className="small text-muted mb-0">
+                                              {articlePrice.toFixed(2)} DT/u
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Add to Cart Button */}
+                <div className="sticky-bottom bg-white pt-3 pb-2 border-top mt-4">
+                  <button
+                    onClick={addRecipeToCart}
+                    disabled={isAdding || !recipeArticles || recipeArticles.length === 0}
+                    className={`btn w-100 py-2 rounded-2 fw-semibold d-flex align-items-center justify-content-center gap-2 ${
+                      isAdding ? "btn-success" : "btn-primary"
+                    }`}
+                    style={!isAdding ? { background: 'linear-gradient(to right, #2563eb, #7c3aed)', border: 'none' } : {}}
+                  >
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    {isAdding ? "Ajout en cours..." : `Ajouter au panier • ${totalPrice} DT`}
+                  </button>
                 </div>
 
-                
+                {/* Instructions */}
+                {recipeInstructions && (
+                  <div className="mb-4 mt-5">
+                    <h2 className="h4 fw-bold text-dark mb-3">
+                      <svg width="24" height="24" className="me-2 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Instructions
+                    </h2>
+                    <div className="card border-0" style={{ backgroundColor: '#fff7ed' }}>
+                      <div className="card-body p-3 p-md-4">
+                        <div className="text-secondary lh-base" style={{ whiteSpace: 'pre-line' }}>
+                          {recipeInstructions}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          )}
-
-          {/* Add to Cart Button */}
-          <div className="sticky bottom-0 bg-white pt-4 pb-2 -mx-4 px-4 sm:-mx-6 sm:px-6 border-t">
-            <button
-              onClick={addRecipeToCart}
-              disabled={isAdding || !recipeArticles || recipeArticles.length === 0}
-              className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 shadow-lg ${
-                isAdding
-                  ? "bg-green-500 text-white cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:shadow-xl transform hover:scale-[1.02]"
-              }`}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              {isAdding ? "Ajout en cours..." : `Ajouter au panier • ${totalPrice} DT`}
-            </button>
           </div>
-
-          {/* Instructions */}
-          {(recipe.recipe?.instructions || recipe.instructions) && (
-            <div className="mb-6 sm:mb-8 mt-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">
-                <svg className="w-6 h-6 inline mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Instructions
-              </h2>
-              <div className="bg-orange-50 rounded-xl p-4 sm:p-5">
-                <div className="text-gray-700 text-sm sm:text-base leading-relaxed whitespace-pre-line">
-                  {recipe.recipe?.instructions || recipe.instructions}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

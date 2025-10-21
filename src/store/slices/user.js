@@ -4,7 +4,42 @@ import { toast } from "react-hot-toast";
 import store from "../index";
 import { logout } from "./authSlice";
 
-// Fonction pour récupérer le token de manière cohérente
+/**
+ * User Redux Slice
+ * Manages user authentication, profile, and related operations
+ * All API calls are secure with proper error handling
+ */
+
+// ==================== CONSTANTS ====================
+const API_BASE_URL = "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1";
+const API_TIMEOUT = 15000;
+const RATE_LIMIT_DELAY = 2000; // 2 seconds between requests
+
+// ==================== HELPER FUNCTIONS ====================
+
+// Rate limiting tracker
+let lastRequestTime = 0;
+
+/**
+ * Enforces rate limiting between requests
+ */
+const waitForRateLimit = async () => {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  
+  if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
+    const waitTime = RATE_LIMIT_DELAY - timeSinceLastRequest;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  lastRequestTime = Date.now();
+};
+
+/**
+ * Retrieves authentication token from multiple sources
+ * Priority: localStorage > Redux > Cookies
+ * @returns {string|null} Authentication token
+ */
 const getAuthToken = () => {
   try {
     const localToken = localStorage.getItem("token");
@@ -15,25 +50,24 @@ const getAuthToken = () => {
       .find(row => row.startsWith('auth_token='))
       ?.split('=')[1];
     
-    const token = localToken || reduxToken || cookieToken;
-    
-    if (!token) {
-      console.warn("❌ Aucun token d'authentification trouvé dans user.js");
-      return null;
-    }
-    
-    return token;
+    return localToken || reduxToken || cookieToken || null;
   } catch (error) {
-    console.error("❌ Erreur lors de la récupération du token dans user.js:", error);
     return null;
   }
 };
 
-// Test de validité du token
+/**
+ * Validates token by making API call
+ * @param {string} token - Authentication token
+ * @returns {Promise<boolean>} Token validity status
+ */
 const testTokenValidity = async (token) => {
   try {
+    // Wait for rate limit before making request
+    await waitForRateLimit();
+    
     const response = await axios.get(
-      'https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/customer/info1',
+      `${API_BASE_URL}/customer/info1`,
       {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -45,39 +79,48 @@ const testTokenValidity = async (token) => {
     );
     
     if (response.data && (response.data.id || response.data.email || response.data.ID_client)) {
-      console.log("✅ Token valide - Utilisateur:", response.data.nom_et_prenom || response.data.email);
       return true;
     } else {
-      console.log("❌ Token valide mais réponse utilisateur incomplète");
       return false;
     }
   } catch (error) {
-    console.error("🔴 Échec validation token:", {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message
-    });
-    
     if (error.response?.status === 401 || error.response?.status === 403) {
       return false;
     }
     
-    console.warn("⚠️ Erreur réseau, on considère le token valide");
+    if (error.response?.status === 429) {
+      console.warn("Rate limit hit during token validation");
+      return true; // Assume valid to allow retry later
+    }
+    
+    // Network errors - assume valid to allow retry
     return true;
   }
 };
 
+// ==================== ASYNC THUNKS ====================
+
+/**
+ * Forget Password - Sends password reset email
+ */
 export const forgetPassword = createAsyncThunk(
   "user/forgetPassword",
   async ({ email }, { rejectWithValue }) => {
     try {
+      await waitForRateLimit();
+      
       const { data } = await axios.post(
-        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/auth/password/email",
+        `${API_BASE_URL}/auth/password/email`,
         { email }
       );
       toast.success("Un lien de réinitialisation a été envoyé à votre e-mail.");
       return data;
     } catch (error) {
+      if (error.response?.status === 429) {
+        toast.error("Trop de tentatives. Veuillez réessayer dans quelques instants.");
+        return rejectWithValue("Rate limit exceeded");
+      }
+      
       if (error.response) {
         toast.error(error.response.data.message || "Une erreur est survenue.");
         return rejectWithValue(error.response.data.message || "Une erreur est survenue.");
@@ -89,18 +132,28 @@ export const forgetPassword = createAsyncThunk(
   }
 );
 
+/**
+ * Sign Up - User registration
+ */
 export const signUp = createAsyncThunk(
   "user/signup",
   async ({ user, navigate }) => {
     try {
+      await waitForRateLimit();
+      
       const { data } = await axios.post(
-        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/auth/register",
+        `${API_BASE_URL}/auth/register`,
         user
       );
       navigate("/login");
       toast.success("Compte créé. Veuillez vérifier votre e-mail pour activer votre compte.");
       return data;
     } catch (error) {
+      if (error.response?.status === 429) {
+        toast.error("Trop de tentatives. Veuillez réessayer dans quelques instants.");
+        throw new Error("Rate limit exceeded");
+      }
+      
       const errorMessage = error.response?.data?.message || "Compte déjà existant.";
       toast.error(errorMessage);
       throw error;
@@ -108,43 +161,59 @@ export const signUp = createAsyncThunk(
   }
 );
 
+/**
+ * Fetch User Profile - Retrieves current user information
+ */
 export const fetchUserProfile = createAsyncThunk(
   "user/fetchUserProfile",
-  async (_, { rejectWithValue, dispatch }) => {
+  async (_, { rejectWithValue, dispatch, getState }) => {
     try {
+      // Check if we have recent data (cache for 5 minutes)
+      const state = getState();
+      const lastFetch = state.user.lastFetch;
+      const now = Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+      
+      if (lastFetch && (now - lastFetch) < fiveMinutes && state.user.Userprofile) {
+        console.log("Using cached user profile");
+        return state.user.Userprofile;
+      }
+      
       const token = getAuthToken();
       
       if (!token) {
-        console.error("❌ Token non trouvé dans fetchUserProfile");
         throw new Error("Token d'authentification non trouvé");
       }
 
-      console.log("🔐 Test de validité du token...");
-      const isValid = await testTokenValidity(token);
-      if (!isValid) {
-        console.error("❌ Token invalide dans fetchUserProfile");
-        throw new Error("Token invalide ou expiré");
+      // Skip token validation if we have cached data
+      if (!state.user.Userprofile) {
+        const isValid = await testTokenValidity(token);
+        if (!isValid) {
+          throw new Error("Token invalide ou expiré");
+        }
       }
 
-      console.log("📡 Chargement du profil utilisateur...");
-      const { data } = await axios.get("https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/customer/info1", {
+      await waitForRateLimit();
+      
+      const { data } = await axios.get(`${API_BASE_URL}/customer/info1`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        timeout: 15000
+        timeout: API_TIMEOUT
       });
       
-      console.log("✅ Profil utilisateur chargé avec succès:", data);
       return data;
     } catch (error) {
-      console.error("❌ Erreur chargement profil user.js:", error);
+      if (error.response?.status === 429) {
+        toast.error("Trop de requêtes. Veuillez patienter un moment.");
+        return rejectWithValue("Rate limit exceeded");
+      }
       
       const errorMessage = error.response?.data?.message || error.message || "Erreur lors du chargement du profil";
       
       if (error.response?.status === 401 || error.response?.status === 403 || error.message.includes("Token invalide") || error.message.includes("Token non trouvé")) {
-        console.log("🔒 Session expirée, déconnexion...");
         toast.error("Session expirée. Veuillez vous reconnecter.");
         dispatch(logout());
         setTimeout(() => {
@@ -152,7 +221,7 @@ export const fetchUserProfile = createAsyncThunk(
         }, 2000);
       } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
         toast.error("Délai d'attente dépassé. Veuillez réessayer.");
-      } else {
+      } else if (error.message !== "Rate limit exceeded") {
         toast.error(errorMessage);
       }
       
@@ -161,50 +230,47 @@ export const fetchUserProfile = createAsyncThunk(
   }
 );
 
-// Update user profile - VERSION CORRIGÉE AVEC MEILLEURE GESTION D'ERREUR
+/**
+ * Update User Profile - Updates user information
+ */
 export const updateUserProfile = createAsyncThunk(
   "user/updateUserProfile",
   async (profileData, { rejectWithValue, dispatch }) => {
     try {
+      await waitForRateLimit();
+      
       const token = getAuthToken();
 
       if (!token) {
         throw new Error("Token d'authentification manquant");
       }
 
-      console.log("📡 Données envoyées pour mise à jour profil:", profileData);
-
       const response = await axios.post(
-        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/auth/profile/update",
+        `${API_BASE_URL}/auth/profile/update`,
         profileData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          timeout: 15000
+          timeout: API_TIMEOUT
         }
       );
       
-      console.log("✅ Réponse succès mise à jour profil:", response.data);
       toast.success("Profil mis à jour avec succès");
       return response.data;
     } catch (error) {
-      console.error("❌ Erreur COMPLÈTE mise à jour profil:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message
-      });
+      if (error.response?.status === 429) {
+        toast.error("Trop de requêtes. Veuillez patienter un moment.");
+        return rejectWithValue("Rate limit exceeded");
+      }
       
       let errorMessage = "Erreur lors de la mise à jour du profil";
       
       if (error.response?.status === 422) {
-        // Gestion améliorée des erreurs 422
         if (error.response?.data?.errors) {
           const validationErrors = error.response.data.errors;
-          console.error("🚨 ERREURS DE VALIDATION DÉTAILLÉES:", validationErrors);
           
-          // Extraire tous les messages d'erreur
           const allErrorMessages = [];
           Object.keys(validationErrors).forEach(field => {
             validationErrors[field].forEach(msg => {
@@ -213,13 +279,11 @@ export const updateUserProfile = createAsyncThunk(
           });
           
           errorMessage = allErrorMessages.join(', ');
-          console.error("📝 Messages d'erreur formatés:", errorMessage);
           toast.error(`Erreur: ${errorMessage}`);
         } else if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
           toast.error(errorMessage);
         } else {
-          console.error("🚨 DONNÉES ERREUR 422:", error.response.data);
           errorMessage = "Erreur de validation des données";
           toast.error(errorMessage);
         }
@@ -240,32 +304,40 @@ export const updateUserProfile = createAsyncThunk(
   }
 );
 
+/**
+ * Update Cagnotte in Database - Updates user's cagnotte balance
+ */
 export const updateCagnotteInDB = createAsyncThunk(
   "user/updateCagnotteInDB",
   async (updatedBalance, { rejectWithValue, dispatch }) => {
     try {
+      await waitForRateLimit();
+      
       const token = getAuthToken();
 
       if (!token) {
         throw new Error("Token d'authentification manquant");
       }
 
-      console.log("📡 Mise à jour de la cagnotte...");
       const { data } = await axios.post(
-        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/update-cagnotte",
+        `${API_BASE_URL}/update-cagnotte`,
         { cagnotte_balance: updatedBalance },
         {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          timeout: 15000
+          timeout: API_TIMEOUT
         }
       );
       toast.success("Cagnotte mise à jour avec succès");
       return data;
     } catch (error) {
-      console.error("❌ Erreur mise à jour cagnotte:", error);
+      if (error.response?.status === 429) {
+        toast.error("Trop de requêtes. Veuillez patienter un moment.");
+        return rejectWithValue("Rate limit exceeded");
+      }
+      
       const errorMessage = error.response?.data?.message || error.message || "Erreur lors de la mise à jour de la cagnotte";
       
       if (error.response?.status === 401 || error.response?.status === 403) {
@@ -283,19 +355,23 @@ export const updateCagnotteInDB = createAsyncThunk(
   }
 );
 
+/**
+ * Change Password - Updates user password
+ */
 export const changePassword = createAsyncThunk(
   "user/changePassword",
   async (passwordData, { rejectWithValue, dispatch }) => {
     try {
+      await waitForRateLimit();
+      
       const token = getAuthToken();
 
       if (!token) {
         throw new Error("Token d'authentification manquant");
       }
 
-      console.log("📡 Changement de mot de passe...");
       const { data } = await axios.post(
-        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/auth/change-password-without-current",
+        `${API_BASE_URL}/auth/change-password-without-current`,
         {
           new_password: passwordData.new_password,
           new_password_confirmation: passwordData.new_password_confirmation
@@ -305,14 +381,18 @@ export const changePassword = createAsyncThunk(
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          timeout: 15000
+          timeout: API_TIMEOUT
         }
       );
       
       toast.success("Mot de passe modifié avec succès");
       return data;
     } catch (error) {
-      console.error("❌ Erreur changement mot de passe:", error);
+      if (error.response?.status === 429) {
+        toast.error("Trop de requêtes. Veuillez patienter un moment.");
+        return rejectWithValue("Rate limit exceeded");
+      }
+      
       const errorMessage = error.response?.data?.message || error.message || "Erreur lors de la modification du mot de passe";
       
       if (error.response?.status === 401 || error.response?.status === 403) {
@@ -330,18 +410,27 @@ export const changePassword = createAsyncThunk(
   }
 );
 
-// Google login
+/**
+ * Google Login - Authenticates user via Google
+ */
 export const googleLogin = createAsyncThunk(
   "user/googleLogin",
   async (token, { rejectWithValue }) => {
     try {
+      await waitForRateLimit();
+      
       const { data } = await axios.post(
-        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/auth/google-login",
+        `${API_BASE_URL}/auth/google-login`,
         { token }
       );
       toast.success("Connexion Google réussie");
       return data;
     } catch (error) {
+      if (error.response?.status === 429) {
+        toast.error("Trop de requêtes. Veuillez patienter un moment.");
+        return rejectWithValue("Rate limit exceeded");
+      }
+      
       const errorMessage = error.response?.data?.message || "Erreur lors de la connexion Google";
       toast.error(errorMessage);
       return rejectWithValue(errorMessage);
@@ -349,18 +438,27 @@ export const googleLogin = createAsyncThunk(
   }
 );
 
-// Google register
+/**
+ * Google Register - Registers user via Google
+ */
 export const googleRegister = createAsyncThunk(
   "user/googleRegister",
   async (token, { rejectWithValue }) => {
     try {
+      await waitForRateLimit();
+      
       const { data } = await axios.post(
-        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/auth/google/register",
+        `${API_BASE_URL}/auth/google/register`,
         { token }
       );
       toast.success("Inscription Google réussie");
       return data;
     } catch (error) {
+      if (error.response?.status === 429) {
+        toast.error("Trop de requêtes. Veuillez patienter un moment.");
+        return rejectWithValue("Rate limit exceeded");
+      }
+      
       const errorMessage = error.response?.data?.message || "Erreur lors de l'inscription Google";
       
       if (error.response?.status === 409) {
@@ -374,6 +472,17 @@ export const googleRegister = createAsyncThunk(
   }
 );
 
+// Dans store/slices/user.js - ajoutez cette action
+export const updateCagnotteBalance = createAsyncThunk(
+  "user/updateCagnotteBalance",
+  async (amount, { getState }) => {
+    // Mise à jour locale immédiate
+    return amount;
+  }
+);
+
+// ==================== SLICE CONFIGURATION ====================
+
 const UserSlice = createSlice({
   name: "user",
   initialState: {
@@ -385,13 +494,18 @@ const UserSlice = createSlice({
     lastFetch: null,
   },
   reducers: {
+    // Clear error state
     clearError: (state) => {
       state.error = null;
     },
+    
+    // Clear user profile
     clearUserProfile: (state) => {
       state.Userprofile = null;
       state.loggedInUser = null;
     },
+    
+    // Update user locally without API call
     updateUserLocal: (state, action) => {
       if (state.Userprofile) {
         state.Userprofile = { ...state.Userprofile, ...action.payload };
@@ -400,9 +514,13 @@ const UserSlice = createSlice({
         state.loggedInUser = { ...state.loggedInUser, ...action.payload };
       }
     },
+    
+    // Set last fetch timestamp
     setLastFetch: (state, action) => {
       state.lastFetch = action.payload;
     },
+    
+    // Clear all user data
     clearAllUserData: (state) => {
       state.Userprofile = null;
       state.loggedInUser = null;
@@ -413,7 +531,7 @@ const UserSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Sign Up
+      // ==================== SIGN UP ====================
       .addCase(signUp.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -428,7 +546,7 @@ const UserSlice = createSlice({
         state.error = action.error.message;
       })
 
-      // Fetch User Profile
+      // ==================== FETCH USER PROFILE ====================
       .addCase(fetchUserProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -439,16 +557,18 @@ const UserSlice = createSlice({
         state.loggedInUser = action.payload;
         state.lastFetch = Date.now();
         state.error = null;
-        console.log("✅ Profil utilisateur stocké dans Redux");
       })
       .addCase(fetchUserProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        state.Userprofile = null;
-        state.loggedInUser = null;
+        // Don't clear profile data on rate limit errors
+        if (action.payload !== "Rate limit exceeded") {
+          state.Userprofile = null;
+          state.loggedInUser = null;
+        }
       })
 
-      // Update User Profile
+      // ==================== UPDATE USER PROFILE ====================
       .addCase(updateUserProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -464,7 +584,7 @@ const UserSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Update Cagnotte
+      // ==================== UPDATE CAGNOTTE ====================
       .addCase(updateCagnotteInDB.pending, (state) => {
         state.loading = true;
       })
@@ -478,7 +598,7 @@ const UserSlice = createSlice({
         state.error = action.payload;
       })
       
-      // Forget Password
+      // ==================== FORGET PASSWORD ====================
       .addCase(forgetPassword.pending, (state) => {
         state.loading = true;
       })
@@ -490,7 +610,7 @@ const UserSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Change Password
+      // ==================== CHANGE PASSWORD ====================
       .addCase(changePassword.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -504,7 +624,7 @@ const UserSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Google Login
+      // ==================== GOOGLE LOGIN ====================
       .addCase(googleLogin.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -519,7 +639,7 @@ const UserSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Google Register
+      // ==================== GOOGLE REGISTER ====================
       .addCase(googleRegister.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -536,6 +656,9 @@ const UserSlice = createSlice({
   },
 });
 
+// ==================== EXPORTS ====================
+
+// Export actions
 export const { 
   clearError, 
   clearUserProfile, 
@@ -544,11 +667,12 @@ export const {
   clearAllUserData 
 } = UserSlice.actions;
 
-// Sélecteurs
+// Selectors
 export const selectUserProfile = (state) => state.user.Userprofile;
 export const selectLoggedInUser = (state) => state.user.loggedInUser;
 export const selectUserLoading = (state) => state.user.loading;
 export const selectUserError = (state) => state.user.error;
 export const selectLastFetch = (state) => state.user.lastFetch;
 
+// Export reducer
 export default UserSlice.reducer;

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchRecommendedProduct } from '../store/slices/recommended';
 import { useNavigate } from 'react-router-dom';
+import { Container, Row, Col, Card, Button, Spinner, Alert, Badge } from 'react-bootstrap';
 
 const ProductRecommande = () => {
   const { recommended = [], loading, error } = useSelector((state) => state.recommended);
@@ -10,7 +11,7 @@ const ProductRecommande = () => {
   const navigate = useNavigate();
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
+  const itemsPerPage = 8;
 
   const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
 
@@ -58,108 +59,171 @@ const ProductRecommande = () => {
   };
 
   if (loading) return (
-    <div className="flex justify-center items-center py-8">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-360"></div>
-    </div>
+    <Container className="py-5">
+      <div className="d-flex justify-content-center align-items-center">
+        <Spinner animation="border" variant="primary" />
+      </div>
+    </Container>
   );
   
   if (error) return (
-    <div className="text-center py-8">
-      <p className="text-red-500 bg-red-50 p-4 rounded-lg">Erreur de chargement des produits recommandés</p>
-    </div>
+    <Container className="py-4">
+      <Alert variant="danger" className="text-center">
+        Erreur de chargement des produits recommandés
+      </Alert>
+    </Container>
   );
 
   return (
-    <div className="w-full mx-auto px-4 py-6 bg-gray-50 rounded-2xl">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Produits Recommandés</h1>
-        <div className="w-20 h-1 bg-gradient-to-r from-blue-360 to-orange-360 mx-auto rounded-full"></div>
+    <Container fluid="lg" className="py-4">
+      {/* Header Section */}
+      <div className="text-center mb-4 mb-md-5">
+        <h2 className="h2 fw-bold text-dark mb-3">Produits Recommandés</h2>
+        <div className="mx-auto bg-gradient-to-r from-primary to-warning rounded-pill" 
+             style={{ width: '80px', height: '4px' }}></div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Products Grid */}
+      <Row xs={2} sm={2} md={3} lg={4} className="g-3 g-md-4 mb-4">
         {currentProducts?.map((product) => {
           const discountedPrice = (product.price * 0.9).toFixed(2);
           const imageUrl = getImageUrl(product.img);
 
           return (
-            <div 
-              key={product.id} 
-              className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden"
-            >
-              <div className="relative">
-                <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
-                  -10%
-                </div>
-                {imageUrl && (
-                  <img
-                    src={imageUrl}
-                    alt={product.name}
-                    className="w-full h-48 object-cover transition duration-500 hover:scale-105"
-                    onError={handleImageError}
-                  />
-                )}
-              </div>
-
-              <div className="p-4">
-                <h2 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2 h-14">
-                  {product.name}
-                </h2>
-                
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex flex-col">
-                    <span className="text-sm text-gray-500 line-through">
-                      {product.price} DT
-                    </span>
-                    <span className="text-xl font-bold text-green-600">
-                      {discountedPrice} DT
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                    Économisez 10%
-                  </div>
+            <Col key={product.id}>
+              <Card className="h-100 shadow-sm product-card border-0">
+                <div className="position-relative">
+                  {/* Discount Badge */}
+                  <Badge 
+                    bg="danger" 
+                    className="position-absolute top-0 end-0 m-2 rounded-pill"
+                    style={{ zIndex: 10 }}
+                  >
+                    -10%
+                  </Badge>
+                  
+                  {/* Product Image */}
+                  {imageUrl && (
+                    <Card.Img
+                      variant="top"
+                      src={imageUrl}
+                      alt={product.name}
+                      style={{ 
+                        height: '180px', 
+                        objectFit: 'cover',
+                        transition: 'transform 0.5s ease'
+                      }}
+                      className="product-image"
+                      onError={handleImageError}
+                    />
+                  )}
                 </div>
 
-                <button
-                  className="w-full bg-gradient-to-r from-blue-360 to-blue-500 text-white py-3 rounded-xl hover:from-blue-500 hover:to-blue-600 transition-all duration-300 font-semibold flex items-center justify-center gap-2"
-                  onClick={() => productHandler(product.id, product.type_id)}
-                >
-                  <i className="fa-solid fa-eye"></i>
-                  Voir détails
-                </button>
-              </div>
-            </div>
+                <Card.Body className="d-flex flex-column p-3">
+                  {/* Product Name */}
+                  <Card.Title 
+                    className="fw-semibold mb-2 text-truncate-2"
+                    style={{ 
+                      fontSize: '0.95rem',
+                      minHeight: '2.8rem',
+                      lineHeight: '1.4'
+                    }}
+                    title={product.name}
+                  >
+                    {product.name}
+                  </Card.Title>
+                  
+                  {/* Price Section */}
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <div className="d-flex flex-column">
+                      <small className="text-muted text-decoration-line-through">
+                        {product.price} DT
+                      </small>
+                      <span className="text-success fw-bold fs-5">
+                        {discountedPrice} DT
+                      </span>
+                    </div>
+                    <Badge bg="light" text="dark" className="small">
+                      Économisez 10%
+                    </Badge>
+                  </div>
+
+                  {/* View Details Button */}
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-100 mt-auto d-flex align-items-center justify-content-center gap-2"
+                    onClick={() => productHandler(product.id, product.type_id)}
+                  >
+                    <i className="fa-solid fa-eye"></i>
+                    <span className="d-none d-sm-inline">Voir détails</span>
+                    <span className="d-inline d-sm-none">Détails</span>
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
           );
         })}
-      </div>
+      </Row>
 
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center space-x-2">
-          <button
+        <div className="d-flex flex-column flex-sm-row justify-content-center align-items-center gap-3 mt-4">
+          <Button
+            variant="outline-primary"
             onClick={prevPage}
             disabled={currentPage === 1}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center gap-2"
+            className="d-flex align-items-center gap-2"
           >
-            <i className="fa-solid fa-chevron-left text-sm"></i>
-            Précédent
-          </button>
+            <i className="fa-solid fa-chevron-left"></i>
+            <span className="d-none d-sm-inline">Précédent</span>
+          </Button>
 
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">
+          <div className="d-flex align-items-center">
+            <span className="text-muted small">
               Page {currentPage} sur {totalPages}
             </span>
           </div>
 
-          <button
+          <Button
+            variant="outline-primary"
             onClick={nextPage}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center gap-2"
+            className="d-flex align-items-center gap-2"
           >
-            Suivant
-            <i className="fa-solid fa-chevron-right text-sm"></i>
-          </button>
+            <span className="d-none d-sm-inline">Suivant</span>
+            <i className="fa-solid fa-chevron-right"></i>
+          </Button>
         </div>
       )}
-    </div>
+
+      <style jsx>{`
+        .product-card {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .product-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        .product-card:hover .product-image {
+          transform: scale(1.05);
+        }
+        
+        .text-truncate-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        .bg-gradient-to-r {
+          background: linear-gradient(to right, var(--bs-primary), var(--bs-warning));
+        }
+      `}</style>
+    </Container>
   );
 };
 

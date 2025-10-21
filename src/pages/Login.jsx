@@ -1,125 +1,76 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { loginSuccess } from "../store/slices/authSlice";
-import { Link, useNavigate } from "react-router-dom";
 import { forgetPassword } from "../store/slices/user";
+import { Link, useNavigate } from "react-router-dom";
 import { Container, Row, Col, Form, Button, Card, Alert, Spinner, Modal, InputGroup } from 'react-bootstrap';
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [searchMail, setSearchMail] = useState("");
   const [password, setPassword] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingModal, setLoadingModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [show, setShow] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { token, isLoggedIn } = useSelector((state) => state.auth);
 
-  // Configuration sécurisée de l'authentification
   const setUnifiedAuth = (token, user) => {
-    try {
-      dispatch(loginSuccess({ user, token }));
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      
-      // Cookie sécurisé avec HttpOnly (simulé)
-      const oneDay = 60 * 60 * 24;
-      document.cookie = `auth_token=${token}; path=/; max-age=${oneDay}; Secure; SameSite=Strict`;
-      sessionStorage.setItem('user_id', user.ID_client || user.id);
-    } catch (error) {
-      throw new Error('Erreur d\'authentification');
-    }
+    dispatch(loginSuccess({ user, token }));
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+    document.cookie = `auth_token=${token}; path=/; max-age=86400; Secure; SameSite=Strict`;
+    sessionStorage.setItem('user_id', user.ID_client || user.id);
   };
 
-  // Redirection si déjà connecté
   useEffect(() => {
-    if (isLoggedIn || token) {
-      navigate("/");
-    }
+    if (isLoggedIn || token) navigate("/");
   }, [isLoggedIn, token, navigate]);
 
-  // Gestion de la connexion
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMessage(null);
-
     try {
-      const response = await axios.post(
+      const response = await fetch(
         "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/auth/login",
-        { email, password },
         {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
         }
       );
-
-      const { client, token } = response.data;
-
-      if (!client || !token) {
+      const data = await response.json();
+      if (!data.client || !data.token) {
         setErrorMessage("Identifiants de connexion invalides.");
         setLoading(false);
         return;
       }
-
-      setUnifiedAuth(token, client);
-      
-      setTimeout(() => {
-        navigate("/");
-      }, 100);
-      
-    } catch (error) {
+      setUnifiedAuth(data.token, data.client);
+      setTimeout(() => navigate("/"), 100);
+    } catch (err) {
       setLoading(false);
-      
-      // Gestion sécurisée des erreurs
-      if (error.response) {
-        const status = error.response.status;
-        const data = error.response.data;
-        
-        if (status === 401) {
-          setErrorMessage("Email ou mot de passe incorrect.");
-        } else if (status === 422) {
-          setErrorMessage("Données de connexion invalides.");
-        } else if (status === 500) {
-          setErrorMessage("Erreur serveur. Veuillez réessayer plus tard.");
-        } else {
-          setErrorMessage(
-            data.errors?.[0]?.message ||
-            data.message ||
-            "Erreur d'authentification. Veuillez réessayer."
-          );
-        }
-      } else if (error.request) {
-        setErrorMessage("Erreur de connexion au serveur. Vérifiez votre connexion internet.");
-      } else {
-        setErrorMessage("Une erreur inattendue est survenue.");
-      }
+      setErrorMessage("Erreur de connexion. Veuillez réessayer.");
     }
   };
 
-  // Gestion du mot de passe oublié
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoadingModal(true);
     setError("");
     setMessage("");
-
     if (!searchMail) {
       setError("Veuillez entrer une adresse e-mail valide.");
       setLoadingModal(false);
       return;
     }
-
     try {
       await dispatch(forgetPassword({ email: searchMail })).unwrap();
       setMessage("Un lien de réinitialisation a été envoyé à votre e-mail.");
@@ -127,181 +78,444 @@ const Login = () => {
         setSearchMail("");
         setIsModalOpen(false);
       }, 2000);
-    } catch (error) {
+    } catch {
       setError("Erreur lors de l'envoi du lien de réinitialisation.");
     } finally {
       setLoadingModal(false);
     }
   };
 
+  const handleGuest = () => {
+    navigate("/");
+  };
+
   return (
-    <div className="min-vh-100 bg-light d-flex align-items-center py-4">
-      <Container>
-        <Row className="justify-content-center">
-          <Col xs={12} sm={10} md={8} lg={6} xl={5}>
-            <Card className="shadow border-0 rounded-3">
-              <Card.Body className="p-4 p-md-5">
-                {/* En-tête */}
-                <div className="text-center mb-4">
-                  <h1 className="h3 fw-bold mb-2">Connexion</h1>
-                  <p className="text-muted small">Connectez-vous à votre compte</p>
+    <>
+      <style>{`
+        @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css');
+        @import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css');
+        
+        .login-wrapper {
+          min-height: 100vh;
+          background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+          display: flex;
+          align-items: center;
+          padding: 20px 0;
+        }
+        
+        .login-card {
+          border: none;
+          border-radius: 20px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+          overflow: hidden;
+        }
+        
+        .login-header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 40px 30px;
+          text-align: center;
+        }
+        
+        .login-header h1 {
+          font-size: 2rem;
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+        
+        .login-header p {
+          opacity: 0.95;
+          margin: 0;
+          font-size: 0.95rem;
+        }
+        
+        .login-body {
+          padding: 40px 35px;
+          background: white;
+        }
+        
+        .form-label {
+          font-weight: 600;
+          color: #2d3748;
+          margin-bottom: 8px;
+          font-size: 0.9rem;
+        }
+        
+        .form-control, .form-select {
+          border: 2px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 12px 15px;
+          font-size: 0.95rem;
+          transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+          border-color: #667eea;
+          box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+        }
+        
+        .input-group-text {
+          background: #f7fafc;
+          border: 2px solid #e2e8f0;
+          border-right: none;
+          color: #718096;
+        }
+        
+        .input-group .form-control {
+          border-left: none;
+        }
+        
+        .input-group .form-control:focus {
+          border-left: none;
+        }
+        
+        .input-group:focus-within .input-group-text {
+          border-color: #667eea;
+          background: #f0f4ff;
+        }
+        
+        .btn-primary {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border: none;
+          border-radius: 10px;
+          padding: 13px 25px;
+          font-weight: 600;
+          font-size: 1rem;
+          transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-outline-secondary {
+          border: 2px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 13px 25px;
+          font-weight: 600;
+          color: #4a5568;
+          transition: all 0.3s ease;
+        }
+        
+        .btn-outline-secondary:hover {
+          background: #f7fafc;
+          border-color: #cbd5e0;
+          color: #2d3748;
+        }
+        
+        .btn-link {
+          color: #667eea;
+          font-weight: 500;
+          text-decoration: none;
+          transition: color 0.2s;
+        }
+        
+        .btn-link:hover {
+          color: #764ba2;
+        }
+        
+        .form-check-input:checked {
+          background-color: #667eea;
+          border-color: #667eea;
+        }
+        
+        .alert {
+          border: none;
+          border-radius: 10px;
+          padding: 12px 15px;
+        }
+        
+        .alert-danger {
+          background: #fee;
+          color: #c53030;
+        }
+        
+        .alert-success {
+          background: #d4edda;
+          color: #155724;
+        }
+        
+        .divider {
+          display: flex;
+          align-items: center;
+          text-align: center;
+          margin: 25px 0;
+        }
+        
+        .divider::before,
+        .divider::after {
+          content: '';
+          flex: 1;
+          border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .divider span {
+          padding: 0 15px;
+          color: #a0aec0;
+          font-size: 0.875rem;
+          font-weight: 500;
+        }
+        
+        .signup-link {
+          color: #667eea;
+          font-weight: 600;
+          text-decoration: none;
+          transition: color 0.2s;
+        }
+        
+        .signup-link:hover {
+          color: #764ba2;
+        }
+        
+        .modal-content {
+          border: none;
+          border-radius: 15px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+          border-bottom: 1px solid #e2e8f0;
+          padding: 20px 25px;
+        }
+        
+        .modal-title {
+          font-weight: 700;
+          color: #2d3748;
+        }
+        
+        .modal-body {
+          padding: 25px;
+        }
+        
+        .modal-footer {
+          border-top: 1px solid #e2e8f0;
+          padding: 15px 25px;
+        }
+        
+        .password-toggle {
+          border: 2px solid #e2e8f0;
+          border-left: none;
+          background: white;
+          color: #718096;
+          transition: all 0.3s ease;
+        }
+        
+        .password-toggle:hover {
+          background: #f7fafc;
+          color: #4a5568;
+        }
+        
+        .input-group:focus-within .password-toggle {
+          border-color: #667eea;
+        }
+        
+        @media (max-width: 576px) {
+          .login-header {
+            padding: 30px 20px;
+          }
+          
+          .login-header h1 {
+            font-size: 1.5rem;
+          }
+          
+          .login-body {
+            padding: 30px 20px;
+          }
+        }
+      `}</style>
+
+      <div className="login-wrapper">
+        <Container>
+          <Row className="justify-content-center">
+            <Col xs={12} sm={11} md={9} lg={7} xl={5}>
+              <Card className="login-card">
+                <div className="login-header">
+                  <i className="bi bi-shield-lock fs-1 mb-3"></i>
+                  <h1>Bienvenue !</h1>
+                  <p>Connectez-vous pour accéder à votre compte</p>
                 </div>
 
-                {/* Formulaire de connexion */}
-                <Form onSubmit={handleLogin}>
-                  <Form.Group className="mb-3">
-                    <Form.Label className="small fw-semibold">Adresse e-mail</Form.Label>
-                    <InputGroup>
-                      <InputGroup.Text className="bg-light border-end-0">
-                        <i className="bi bi-envelope text-muted"></i>
-                      </InputGroup.Text>
-                      <Form.Control
-                        type="email"
-                        placeholder="votre@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="border-start-0"
-                        required
-                      />
-                    </InputGroup>
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                    <Form.Label className="small fw-semibold">Mot de passe</Form.Label>
-                    <InputGroup>
-                      <InputGroup.Text className="bg-light border-end-0">
-                        <i className="bi bi-lock text-muted"></i>
-                      </InputGroup.Text>
-                      <Form.Control
-                        type={show ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="border-start-0 border-end-0"
-                        required
-                      />
-                      <Button
-                        variant="outline-secondary"
-                        onClick={() => setShow(!show)}
-                        className="border-start-0"
-                      >
-                        <i className={`bi ${show ? 'bi-eye-slash' : 'bi-eye'}`}></i>
-                      </Button>
-                    </InputGroup>
-                  </Form.Group>
-
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <Form.Check
-                      type="checkbox"
-                      label="Se souvenir"
-                      className="small"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                    />
-                    <Button
-                      variant="link"
-                      className="text-decoration-none p-0 small"
-                      onClick={() => setIsModalOpen(true)}
-                    >
-                      Mot de passe oublié ?
-                    </Button>
-                  </div>
-
+                <div className="login-body">
                   {errorMessage && (
-                    <Alert variant="danger" className="py-2 small">
+                    <Alert variant="danger" className="mb-4">
                       <i className="bi bi-exclamation-circle me-2"></i>
                       {errorMessage}
                     </Alert>
                   )}
 
-                  <Button
-                    variant="primary"
-                    type="submit"
-                    className="w-100 py-2 mb-3"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Spinner animation="border" size="sm" className="me-2" />
-                        Connexion...
-                      </>
-                    ) : (
-                      "Se connecter"
-                    )}
-                  </Button>
+                  <Form onSubmit={handleLogin}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Adresse e-mail</Form.Label>
+                      <InputGroup>
+                        <InputGroup.Text>
+                          <i className="bi bi-envelope"></i>
+                        </InputGroup.Text>
+                        <Form.Control
+                          type="email"
+                          placeholder="votre@email.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                        />
+                      </InputGroup>
+                    </Form.Group>
 
-                  <div className="text-center">
-                    <span className="text-muted small">Pas de compte ? </span>
-                    <Link to="/inscrire" className="fw-semibold text-decoration-none small">
-                      S'inscrire
-                    </Link>
-                  </div>
-                </Form>
-              </Card.Body>
-            </Card>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Mot de passe</Form.Label>
+                      <InputGroup>
+                        <InputGroup.Text>
+                          <i className="bi bi-lock"></i>
+                        </InputGroup.Text>
+                        <Form.Control
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                        />
+                        <Button
+                          variant="outline-secondary"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="password-toggle"
+                        >
+                          <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                        </Button>
+                      </InputGroup>
+                    </Form.Group>
 
-            {/* Lien retour accueil */}
-            <div className="text-center mt-3">
-              <Link to="/" className="text-muted text-decoration-none small">
-                <i className="bi bi-arrow-left me-2"></i>
-                Retour au site
-              </Link>
-            </div>
-          </Col>
-        </Row>
-      </Container>
+                    <div className="d-flex justify-content-between align-items-center mb-4">
+                      <Form.Check
+                        type="checkbox"
+                        label="Se souvenir de moi"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                      />
+                      <Button
+                        variant="link"
+                        className="p-0"
+                        onClick={() => setIsModalOpen(true)}
+                      >
+                        Mot de passe oublié ?
+                      </Button>
+                    </div>
 
-      {/* Modal mot de passe oublié */}
-      <Modal show={isModalOpen} onHide={() => setIsModalOpen(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title className="h5">Mot de passe oublié</Modal.Title>
-        </Modal.Header>
-        <Form onSubmit={handleSubmit}>
-          <Modal.Body>
-            <p className="text-muted small mb-3">
-              Entrez votre adresse e-mail pour recevoir un lien de réinitialisation
-            </p>
-            <Form.Group>
-              <Form.Label className="small fw-semibold">Adresse e-mail</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="votre@email.com"
-                value={searchMail}
-                onChange={(e) => setSearchMail(e.target.value)}
-                required
-              />
-            </Form.Group>
+                    <Button
+                      variant="primary"
+                      type="submit"
+                      className="w-100 mb-3"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <Spinner animation="border" size="sm" className="me-2" />
+                          Connexion en cours...
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-box-arrow-in-right me-2"></i>
+                          Se connecter
+                        </>
+                      )}
+                    </Button>
 
-            {error && (
-              <Alert variant="danger" className="mt-3 py-2 small mb-0">
-                {error}
-              </Alert>
-            )}
+                    <div className="divider">
+                      <span>OU</span>
+                    </div>
 
-            {message && (
-              <Alert variant="success" className="mt-3 py-2 small mb-0">
-                {message}
-              </Alert>
-            )}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" size="sm" onClick={() => setIsModalOpen(false)}>
-              Annuler
-            </Button>
-            <Button variant="primary" size="sm" type="submit" disabled={loadingModal}>
-              {loadingModal ? (
-                <>
-                  <Spinner animation="border" size="sm" className="me-2" />
-                  Envoi...
-                </>
-              ) : (
-                "Envoyer"
+                    <Button
+                      variant="outline-secondary"
+                      className="w-100 mb-4"
+                      onClick={handleGuest}
+                    >
+                      <i className="bi bi-eye me-2"></i>
+                      Explorer en tant qu'invité
+                    </Button>
+
+                    <div className="text-center">
+                      <span className="text-muted">Vous n'avez pas de compte ? </span>
+                      <Link to="/inscrire" className="signup-link">
+                        Créer un compte
+                      </Link>
+                    </div>
+                  </Form>
+                </div>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
+
+        {/* Modal mot de passe oublié */}
+        <Modal show={isModalOpen} onHide={() => setIsModalOpen(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <i className="bi bi-key me-2"></i>
+              Réinitialiser le mot de passe
+            </Modal.Title>
+          </Modal.Header>
+          <Form onSubmit={handleSubmit}>
+            <Modal.Body>
+              <p className="text-muted mb-4">
+                Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+              </p>
+              <Form.Group>
+                <Form.Label>Adresse e-mail</Form.Label>
+                <InputGroup>
+                  <InputGroup.Text>
+                    <i className="bi bi-envelope"></i>
+                  </InputGroup.Text>
+                  <Form.Control
+                    type="email"
+                    placeholder="votre@email.com"
+                    value={searchMail}
+                    onChange={(e) => setSearchMail(e.target.value)}
+                    required
+                  />
+                </InputGroup>
+              </Form.Group>
+
+              {error && (
+                <Alert variant="danger" className="mt-3 mb-0">
+                  <i className="bi bi-exclamation-circle me-2"></i>
+                  {error}
+                </Alert>
               )}
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
-    </div>
+              {message && (
+                <Alert variant="success" className="mt-3 mb-0">
+                  <i className="bi bi-check-circle me-2"></i>
+                  {message}
+                </Alert>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button 
+                variant="outline-secondary" 
+                onClick={() => setIsModalOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button 
+                variant="primary" 
+                type="submit" 
+                disabled={loadingModal}
+              >
+                {loadingModal ? (
+                  <>
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    Envoi...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-send me-2"></i>
+                    Envoyer le lien
+                  </>
+                )}
+              </Button>
+            </Modal.Footer>
+          </Form>
+        </Modal>
+      </div>
+    </>
   );
 };
 

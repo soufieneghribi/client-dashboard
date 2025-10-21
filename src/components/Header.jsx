@@ -7,16 +7,35 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import Company_Logo from "../assets/images/logo_0.png";
 import { Navbar, Nav, Container, Form, Button, Dropdown, Badge, Offcanvas, InputGroup } from 'react-bootstrap';
 import debounce from 'lodash.debounce';
+import Cookies from "js-cookie";
 
 const Header = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [cartCount, setCartCount] = useState(0);
   const searchRef = useRef(null);
 
   const auth = useSelector((state) => state.auth);
   const { searchResults, loading: searchLoading, error: searchError } = useSelector((state) => state.search);
+
+  // Update cart count from cookies
+  useEffect(() => {
+    const updateCartCount = () => {
+      const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
+      const totalItems = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+      setCartCount(totalItems);
+    };
+
+    // Initial update
+    updateCartCount();
+
+    // Update every second to catch cart changes
+    const interval = setInterval(updateCartCount, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const debouncedSearch = useCallback(
     debounce((query) => {
@@ -50,7 +69,7 @@ const Header = () => {
 
   const navLinks = [
     { path: "/", label: "Accueil", icon: "fa-home" },
-    { path: "/categories", label: "Catégories", icon: "fa-th-large" },
+    { path: "/categories", label: "Product", icon: "fa-th-large" },
     { path: "/MesDeals", label: "Offres", icon: "fa-tag" },
     { path: "/contact", label: "Contact", icon: "fa-envelope" }
   ];
@@ -66,7 +85,6 @@ const Header = () => {
           dispatch(loginSuccess({ token, user: parsedUser }));
         }
       } catch (error) {
-        console.error("Error parsing user data:", error);
         localStorage.removeItem("user");
       }
     }
@@ -180,10 +198,14 @@ const Header = () => {
               </div>
             )}
 
-            
+            {/* Dynamic Cart Counter */}
             <Button variant="link" as={Link} to="/cart-shopping" className="position-relative text-secondary p-2">
               <i className="fas fa-shopping-cart fs-4"></i>
-              <Badge bg="primary" pill className="position-absolute top-0 start-100 translate-middle" style={{ fontSize: '0.6rem' }}>3</Badge>
+              {cartCount > 0 && (
+                <Badge bg="primary" pill className="position-absolute top-0 start-100 translate-middle" style={{ fontSize: '0.6rem' }}>
+                  {cartCount}
+                </Badge>
+              )}
             </Button>
 
             <div className="d-lg-none">
@@ -261,8 +283,13 @@ const Header = () => {
             <Button variant="outline-danger" as={Link} to="/wishlist" className="flex-fill" onClick={() => setShowMobileMenu(false)}>
               <i className="far fa-heart me-2"></i> Favoris
             </Button>
-            <Button variant="outline-primary" as={Link} to="/cart-shopping" className="flex-fill" onClick={() => setShowMobileMenu(false)}>
+            <Button variant="outline-primary" as={Link} to="/cart-shopping" className="flex-fill position-relative" onClick={() => setShowMobileMenu(false)}>
               <i className="fas fa-shopping-cart me-2"></i> Panier
+              {cartCount > 0 && (
+                <Badge bg="danger" pill className="position-absolute top-0 start-100 translate-middle">
+                  {cartCount}
+                </Badge>
+              )}
             </Button>
           </div>
         </Offcanvas.Body>

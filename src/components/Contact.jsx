@@ -1,60 +1,38 @@
-
-
-import React, { useState } from 'react';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import emailjs from "@emailjs/browser";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
-    nom: '',
-    email: '',
-    telephone: '',
-    sujet: '',
-    message: ''
+    nom: "",
+    email: "",
+    telephone: "",
+    sujet: "",
+    message: "",
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
-    // Validation téléphone en temps réel
-    if (name === 'telephone') {
-      const cleaned = value.replace(/\D/g, '');
-      if (cleaned.length <= 8) {
-        setFormData({ ...formData, [name]: cleaned });
-      }
+    if (name === "telephone") {
+      const cleaned = value.replace(/\D/g, "");
+      if (cleaned.length <= 8) setFormData({ ...formData, [name]: cleaned });
     } else {
       setFormData({ ...formData, [name]: value });
     }
-    
-    setErrors({ ...errors, [name]: '' });
+    setErrors({ ...errors, [name]: "" });
   };
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.nom.trim()) {
-      newErrors.nom = 'Le nom est requis';
-    }
-
+    if (!formData.nom.trim()) newErrors.nom = "Le nom est requis";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email || !emailRegex.test(formData.email)) {
-      newErrors.email = 'Email invalide';
-    }
-
-    if (formData.telephone && !/^\d{8}$/.test(formData.telephone)) {
-      newErrors.telephone = 'Le numéro doit contenir 8 chiffres';
-    }
-
-    if (!formData.sujet.trim()) {
-      newErrors.sujet = 'Le sujet est requis';
-    }
-
-    if (!formData.message.trim()) {
-      newErrors.message = 'Le message est requis';
-    } else if (formData.message.trim().length < 10) {
-      newErrors.message = 'Le message doit contenir au moins 10 caractères';
-    }
+    if (!formData.email || !emailRegex.test(formData.email)) newErrors.email = "Email invalide";
+    if (formData.telephone && !/^\d{8}$/.test(formData.telephone)) newErrors.telephone = "Le numéro doit contenir 8 chiffres";
+    if (!formData.sujet.trim()) newErrors.sujet = "Le sujet est requis";
+    if (!formData.message.trim()) newErrors.message = "Le message est requis";
+    else if (formData.message.trim().length < 10) newErrors.message = "Le message doit contenir au moins 10 caractères";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -62,287 +40,383 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      toast.error('Veuillez corriger les erreurs du formulaire');
-      return;
-    }
-
+    if (!validateForm()) return;
     setLoading(true);
-
-    // Simuler l'envoi (remplacez par votre API)
-    setTimeout(() => {
+    setSuccess(false);
+    try {
+      // Mapper les champs du formulaire aux variables du template EmailJS
+      const templateParams = {
+        from_name: formData.nom,
+        from_email: formData.email,
+        telephone: formData.telephone || 'Non renseigné',
+        sujet: formData.sujet,
+        message: formData.message
+      };
+      
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        templateParams,
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+      setSuccess(true);
+      setFormData({ nom: "", email: "", telephone: "", sujet: "", message: "" });
+      setTimeout(() => setSuccess(false), 5000);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de l'envoi du message, veuillez réessayer.");
+    } finally {
       setLoading(false);
-      toast.success('Message envoyé avec succès !');
-      setFormData({
-        nom: '',
-        email: '',
-        telephone: '',
-        sujet: '',
-        message: ''
-      });
-    }, 1500);
+    }
   };
 
-  const contactInfo = [
-    {
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-        </svg>
-      ),
-      title: 'Téléphone',
-      content: '22 578 815',
-      link: 'tel:22578815'
-    },
-    {
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      ),
-      title: 'Email',
-      content: 'contact@tn360.com',
-      link: 'mailto:contact@tn360.com'
-    },
-    {
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ),
-      title: 'Adresse',
-      content: 'Rue du lac leman, immeuble MakCrown, 1er étage, Les berges du lac, Tunis 1053',
-      link: null
-    },
-    {
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      title: 'Horaires',
-      content: 'Lun - Ven: 9h - 18h\nSam: 9h - 13h',
-      link: null
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4">
-      <div className="max-w-7xl mx-auto">
+    <>
+      <style>{`
+        @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
         
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-            Contactez-nous
-          </h1>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Une question ? Une suggestion ? Notre équipe est là pour vous aider. 
-            Remplissez le formulaire ci-dessous et nous vous répondrons dans les plus brefs délais.
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-8">
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+        }
+        
+        .contact-page {
+          min-height: 100vh;
+          padding: 60px 0;
+          background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+        }
+        
+        .contact-header {
+          text-align: center;
+          margin-bottom: 50px;
+        }
+        
+        .contact-header h1 {
+          font-size: 2.8rem;
+          font-weight: 700;
+          color: #2c3e50;
+          margin-bottom: 15px;
+        }
+        
+        .contact-header p {
+          font-size: 1.15rem;
+          color: #7f8c8d;
+          max-width: 600px;
+          margin: 0 auto;
+        }
+        
+        .info-card {
+          background: white;
+          border-radius: 15px;
+          padding: 25px;
+          margin-bottom: 20px;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+          transition: all 0.3s ease;
+          border: none;
+        }
+        
+        .info-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+        
+        .info-card-icon {
+          width: 50px;
+          height: 50px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem;
+          margin-bottom: 15px;
+        }
+        
+        .icon-blue { background: #e3f2fd; color: #2196f3; }
+        .icon-green { background: #e8f5e9; color: #4caf50; }
+        .icon-orange { background: #fff3e0; color: #ff9800; }
+        .icon-purple { background: #f3e5f5; color: #9c27b0; }
+        
+        .info-card h5 {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #2c3e50;
+          margin-bottom: 8px;
+        }
+        
+        .info-card p {
+          color: #7f8c8d;
+          margin-bottom: 0;
+          font-size: 0.95rem;
+        }
+        
+        .form-card {
+          background: white;
+          border-radius: 20px;
+          padding: 40px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+          border: none;
+        }
+        
+        .form-label {
+          font-weight: 600;
+          color: #2c3e50;
+          margin-bottom: 8px;
+          font-size: 0.95rem;
+        }
+        
+        .form-control, .form-select {
+          border: 2px solid #e9ecef;
+          border-radius: 10px;
+          padding: 12px 15px;
+          font-size: 0.95rem;
+          transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+          border-color: #2196f3;
+          box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.15);
+        }
+        
+        .input-group-text {
+          background: #f8f9fa;
+          border: 2px solid #e9ecef;
+          border-right: none;
+          border-radius: 10px 0 0 10px;
+          font-weight: 600;
+          color: #495057;
+        }
+        
+        .input-group .form-control {
+          border-left: none;
+          border-radius: 0 10px 10px 0;
+        }
+        
+        .btn-submit {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border: none;
+          border-radius: 10px;
+          padding: 14px 30px;
+          font-size: 1.05rem;
+          font-weight: 600;
+          color: white;
+          transition: all 0.3s ease;
+          width: 100%;
+        }
+        
+        .btn-submit:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-submit:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        
+        .alert-success-custom {
+          background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+          border: none;
+          border-radius: 12px;
+          padding: 16px 20px;
+          color: #155724;
+          margin-bottom: 25px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        
+        .alert-success-custom i {
+          font-size: 1.3rem;
+        }
+        
+        .invalid-feedback {
+          display: block;
+          color: #dc3545;
+          font-size: 0.875rem;
+          margin-top: 5px;
+        }
+        
+        .spinner-border-sm {
+          width: 1rem;
+          height: 1rem;
+          border-width: 0.15em;
+        }
+        
+        @media (max-width: 768px) {
+          .contact-header h1 {
+            font-size: 2rem;
+          }
           
-          {/* Formulaire de contact */}
-          <div className="bg-white rounded-3xl shadow-xl p-8 md:p-10">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Envoyez-nous un message</h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Nom */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Nom complet <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="nom"
-                  value={formData.nom}
-                  onChange={handleChange}
-                  className="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all"
-                  placeholder="Votre nom et prénom"
-                />
-                {errors.nom && <p className="text-red-600 text-sm mt-1.5">{errors.nom}</p>}
-              </div>
+          .form-card {
+            padding: 25px;
+          }
+          
+          .contact-page {
+            padding: 30px 0;
+          }
+        }
+      `}</style>
 
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all"
-                  placeholder="votre@email.com"
-                />
-                {errors.email && <p className="text-red-600 text-sm mt-1.5">{errors.email}</p>}
-              </div>
+      <div className="contact-page">
+        <div className="container">
+          {/* Header */}
+          <div className="contact-header">
+            <h1><i className="fas fa-envelope me-3"></i>Contactez-nous</h1>
+            <p>Notre équipe est à votre écoute. N'hésitez pas à nous contacter pour toute question ou demande d'information.</p>
+          </div>
 
-              {/* Téléphone */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Téléphone <span className="text-gray-400">(optionnel)</span>
-                </label>
-                <div className="flex">
-                  <div className="px-4 py-4 text-base rounded-l-xl border-2 border-r-0 border-gray-200 bg-gray-50 text-gray-700 font-medium">
-                    +216
-                  </div>
-                  <input
-                    type="text"
-                    name="telephone"
-                    value={formData.telephone}
-                    onChange={handleChange}
-                    maxLength="8"
-                    className="flex-1 px-5 py-4 text-base rounded-r-xl border-2 border-l-0 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all"
-                    placeholder="12345678"
-                  />
+          <div className="row g-4">
+            {/* Informations de contact */}
+            <div className="col-lg-4">
+              <div className="info-card">
+                <div className="info-card-icon icon-blue">
+                  <i className="fas fa-phone"></i>
                 </div>
-                {errors.telephone && <p className="text-red-600 text-sm mt-1.5">{errors.telephone}</p>}
+                <h5>Téléphone</h5>
+                <p>22 578 815</p>
               </div>
 
-              {/* Sujet */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Sujet <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="sujet"
-                  value={formData.sujet}
-                  onChange={handleChange}
-                  className="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-white"
-                >
-                  <option value="">Sélectionnez un sujet</option>
-                  <option value="information">Demande d'information</option>
-                  <option value="support">Support technique</option>
-                  <option value="partenariat">Partenariat</option>
-                  <option value="reclamation">Réclamation</option>
-                  <option value="autre">Autre</option>
-                </select>
-                {errors.sujet && <p className="text-red-600 text-sm mt-1.5">{errors.sujet}</p>}
+              <div className="info-card">
+                <div className="info-card-icon icon-green">
+                  <i className="fas fa-envelope"></i>
+                </div>
+                <h5>Email</h5>
+                <p>contact.tn360@gmail.com</p>
               </div>
 
-              {/* Message */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Message <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  rows="5"
-                  className="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all resize-none"
-                  placeholder="Décrivez votre demande en détail..."
-                />
-                {errors.message && <p className="text-red-600 text-sm mt-1.5">{errors.message}</p>}
-                <p className="text-xs text-gray-500 mt-1">Minimum 10 caractères</p>
+              <div className="info-card">
+                <div className="info-card-icon icon-orange">
+                  <i className="fas fa-map-marker-alt"></i>
+                </div>
+                <h5>Adresse</h5>
+                <p>Rue du lac leman, MakCrown<br/>Tunis 1053</p>
               </div>
 
-              {/* Bouton Submit */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center text-base disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Envoi en cours...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                    Envoyer le message
-                  </>
+              <div className="info-card">
+                <div className="info-card-icon icon-purple">
+                  <i className="fas fa-clock"></i>
+                </div>
+                <h5>Horaires d'ouverture</h5>
+                <p>Lundi - Vendredi: 9h - 18h<br/>Samedi: 9h - 13h</p>
+              </div>
+            </div>
+
+            {/* Formulaire de contact */}
+            <div className="col-lg-8">
+              <div className="form-card">
+                {success && (
+                  <div className="alert-success-custom">
+                    <i className="fas fa-check-circle"></i>
+                    <span><strong>Succès !</strong> Votre message a été envoyé avec succès. Nous vous répondrons dans les plus brefs délais.</span>
+                  </div>
                 )}
-              </button>
-            </form>
-          </div>
 
-          {/* Informations de contact */}
-          <div className="space-y-6">
-            
-            {/* Cartes d'information */}
-            <div className="grid gap-6">
-              {contactInfo.map((info, index) => (
-                <div key={index} className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-200">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white">
-                      {info.icon}
+                <form onSubmit={handleSubmit}>
+                  <div className="row g-3">
+                    {/* Nom */}
+                    <div className="col-md-6">
+                      <label className="form-label">Nom complet <span className="text-danger">*</span></label>
+                      <input
+                        type="text"
+                        name="nom"
+                        className={`form-control ${errors.nom ? 'is-invalid' : ''}`}
+                        value={formData.nom}
+                        onChange={handleChange}
+                        placeholder="Votre nom complet"
+                      />
+                      {errors.nom && <div className="invalid-feedback">{errors.nom}</div>}
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 text-lg mb-2">{info.title}</h3>
-                      {info.link ? (
-                        <a 
-                          href={info.link}
-                          className="text-blue-600 hover:text-blue-700 transition-colors font-medium"
-                        >
-                          {info.content}
-                        </a>
-                      ) : (
-                        <p className="text-gray-600 whitespace-pre-line">{info.content}</p>
-                      )}
+
+                    {/* Email */}
+                    <div className="col-md-6">
+                      <label className="form-label">Email <span className="text-danger">*</span></label>
+                      <input
+                        type="email"
+                        name="email"
+                        className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="votre@email.com"
+                      />
+                      {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                    </div>
+
+                    {/* Téléphone */}
+                    <div className="col-md-6">
+                      <label className="form-label">Téléphone</label>
+                      <div className="input-group">
+                        <span className="input-group-text">+216</span>
+                        <input
+                          type="text"
+                          name="telephone"
+                          className={`form-control ${errors.telephone ? 'is-invalid' : ''}`}
+                          value={formData.telephone}
+                          onChange={handleChange}
+                          placeholder="12345678"
+                          maxLength="8"
+                        />
+                      </div>
+                      {errors.telephone && <div className="invalid-feedback">{errors.telephone}</div>}
+                    </div>
+
+                    {/* Sujet */}
+                    <div className="col-md-6">
+                      <label className="form-label">Sujet <span className="text-danger">*</span></label>
+                      <select
+                        name="sujet"
+                        className={`form-select ${errors.sujet ? 'is-invalid' : ''}`}
+                        value={formData.sujet}
+                        onChange={handleChange}
+                      >
+                        <option value="">Sélectionnez un sujet</option>
+                        <option value="information">Demande d'information</option>
+                        <option value="support">Support technique</option>
+                        <option value="partenariat">Partenariat</option>
+                        <option value="reclamation">Réclamation</option>
+                        <option value="autre">Autre</option>
+                      </select>
+                      {errors.sujet && <div className="invalid-feedback">{errors.sujet}</div>}
+                    </div>
+
+                    {/* Message */}
+                    <div className="col-12">
+                      <label className="form-label">Message <span className="text-danger">*</span></label>
+                      <textarea
+                        name="message"
+                        className={`form-control ${errors.message ? 'is-invalid' : ''}`}
+                        value={formData.message}
+                        onChange={handleChange}
+                        rows="5"
+                        placeholder="Décrivez votre demande en détail..."
+                      ></textarea>
+                      {errors.message && <div className="invalid-feedback">{errors.message}</div>}
+                    </div>
+
+                    {/* Bouton submit */}
+                    <div className="col-12">
+                      <button type="submit" className="btn-submit" disabled={loading}>
+                        {loading ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2"></span>
+                            Envoi en cours...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-paper-plane me-2"></i>
+                            Envoyer le message
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-
-        
-
-            {/* Réseaux sociaux */}
-            
-          </div>
-        </div>
-
-        {/* FAQ Section */}
-        <div className="mt-16">
-          <h2 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Questions fréquentes
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                </form>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Comment créer un compte ?</h3>
-              <p className="text-gray-600 text-sm">Cliquez sur "S'inscrire" et suivez les étapes du formulaire d'inscription.</p>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Quels sont les modes de paiement ?</h3>
-              <p className="text-gray-600 text-sm">Nous acceptons les cartes bancaires, virements et paiements en ligne sécurisés.</p>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Délai de livraison ?</h3>
-              <p className="text-gray-600 text-sm">Les livraisons sont effectuées sous 2-5 jours ouvrables selon votre région.</p>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

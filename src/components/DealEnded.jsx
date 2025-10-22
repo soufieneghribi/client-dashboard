@@ -1,96 +1,156 @@
-import React, { useEffect, useState } from 'react'; 
+import React, { useEffect, useState } from 'react';
 import { fetchUserProfile, updateCagnotteInDB } from '../store/slices/user';
 import { useDispatch, useSelector } from 'react-redux';
-import { toast } from 'react-hot-toast'; // Si vous utilisez toast pour afficher les messages.
+import { toast } from 'react-hot-toast';
 
 const DealEnded = ({ gain, image }) => {
-  const [show, setShow] = useState(true);
-  const [clicked, setClicked] = useState(false); // État pour gérer si l'utilisateur a cliqué
+  const [hasClicked, setHasClicked] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { Userprofile } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
-  // Fetch user profile on component mount
   useEffect(() => {
     dispatch(fetchUserProfile());
   }, [dispatch]);
 
-  // Vérifier si le gain a déjà été ajouté lors du chargement du composant
   useEffect(() => {
-    const hasAlreadyAdded = localStorage.getItem('gainAdded');
+    const gainKey = `gain_added_${gain}_${image}`;
+    const hasAlreadyAdded = localStorage.getItem(gainKey);
     if (hasAlreadyAdded) {
-      setShow(false); // Si le gain a déjà été ajouté, on cache la carte
-      setClicked(true); // Marquer comme cliqué pour ne pas le refaire
+      setHasClicked(true);
     }
-  }, []);
+  }, [gain, image]);
 
-  // Fonction qui gère l'envoi à la cagnotte lors du clic
-  const toCagnotte = () => {
-    if (clicked) return; // Si l'utilisateur a déjà cliqué, ne rien faire
+  const handleAddToCagnotte = async () => {
+    if (hasClicked || isProcessing) return;
 
-    setClicked(true); // Marquer comme cliqué
-    setShow(false); // Masquer le message de félicitations
+    setIsProcessing(true);
+    const gainKey = `gain_added_${gain}_${image}`;
 
-    const updatedBalance = parseFloat(gain); // Calcul du gain à ajouter à la cagnotte
-
-    // Envoi de la mise à jour de la cagnotte dans la base de données
-    dispatch(updateCagnotteInDB(updatedBalance))
-      .then(() => {
-        // Mettre à jour le profil pour marquer que le gain a été ajouté
-        dispatch(fetchUserProfile());
-        // Persister l'état dans localStorage pour empêcher d'ajouter à nouveau le gain
-        localStorage.setItem('gainAdded', 'true');
-        toast.success('Cagnotte mise à jour avec succès!');
-      })
-      .catch((error) => {
-        toast.error('Une erreur est survenue lors de la mise à jour de la cagnotte.');
-        console.error(error);
+    try {
+      const updatedBalance = parseFloat(gain);
+      
+      await dispatch(updateCagnotteInDB(updatedBalance)).unwrap();
+      await dispatch(fetchUserProfile()).unwrap();
+      
+      localStorage.setItem(gainKey, 'true');
+      setHasClicked(true);
+      
+      toast.success(`${gain} DT ajoutés à votre cagnotte!`, {
+        duration: 3000,
+        icon: '🎉',
       });
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour de la cagnotte');
+      console.error(error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
+  const styles = {
+    container: {
+      background: 'linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%)',
+      borderRadius: '16px',
+      padding: '24px',
+      color: 'white',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+      cursor: hasClicked || isProcessing ? 'default' : 'pointer',
+      transition: 'transform 0.2s',
+    },
+    content: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '20px',
+    },
+    image: {
+      width: '100px',
+      height: '100px',
+      objectFit: 'contain',
+      background: 'white',
+      borderRadius: '12px',
+      padding: '8px',
+    },
+    textSection: {
+      flex: 1,
+    },
+    title: {
+      fontSize: '18px',
+      fontWeight: 'bold',
+      margin: '0 0 8px 0',
+    },
+    reward: {
+      fontSize: '24px',
+      fontWeight: 'bold',
+      color: '#FFD700',
+      margin: '8px 0',
+    },
+    action: {
+      fontSize: '14px',
+      margin: '8px 0 0 0',
+      opacity: 0.9,
+    },
+  };
+
+  const containerHoverStyle = !hasClicked && !isProcessing ? {
+    ':hover': {
+      transform: 'scale(1.02)',
+    }
+  } : {};
+
+  if (hasClicked) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.content}>
+          <img
+            src={image}
+            alt="Deal terminé"
+            style={styles.image}
+          />
+          <div style={styles.textSection}>
+            <p style={styles.title}>✓ Mission accomplie!</p>
+            <p style={styles.reward}>{gain} DT</p>
+            <p style={styles.action}>Ajouté à votre cagnotte avec succès</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className="flex justify-start m-8 items-center bg-gray-100 cursor-pointer"
-      onClick={toCagnotte}
+    <div 
+      style={styles.container}
+      onClick={handleAddToCagnotte}
+      onMouseEnter={(e) => {
+        if (!hasClicked && !isProcessing) {
+          e.currentTarget.style.transform = 'scale(1.02)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!hasClicked && !isProcessing) {
+          e.currentTarget.style.transform = 'scale(1)';
+        }
+      }}
     >
-      {show && !clicked && ( // Afficher le message seulement si ce n'est pas cliqué
-        <div className="w-full rounded-lg overflow-hidden shadow-lg bg-green-950">
-          <div className="flex flex-row justify-evenly">
-            {/* Image Section */}
-            <img
-              src={image}
-              alt="Deal"
-              className="w-48 h-48 object-cover p-2"
-            />
-
-            {/* Text Section */}
-            <div className="pt-10 px-4 font-semibold text-lg text-white">
-              <p>Félicitations, mission accomplie !</p>
-              <p>Vous avez gagné {gain} DT</p>
-              <p>Cliquez sur moi pour envoyer l'argent gagné à la cagnotte</p>
-            </div>
-          </div>
+      <div style={styles.content}>
+        <img
+          src={image}
+          alt="Deal terminé"
+          style={styles.image}
+        />
+        <div style={styles.textSection}>
+          <p style={styles.title}>
+            {isProcessing ? 'Traitement...' : '🎉 Félicitations!'}
+          </p>
+          <p style={styles.reward}>{gain} DT</p>
+          <p style={styles.action}>
+            {isProcessing 
+              ? 'Ajout en cours...'
+              : 'Cliquez pour ajouter à votre cagnotte'
+            }
+          </p>
         </div>
-      )}
-
-      {/* Après le clic, on affiche un message de confirmation */}
-      {!show && clicked && (
-        <div className="w-full rounded-lg overflow-hidden shadow-lg bg-green-950">
-          <div className="flex flex-row justify-evenly">
-            {/* Image Section */}
-            <img
-              src={image}
-              alt="Deal"
-              className="w-48 h-48 object-cover p-2"
-            />
-
-            {/* Text Section */}
-            <div className="pt-10 px-4 font-semibold text-lg text-white">
-              <p>Félicitations, votre cagnotte a été mise à jour avec succès !</p>
-              <p>Vous avez ajouté {gain} DT à votre cagnotte.</p>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

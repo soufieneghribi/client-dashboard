@@ -42,7 +42,8 @@ const router = createBrowserRouter(
       <Route path="/subcategory/:id" element={<SubCategory />} />
       <Route path="/products" element={<Products />} />
       <Route path="/product/:id" element={<ProductDetails />} />
-      <Route path="/search" element={<SearchResult />} />
+<Route path="/search" element={<SearchResult />} />
+
       <Route path="/recipe/:id" element={<RecipeDetails />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/MesDeals" element={<ProtectedRoute><MesDeals /></ProtectedRoute>} />

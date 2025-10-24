@@ -61,7 +61,7 @@ const CartShopping = () => {
   const calculateTotal = useMemo(() => {
     const subtotal = cartItems.reduce((acc, item) => acc + parseFloat(item.total), 0);
     const QTotal = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-    const delivery = QTotal >= 5 ? 0 : 5;
+    const delivery = 5;
     
     // ✅ Calculer la déduction POTENTIELLE (pour affichage uniquement)
     const totalBeforeDeduction = subtotal + delivery;
@@ -108,7 +108,7 @@ const CartShopping = () => {
         total: parseFloat(item.total)
       })),
       subtotal: parseFloat(subtotal),
-      deliveryFee: parseFloat(delivery),
+      deliveryFee: 5,
       totalTTC: parseFloat(totalTTC),
       cagnotteDeduction: useCagnotte ? cagnotteDeduction : 0, // ✅ Montant calculé, pas encore déduit
       useCagnotte: useCagnotte // ✅ Indiquer si l'utilisateur veut utiliser la cagnotte

@@ -70,9 +70,16 @@ const Header = () => {
   const navLinks = [
     { path: "/", label: "Accueil", icon: "fa-home" },
     { path: "/categories", label: "Product", icon: "fa-th-large" },
-    { path: "/MesDeals", label: "Offres", icon: "fa-tag" },
+    { path: "/MesDeals", label: "deals", icon: "fa-tag" },
+{ path: "/Catalogue", label: "Catalogue", icon: "fa-book" },
     { path: "/contact", label: "Contact", icon: "fa-envelope" }
+
+
   ];
+
+
+
+
 
   useEffect(() => {
     const token = localStorage.getItem("token");

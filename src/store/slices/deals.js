@@ -107,7 +107,7 @@ const transformFrequenceDealsData = (deals) => {
   }));
 };
 
-// Transfer deal to cagnotte - FIXED VERSION
+// Transfer deal to cagnotte - USING update-cagnotte ENDPOINT
 export const transferDealToCagnotte = createAsyncThunk(
   "deals/transferToCagnotte",
   async ({ dealType, dealId, amount }, { rejectWithValue, dispatch }) => {
@@ -119,31 +119,16 @@ export const transferDealToCagnotte = createAsyncThunk(
         return rejectWithValue("No auth token");
       }
 
-      const endpoints = {
-        depense: `/api/v1/dealDepense/${dealId}/transfer-cagnotte`,
-        marque: `/api/v1/dealMarque/${dealId}/transfer-cagnotte`,
-        frequence: `/api/v1/dealFrequence/${dealId}/transfer-cagnotte`,
-        anniversaire: `/api/v1/dealAnniversaire/${dealId}/transfer-cagnotte`
-      };
-
-      const endpoint = endpoints[dealType];
-      
-      if (!endpoint) {
-        toast.error("Type de deal invalide");
-        return rejectWithValue("Invalid deal type");
-      }
-
-      console.log('Transferring to backend:', {
-        endpoint: `${BASE_URL}${endpoint}`,
+      console.log('Transferring to cagnotte:', {
         amount: amount,
         dealType: dealType,
         dealId: dealId
       });
 
-      // Send the amount in the request body
+      // ✅ UTILISER L'ENDPOINT update-cagnotte POUR TOUS LES TYPES DE DEALS
       const response = await axios.post(
-        `${BASE_URL}${endpoint}`,
-        { amount: amount },
+        `${BASE_URL}/api/v1/customer/update-cagnotte`,
+        { cagnotte_balance: parseFloat(amount) }, // Format correct pour l'endpoint
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -176,7 +161,6 @@ export const transferDealToCagnotte = createAsyncThunk(
     }
   }
 );
-
 const dealsSlice = createSlice({
   name: "deals",
   initialState: {

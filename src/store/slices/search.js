@@ -1,40 +1,14 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { API_ENDPOINTS } from "../../services/api";
 
 // ===================================
-// CONFIGURATION DE L'URL DE BASE
+// CONFIGURATION
 // ===================================
-
-/**
- * Détermine l'URL de base en fonction de l'environnement
- * Utilise les variables d'environnement VITE
- * Note: L'API de recherche peut utiliser une URL différente
- */
-const getApiBaseUrl = () => {
-  // Vérifier si on est en développement
-  const isDevelopment = import.meta.env.VITE_NODE_ENV === 'development' || 
-                        import.meta.env.MODE === 'development';
-  
-  if (isDevelopment) {
-    // URL de développement (localhost)
-    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-  } else {
-    // URL de production - Utiliser VITE_SEARCH_API_URL si disponible, sinon utiliser l'URL par défaut
-    return import.meta.env.VITE_SEARCH_API_URL || 
-           import.meta.env.VITE_API_BASE_URL_PROD || 
-           'https://tn360-lqd25ixbvq-ew.a.run.app';
-  }
-};
-
-// URL de base pour tous les appels API de recherche
-const API_BASE_URL = `${getApiBaseUrl()}/api/v1`;
 
 // Configuration du timeout
-const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT) || 15000;
-
-if (import.meta.env.VITE_DEBUG_MODE === 'true') {
-}
+const API_TIMEOUT = 15000;
 
 // ===================================
 // ASYNC THUNKS
@@ -53,7 +27,7 @@ export const SearchProduct = createAsyncThunk(
       }
 
       const response = await axios.get(
-        `${API_BASE_URL}/products/search?query=${encodeURIComponent(query)}`,
+        `${API_ENDPOINTS.PRODUCTS.SEARCH}?query=${encodeURIComponent(query)}`,
         {
           timeout: API_TIMEOUT,
           headers: {
@@ -106,7 +80,7 @@ export const SearchProductWithFilters = createAsyncThunk(
       });
 
       const response = await axios.get(
-        `${API_BASE_URL}/products/search?${params.toString()}`,
+        `${API_ENDPOINTS.PRODUCTS.SEARCH}?${params.toString()}`,
         {
           timeout: API_TIMEOUT,
           headers: {

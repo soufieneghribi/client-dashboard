@@ -1,14 +1,13 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-
-const API_BASE_URL = "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1";
+import { API_ENDPOINTS } from "../../services/api";
 
 // Fetch featured recipes
 export const fetchFeaturedRecipes = createAsyncThunk(
   "recipes/fetchFeatured",
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/recipes/featured`);
+      const { data } = await axios.get(API_ENDPOINTS.RECIPES.FEATURED);
       return data;
     } catch (error) {
       console.error("Error fetching featured recipes:", error);
@@ -24,7 +23,7 @@ export const fetchAllRecipes = createAsyncThunk(
   "recipes/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/recipes`);
+      const { data } = await axios.get(API_ENDPOINTS.RECIPES.ALL);
       return data;
     } catch (error) {
       console.error("Error fetching all recipes:", error);
@@ -40,7 +39,7 @@ export const fetchRecipeDetails = createAsyncThunk(
   "recipes/fetchDetails",
   async (recipeId, { rejectWithValue }) => {
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/recipes/${recipeId}`);
+      const { data } = await axios.get(API_ENDPOINTS.RECIPES.BY_ID(recipeId));
       return data;
     } catch (error) {
       console.error("Error fetching recipe details:", error);

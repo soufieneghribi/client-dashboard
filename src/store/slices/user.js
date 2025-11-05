@@ -3,6 +3,7 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import store from "../index";
 import { logout, updateUser as updateAuthUser } from "./authSlice";
+import { API_ENDPOINTS, getAuthHeaders } from "../../services/api";
 
 /**
  * User Redux Slice
@@ -11,21 +12,6 @@ import { logout, updateUser as updateAuthUser } from "./authSlice";
  */
 
 // ==================== CONSTANTS ====================
-// Déterminer l'URL de base en fonction de l'environnement
-const getApiBaseUrl = () => {
-  const isDevelopment = import.meta.env.VITE_NODE_ENV === 'development' || 
-                        import.meta.env.MODE === 'development';
-  
-  if (isDevelopment) {
-    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-  } else {
-    return import.meta.env.VITE_API_BASE_URL_PROD || 
-           'https://tn360-back-office-122923924979.europe-west1.run.app';
-  }
-};
-
-const BASE_URL =  "https://tn360-back-office-122923924979.europe-west1.run.app";
-const API_BASE_URL = `${BASE_URL}/api/v1`;
 const API_TIMEOUT = 15000;
 const RATE_LIMIT_DELAY = 2000;
 
@@ -65,13 +51,9 @@ const testTokenValidity = async (token) => {
     await waitForRateLimit();
     
     const response = await axios.get(
-      `${API_BASE_URL}/customer/info1`,
+      API_ENDPOINTS.USER.PROFILE,
       {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(token),
         timeout: 10000
       }
     );
@@ -104,7 +86,7 @@ export const forgetPassword = createAsyncThunk(
       await waitForRateLimit();
       
       const { data } = await axios.post(
-        `${API_BASE_URL}/auth/password/email`,
+        API_ENDPOINTS.AUTH.FORGOT_PASSWORD,
         { email }
       );
       toast.success("Un lien de réinitialisation a été envoyé à votre e-mail.");
@@ -133,7 +115,7 @@ export const signUp = createAsyncThunk(
       await waitForRateLimit();
       
       const { data } = await axios.post(
-        `${API_BASE_URL}/auth/register`,
+        API_ENDPOINTS.AUTH.REGISTER,
         user
       );
       navigate("/login");
@@ -180,12 +162,8 @@ export const fetchUserProfile = createAsyncThunk(
 
       await waitForRateLimit();
       
-      const { data } = await axios.get(`${API_BASE_URL}/customer/info1`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+      const { data } = await axios.get(API_ENDPOINTS.USER.PROFILE, {
+        headers: getAuthHeaders(token),
         timeout: API_TIMEOUT
       });
       
@@ -225,12 +203,8 @@ export const fetchUserProfileForce = createAsyncThunk(
         throw new Error("Token d'authentification non trouvé");
       }
 
-      const { data } = await axios.get(`${API_BASE_URL}/customer/info1`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+      const { data } = await axios.get(API_ENDPOINTS.USER.PROFILE, {
+        headers: getAuthHeaders(token),
         timeout: API_TIMEOUT
       });
       
@@ -265,124 +239,48 @@ export const updateUserProfile = createAsyncThunk(
         throw new Error("Token d'authentification manquant");
       }
 
-      // Clean data - remove empty strings
-      const cleanedData = {};
-      Object.keys(profileData).forEach(key => {
-        const value = profileData[key];
-        if (value !== "" && value !== undefined) {
-          cleanedData[key] = value;
-        }
-      });
-
-      console.log("📤 Données envoyées au backend:", cleanedData);
-
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/profile/update`,
-        cleanedData,
+      const { data } = await axios.post(
+        API_ENDPOINTS.AUTH.PROFILE_UPDATE,
+        profileData,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
+          headers: getAuthHeaders(token),
           timeout: API_TIMEOUT
         }
       );
 
-      console.log("✅ Réponse du serveur:", response.data);
-
-      // Update auth state
-      if (response.data.client) {
-        dispatch(updateAuthUser(response.data.client));
-        toast.success(response.data.message || "Profil mis à jour avec succès");
-        return response.data.client;
-      }
-
+      dispatch(updateAuthUser(data));
       toast.success("Profil mis à jour avec succès");
-      return response.data;
-      
+      return data;
     } catch (error) {
-      console.error("❌ Erreur complète:", error);
-      console.error("❌ Réponse du serveur:", error.response?.data);
-
       if (error.response?.status === 429) {
         toast.error("Trop de requêtes. Veuillez patienter un moment.");
         return rejectWithValue("Rate limit exceeded");
       }
 
       if (error.response?.status === 422) {
-        // Gestion des erreurs de validation
         const validationErrors = error.response.data.errors;
-        console.error("❌ Erreurs de validation:", validationErrors);
         
-        if (Array.isArray(validationErrors)) {
-          // Format Helpers::error_processor (Laravel)
-          const firstError = validationErrors[0];
-          const errorMessage = firstError.message || firstError;
-          toast.error(errorMessage);
-          return rejectWithValue(errorMessage);
-        } else if (typeof validationErrors === 'object') {
-          // Format standard Laravel
-          const firstKey = Object.keys(validationErrors)[0];
-          const errorMessage = validationErrors[firstKey][0];
-          toast.error(errorMessage);
-          return rejectWithValue(errorMessage);
+        if (validationErrors) {
+          if (Array.isArray(validationErrors)) {
+            const firstError = validationErrors[0]?.message || validationErrors[0] || "Erreur de validation";
+            toast.error(firstError);
+            return rejectWithValue(firstError);
+          }
+          
+          if (typeof validationErrors === 'object') {
+            const firstKey = Object.keys(validationErrors)[0];
+            const firstError = validationErrors[firstKey][0] || validationErrors[firstKey] || "Erreur de validation";
+            toast.error(firstError);
+            return rejectWithValue(firstError);
+          }
         }
         
-        toast.error("Erreur de validation des données");
-        return rejectWithValue("Erreur de validation");
-      }
-      
-      const errorMessage = error.response?.data?.message || "Erreur lors de la mise à jour du profil";
-      
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        toast.error("Session expirée. Veuillez vous reconnecter.");
-        dispatch(logout());
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
-      } else {
-        toast.error(errorMessage);
-      }
-      
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
-export const updateCagnotteInDB = createAsyncThunk(
-  "user/updateCagnotteInDB",
-  async (amount, { rejectWithValue, dispatch }) => {
-    try {
-      await waitForRateLimit();
-      
-      const token = getAuthToken();
-
-      if (!token) {
-        throw new Error("Token d'authentification manquant");
+        const fallbackMessage = error.response.data.message || "Données invalides";
+        toast.error(fallbackMessage);
+        return rejectWithValue(fallbackMessage);
       }
 
-      const response = await axios.post(
-        `${API_BASE_URL}/customer/update-cagnotte`,
-        { amount },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: API_TIMEOUT
-        }
-      );
-
-      toast.success("Cagnotte mise à jour avec succès");
-      return response.data;
-    } catch (error) {
-      if (error.response?.status === 429) {
-        toast.error("Trop de requêtes. Veuillez patienter un moment.");
-        return rejectWithValue("Rate limit exceeded");
-      }
-      
-      const errorMessage = error.response?.data?.message || "Erreur lors de la mise à jour de la cagnotte";
+      const errorMessage = error.response?.data?.message || error.message || "Erreur lors de la mise à jour du profil";
       
       if (error.response?.status === 401 || error.response?.status === 403) {
         toast.error("Session expirée. Veuillez vous reconnecter.");
@@ -400,11 +298,11 @@ export const updateCagnotteInDB = createAsyncThunk(
 );
 
 /**
- * Change Password - MISE À JOUR AVEC GESTION D'ERREUR 422 AMÉLIORÉE
+ * Update Cagnotte in Database
  */
-export const changePassword = createAsyncThunk(
-  "user/changePassword",
-  async (passwordData, { rejectWithValue, dispatch }) => {
+export const updateCagnotteInDB = createAsyncThunk(
+  "user/updateCagnotteInDB",
+  async ({ amount }, { rejectWithValue, dispatch }) => {
     try {
       await waitForRateLimit();
       
@@ -414,62 +312,72 @@ export const changePassword = createAsyncThunk(
         throw new Error("Token d'authentification manquant");
       }
 
-      console.log("📤 Changement de mot de passe avec données:", {
-        current_password: "***",
-        new_password: "***",
-        new_password_confirmation: "***"
-      });
-
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/change-password`,
-        {
-          current_password: passwordData.currentPassword,
-          new_password: passwordData.newPassword,
-          new_password_confirmation: passwordData.newPassword
+      const { data } = await axios.post(
+        API_ENDPOINTS.USER.UPDATE_CAGNOTTE,
+        { 
+          amount: parseFloat(amount),
+          operation: 'add'
         },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
+          headers: getAuthHeaders(token),
           timeout: API_TIMEOUT
         }
       );
 
-      console.log("✅ Mot de passe changé avec succès");
-      toast.success("Mot de passe modifié avec succès");
-      return response.data;
-      
+      toast.success(`${amount} DT ajoutés à votre cagnotte`);
+      return data;
     } catch (error) {
-      console.error("❌ Erreur changement mot de passe:", error);
-      console.error("❌ Détails de l'erreur:", error.response?.data);
-
       if (error.response?.status === 429) {
         toast.error("Trop de requêtes. Veuillez patienter un moment.");
         return rejectWithValue("Rate limit exceeded");
       }
 
-      if (error.response?.status === 422) {
-        const validationErrors = error.response.data.errors;
-        console.error("❌ Erreurs de validation:", validationErrors);
-        
-        if (Array.isArray(validationErrors)) {
-          const firstError = validationErrors[0];
-          const errorMessage = firstError.message || firstError;
-          toast.error(errorMessage);
-          return rejectWithValue(errorMessage);
-        } else if (typeof validationErrors === 'object') {
-          const firstKey = Object.keys(validationErrors)[0];
-          const errorMessage = validationErrors[firstKey][0];
-          toast.error(errorMessage);
-          return rejectWithValue(errorMessage);
-        }
-        
-        toast.error("Erreur de validation. Vérifiez vos mots de passe.");
-        return rejectWithValue("Erreur de validation");
+      const errorMessage = error.response?.data?.message || "Erreur lors de la mise à jour de la cagnotte";
+      
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        toast.error("Session expirée. Veuillez vous reconnecter.");
+        dispatch(logout());
+      } else {
+        toast.error(errorMessage);
       }
       
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+/**
+ * Change Password
+ */
+export const changePassword = createAsyncThunk(
+  "user/changePassword",
+  async (passwordData, { rejectWithValue }) => {
+    try {
+      await waitForRateLimit();
+      
+      const token = getAuthToken();
+
+      if (!token) {
+        throw new Error("Token d'authentification manquant");
+      }
+
+      const { data } = await axios.post(
+        API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
+        passwordData,
+        {
+          headers: getAuthHeaders(token),
+          timeout: API_TIMEOUT
+        }
+      );
+
+      toast.success("Mot de passe changé avec succès");
+      return data;
+    } catch (error) {
+      if (error.response?.status === 429) {
+        toast.error("Trop de requêtes. Veuillez patienter un moment.");
+        return rejectWithValue("Rate limit exceeded");
+      }
+
       const errorMessage = error.response?.data?.message || "Erreur lors du changement de mot de passe";
       
       if (error.response?.status === 401 || error.response?.status === 403) {
@@ -490,7 +398,7 @@ export const googleLogin = createAsyncThunk(
       await waitForRateLimit();
       
       const { data } = await axios.post(
-        `${API_BASE_URL}/auth/google-login`,
+        API_ENDPOINTS.AUTH.GOOGLE_LOGIN,
         { token }
       );
       toast.success("Connexion Google réussie");
@@ -515,7 +423,7 @@ export const googleRegister = createAsyncThunk(
       await waitForRateLimit();
       
       const { data } = await axios.post(
-        `${API_BASE_URL}/auth/google/register`,
+        API_ENDPOINTS.AUTH.GOOGLE_REGISTER,
         { token }
       );
       toast.success("Inscription Google réussie");

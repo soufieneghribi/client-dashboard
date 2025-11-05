@@ -2,8 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { fetchUserProfileForce } from "./user";
-
-const BASE_URL = "https://tn360-back-office-122923924979.europe-west1.run.app";
+import { API_ENDPOINTS, getAuthHeaders } from "../../services/api";
 
 // ===================================
 // HELPERS
@@ -175,16 +174,13 @@ export const fetchClientDeals = createAsyncThunk(
         return rejectWithValue("No authentication token");
       }
 
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
+      const headers = getAuthHeaders(token);
 
       const [depenseRes, marqueRes, frequenceRes, anniversaireRes] = await Promise.all([
-        axios.get(`${BASE_URL}/api/v1/dealDepense/clientId/${clientId}`, { headers }),
-        axios.get(`${BASE_URL}/api/v1/dealMarque/clientId/${clientId}`, { headers }),
-        axios.get(`${BASE_URL}/api/v1/dealFrequence/clientId/${clientId}`, { headers }),
-        axios.get(`${BASE_URL}/api/v1/dealAnniversaire/clientId/${clientId}`, { headers })
+        axios.get(API_ENDPOINTS.DEALS.DEPENSE.BY_CLIENT(clientId), { headers }),
+        axios.get(API_ENDPOINTS.DEALS.MARQUE.BY_CLIENT(clientId), { headers }),
+        axios.get(API_ENDPOINTS.DEALS.FREQUENCE.BY_CLIENT(clientId), { headers }),
+        axios.get(API_ENDPOINTS.DEALS.ANNIVERSAIRE.BY_CLIENT(clientId), { headers })
       ]);
 
       const depenseDeals = transformDealsData(depenseRes.data?.data || []).map(d => ({ ...d, type: 'depense' }));
@@ -235,16 +231,16 @@ export const transferDealToCagnotte = createAsyncThunk(
       
       switch (dealType) {
         case 'depense':
-          endpoint = `${BASE_URL}/api/v1/dealDepense/${dealId}/transfer-cagnotte`;
+          endpoint = API_ENDPOINTS.DEALS.DEPENSE.TRANSFER(dealId);
           break;
         case 'marque':
-          endpoint = `${BASE_URL}/api/v1/dealMarque/${dealId}/transfer-cagnotte`;
+          endpoint = API_ENDPOINTS.DEALS.MARQUE.TRANSFER(dealId);
           break;
         case 'frequence':
-          endpoint = `${BASE_URL}/api/v1/dealFrequence/${dealId}/transfer-cagnotte`;
+          endpoint = API_ENDPOINTS.DEALS.FREQUENCE.TRANSFER(dealId);
           break;
         case 'anniversaire':
-          endpoint = `${BASE_URL}/api/v1/dealAnniversaire/${dealId}/transfer-cagnotte`;
+          endpoint = API_ENDPOINTS.DEALS.ANNIVERSAIRE.TRANSFER(dealId);
           break;
         default:
           return rejectWithValue("Type de deal invalide");
@@ -256,10 +252,7 @@ export const transferDealToCagnotte = createAsyncThunk(
         endpoint,
         {},
         {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+          headers: getAuthHeaders(token)
         }
       );
 

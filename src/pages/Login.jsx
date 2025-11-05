@@ -5,6 +5,30 @@ import { forgetPassword } from "../store/slices/user";
 import { Link, useNavigate } from "react-router-dom";
 import { Container, Row, Col, Form, Button, Card, Alert, Spinner, Modal, InputGroup } from 'react-bootstrap';
 
+// ==================== API CONFIGURATION ====================
+/**
+ * Fonction pour obtenir l'URL de base de l'API en fonction de l'environnement
+ */
+const getApiBaseUrl = () => {
+  const isDevelopment = import.meta.env.VITE_NODE_ENV === 'development' || 
+                        import.meta.env.MODE === 'development';
+  
+  if (isDevelopment) {
+    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  } else {
+    return import.meta.env.VITE_API_BASE_URL_PROD || 
+           'https://tn360-back-office-122923924979.europe-west1.run.app';
+  }
+};
+
+const BASE_URL =  "https://tn360-back-office-122923924979.europe-west1.run.app";
+
+
+const API_BASE_URL = `${BASE_URL}/api/v1`;
+
+
+
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [searchMail, setSearchMail] = useState("");
@@ -40,7 +64,7 @@ const Login = () => {
     setErrorMessage(null);
     try {
       const response = await fetch(
-        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/auth/login",
+        `${API_BASE_URL}/auth/login`, // Utilise maintenant la variable d'environnement
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

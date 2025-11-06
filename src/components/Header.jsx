@@ -20,6 +20,13 @@ const Header = () => {
   const auth = useSelector((state) => state.auth);
   const { searchResults, loading: searchLoading, error: searchError } = useSelector((state) => state.search);
 
+  // Fonction de déconnexion avec redirection
+  const handleLogout = () => {
+    dispatch(logout());
+    setShowMobileMenu(false);
+    navigate('/login'); // Redirection vers la page de connexion
+  };
+
   // Update cart count from cookies
   useEffect(() => {
     const updateCartCount = () => {
@@ -71,15 +78,9 @@ const Header = () => {
     { path: "/", label: "Accueil", icon: "fa-home" },
     { path: "/categories", label: "Product", icon: "fa-th-large" },
     { path: "/MesDeals", label: "deals", icon: "fa-tag" },
-{ path: "/Catalogue", label: "Catalogue", icon: "fa-book" },
+    { path: "/Catalogue", label: "Catalogue", icon: "fa-book" },
     { path: "/contact", label: "Contact", icon: "fa-envelope" }
-
-
   ];
-
-
-
-
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -189,7 +190,8 @@ const Header = () => {
                   <Dropdown.Item as={Link} to="/settings"><i className="fas fa-cog me-2"></i> Paramètres</Dropdown.Item>
                   <Dropdown.Item as={Link} to="/Mes-Commandes"><i className="fas fa-shopping-bag me-2"></i> Mes Commandes</Dropdown.Item>
                   <Dropdown.Divider />
-                  <Dropdown.Item onClick={() => dispatch(logout())} className="text-danger">
+                  {/* Utiliser handleLogout au lieu de dispatch(logout()) directement */}
+                  <Dropdown.Item onClick={handleLogout} className="text-danger">
                     <i className="fas fa-sign-out-alt me-2"></i> Déconnexion
                   </Dropdown.Item>
                 </Dropdown.Menu>
@@ -269,7 +271,8 @@ const Header = () => {
                 <Nav.Link as={Link} to="/Mes-Commandes" className="py-2 text-dark" onClick={() => setShowMobileMenu(false)}>
                   <i className="fas fa-shopping-bag me-3 text-primary" style={{ width: '20px' }}></i> Mes Commandes
                 </Nav.Link>
-                <Nav.Link onClick={() => { dispatch(logout()); setShowMobileMenu(false); }} className="py-2 text-danger">
+                {/* Utiliser handleLogout au lieu de dispatch(logout()) directement */}
+                <Nav.Link onClick={handleLogout} className="py-2 text-danger">
                   <i className="fas fa-sign-out-alt me-3" style={{ width: '20px' }}></i> Déconnexion
                 </Nav.Link>
               </Nav>

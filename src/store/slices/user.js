@@ -2,7 +2,8 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import store from "../index";
-import { logout } from "./authSlice";
+import { logout, updateUser as updateAuthUser } from "./authSlice";
+import { API_ENDPOINTS, getAuthHeaders } from "../../services/api";
 
 /**
  * User Redux Slice
@@ -11,18 +12,12 @@ import { logout } from "./authSlice";
  */
 
 // ==================== CONSTANTS ====================
-const API_BASE_URL = "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1";
 const API_TIMEOUT = 15000;
-const RATE_LIMIT_DELAY = 2000; // 2 seconds between requests
+const RATE_LIMIT_DELAY = 2000;
 
 // ==================== HELPER FUNCTIONS ====================
-
-// Rate limiting tracker
 let lastRequestTime = 0;
 
-/**
- * Enforces rate limiting between requests
- */
 const waitForRateLimit = async () => {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
@@ -35,11 +30,6 @@ const waitForRateLimit = async () => {
   lastRequestTime = Date.now();
 };
 
-/**
- * Retrieves authentication token from multiple sources
- * Priority: localStorage > Redux > Cookies
- * @returns {string|null} Authentication token
- */
 const getAuthToken = () => {
   try {
     const localToken = localStorage.getItem("token");
@@ -56,24 +46,14 @@ const getAuthToken = () => {
   }
 };
 
-/**
- * Validates token by making API call
- * @param {string} token - Authentication token
- * @returns {Promise<boolean>} Token validity status
- */
 const testTokenValidity = async (token) => {
   try {
-    // Wait for rate limit before making request
     await waitForRateLimit();
     
     const response = await axios.get(
-      `${API_BASE_URL}/customer/info1`,
+      API_ENDPOINTS.USER.PROFILE,
       {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(token),
         timeout: 10000
       }
     );
@@ -90,19 +70,15 @@ const testTokenValidity = async (token) => {
     
     if (error.response?.status === 429) {
       console.warn("Rate limit hit during token validation");
-      return true; // Assume valid to allow retry later
+      return true;
     }
     
-    // Network errors - assume valid to allow retry
     return true;
   }
 };
 
 // ==================== ASYNC THUNKS ====================
 
-/**
- * Forget Password - Sends password reset email
- */
 export const forgetPassword = createAsyncThunk(
   "user/forgetPassword",
   async ({ email }, { rejectWithValue }) => {
@@ -110,7 +86,7 @@ export const forgetPassword = createAsyncThunk(
       await waitForRateLimit();
       
       const { data } = await axios.post(
-        `${API_BASE_URL}/auth/password/email`,
+        API_ENDPOINTS.AUTH.FORGOT_PASSWORD,
         { email }
       );
       toast.success("Un lien de réinitialisation a été envoyé à votre e-mail.");
@@ -132,9 +108,6 @@ export const forgetPassword = createAsyncThunk(
   }
 );
 
-/**
- * Sign Up - User registration
- */
 export const signUp = createAsyncThunk(
   "user/signup",
   async ({ user, navigate }) => {
@@ -142,7 +115,7 @@ export const signUp = createAsyncThunk(
       await waitForRateLimit();
       
       const { data } = await axios.post(
-        `${API_BASE_URL}/auth/register`,
+        API_ENDPOINTS.AUTH.REGISTER,
         user
       );
       navigate("/login");
@@ -161,21 +134,16 @@ export const signUp = createAsyncThunk(
   }
 );
 
-/**
- * Fetch User Profile - Retrieves current user information
- */
 export const fetchUserProfile = createAsyncThunk(
   "user/fetchUserProfile",
   async (_, { rejectWithValue, dispatch, getState }) => {
     try {
-      // Check if we have recent data (cache for 5 minutes)
       const state = getState();
       const lastFetch = state.user.lastFetch;
       const now = Date.now();
       const fiveMinutes = 5 * 60 * 1000;
       
       if (lastFetch && (now - lastFetch) < fiveMinutes && state.user.Userprofile) {
-        console.log("Using cached user profile");
         return state.user.Userprofile;
       }
       
@@ -185,7 +153,6 @@ export const fetchUserProfile = createAsyncThunk(
         throw new Error("Token d'authentification non trouvé");
       }
 
-      // Skip token validation if we have cached data
       if (!state.user.Userprofile) {
         const isValid = await testTokenValidity(token);
         if (!isValid) {
@@ -195,12 +162,8 @@ export const fetchUserProfile = createAsyncThunk(
 
       await waitForRateLimit();
       
-      const { data } = await axios.get(`${API_BASE_URL}/customer/info1`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+      const { data } = await axios.get(API_ENDPOINTS.USER.PROFILE, {
+        headers: getAuthHeaders(token),
         timeout: API_TIMEOUT
       });
       
@@ -230,8 +193,39 @@ export const fetchUserProfile = createAsyncThunk(
   }
 );
 
+export const fetchUserProfileForce = createAsyncThunk(
+  "user/fetchUserProfileForce",
+  async (_, { rejectWithValue, dispatch }) => {
+    try {
+      const token = getAuthToken();
+      
+      if (!token) {
+        throw new Error("Token d'authentification non trouvé");
+      }
+
+      const { data } = await axios.get(API_ENDPOINTS.USER.PROFILE, {
+        headers: getAuthHeaders(token),
+        timeout: API_TIMEOUT
+      });
+      
+      return data;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "Erreur lors du chargement du profil";
+      
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        dispatch(logout());
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      }
+      
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 /**
- * Update User Profile - Updates user information
+ * Update User Profile - MISE À JOUR AVEC GESTION D'ERREUR 422 AMÉLIORÉE
  */
 export const updateUserProfile = createAsyncThunk(
   "user/updateUserProfile",
@@ -245,57 +239,56 @@ export const updateUserProfile = createAsyncThunk(
         throw new Error("Token d'authentification manquant");
       }
 
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/profile/update`,
+      const { data } = await axios.post(
+        API_ENDPOINTS.AUTH.PROFILE_UPDATE,
         profileData,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
+          headers: getAuthHeaders(token),
           timeout: API_TIMEOUT
         }
       );
-      
+
+      dispatch(updateAuthUser(data));
       toast.success("Profil mis à jour avec succès");
-      return response.data;
+      return data;
     } catch (error) {
       if (error.response?.status === 429) {
         toast.error("Trop de requêtes. Veuillez patienter un moment.");
         return rejectWithValue("Rate limit exceeded");
       }
-      
-      let errorMessage = "Erreur lors de la mise à jour du profil";
-      
+
       if (error.response?.status === 422) {
-        if (error.response?.data?.errors) {
-          const validationErrors = error.response.data.errors;
+        const validationErrors = error.response.data.errors;
+        
+        if (validationErrors) {
+          if (Array.isArray(validationErrors)) {
+            const firstError = validationErrors[0]?.message || validationErrors[0] || "Erreur de validation";
+            toast.error(firstError);
+            return rejectWithValue(firstError);
+          }
           
-          const allErrorMessages = [];
-          Object.keys(validationErrors).forEach(field => {
-            validationErrors[field].forEach(msg => {
-              allErrorMessages.push(`${field}: ${msg}`);
-            });
-          });
-          
-          errorMessage = allErrorMessages.join(', ');
-          toast.error(`Erreur: ${errorMessage}`);
-        } else if (error.response?.data?.message) {
-          errorMessage = error.response.data.message;
-          toast.error(errorMessage);
-        } else {
-          errorMessage = "Erreur de validation des données";
-          toast.error(errorMessage);
+          if (typeof validationErrors === 'object') {
+            const firstKey = Object.keys(validationErrors)[0];
+            const firstError = validationErrors[firstKey][0] || validationErrors[firstKey] || "Erreur de validation";
+            toast.error(firstError);
+            return rejectWithValue(firstError);
+          }
         }
-      } else if (error.response?.status === 401 || error.response?.status === 403) {
-        errorMessage = "Session expirée. Veuillez vous reconnecter.";
-        toast.error(errorMessage);
+        
+        const fallbackMessage = error.response.data.message || "Données invalides";
+        toast.error(fallbackMessage);
+        return rejectWithValue(fallbackMessage);
+      }
+
+      const errorMessage = error.response?.data?.message || error.message || "Erreur lors de la mise à jour du profil";
+      
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        toast.error("Session expirée. Veuillez vous reconnecter.");
         dispatch(logout());
         setTimeout(() => {
           window.location.href = '/login';
         }, 2000);
       } else {
-        errorMessage = error.response?.data?.message || error.message || "Erreur lors de la mise à jour du profil";
         toast.error(errorMessage);
       }
       
@@ -305,11 +298,11 @@ export const updateUserProfile = createAsyncThunk(
 );
 
 /**
- * Update Cagnotte in Database - Updates user's cagnotte balance
+ * Update Cagnotte in Database
  */
 export const updateCagnotteInDB = createAsyncThunk(
   "user/updateCagnotteInDB",
-  async (updatedBalance, { rejectWithValue, dispatch }) => {
+  async ({ amount }, { rejectWithValue, dispatch }) => {
     try {
       await waitForRateLimit();
       
@@ -320,32 +313,30 @@ export const updateCagnotteInDB = createAsyncThunk(
       }
 
       const { data } = await axios.post(
-        `${API_BASE_URL}/update-cagnotte`,
-        { cagnotte_balance: updatedBalance },
+        API_ENDPOINTS.USER.UPDATE_CAGNOTTE,
+        { 
+          amount: parseFloat(amount),
+          operation: 'add'
+        },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
+          headers: getAuthHeaders(token),
           timeout: API_TIMEOUT
         }
       );
-      toast.success("Cagnotte mise à jour avec succès");
+
+      toast.success(`${amount} DT ajoutés à votre cagnotte`);
       return data;
     } catch (error) {
       if (error.response?.status === 429) {
         toast.error("Trop de requêtes. Veuillez patienter un moment.");
         return rejectWithValue("Rate limit exceeded");
       }
-      
-      const errorMessage = error.response?.data?.message || error.message || "Erreur lors de la mise à jour de la cagnotte";
+
+      const errorMessage = error.response?.data?.message || "Erreur lors de la mise à jour de la cagnotte";
       
       if (error.response?.status === 401 || error.response?.status === 403) {
         toast.error("Session expirée. Veuillez vous reconnecter.");
         dispatch(logout());
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
       } else {
         toast.error(errorMessage);
       }
@@ -356,11 +347,11 @@ export const updateCagnotteInDB = createAsyncThunk(
 );
 
 /**
- * Change Password - Updates user password
+ * Change Password
  */
 export const changePassword = createAsyncThunk(
   "user/changePassword",
-  async (passwordData, { rejectWithValue, dispatch }) => {
+  async (passwordData, { rejectWithValue }) => {
     try {
       await waitForRateLimit();
       
@@ -371,36 +362,26 @@ export const changePassword = createAsyncThunk(
       }
 
       const { data } = await axios.post(
-        `${API_BASE_URL}/auth/change-password-without-current`,
+        API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
+        passwordData,
         {
-          new_password: passwordData.new_password,
-          new_password_confirmation: passwordData.new_password_confirmation
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
+          headers: getAuthHeaders(token),
           timeout: API_TIMEOUT
         }
       );
-      
-      toast.success("Mot de passe modifié avec succès");
+
+      toast.success("Mot de passe changé avec succès");
       return data;
     } catch (error) {
       if (error.response?.status === 429) {
         toast.error("Trop de requêtes. Veuillez patienter un moment.");
         return rejectWithValue("Rate limit exceeded");
       }
-      
-      const errorMessage = error.response?.data?.message || error.message || "Erreur lors de la modification du mot de passe";
+
+      const errorMessage = error.response?.data?.message || "Erreur lors du changement de mot de passe";
       
       if (error.response?.status === 401 || error.response?.status === 403) {
-        toast.error("Session expirée. Veuillez vous reconnecter.");
-        dispatch(logout());
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
+        toast.error("Mot de passe actuel incorrect");
       } else {
         toast.error(errorMessage);
       }
@@ -410,9 +391,6 @@ export const changePassword = createAsyncThunk(
   }
 );
 
-/**
- * Google Login - Authenticates user via Google
- */
 export const googleLogin = createAsyncThunk(
   "user/googleLogin",
   async (token, { rejectWithValue }) => {
@@ -420,7 +398,7 @@ export const googleLogin = createAsyncThunk(
       await waitForRateLimit();
       
       const { data } = await axios.post(
-        `${API_BASE_URL}/auth/google-login`,
+        API_ENDPOINTS.AUTH.GOOGLE_LOGIN,
         { token }
       );
       toast.success("Connexion Google réussie");
@@ -438,9 +416,6 @@ export const googleLogin = createAsyncThunk(
   }
 );
 
-/**
- * Google Register - Registers user via Google
- */
 export const googleRegister = createAsyncThunk(
   "user/googleRegister",
   async (token, { rejectWithValue }) => {
@@ -448,7 +423,7 @@ export const googleRegister = createAsyncThunk(
       await waitForRateLimit();
       
       const { data } = await axios.post(
-        `${API_BASE_URL}/auth/google/register`,
+        API_ENDPOINTS.AUTH.GOOGLE_REGISTER,
         { token }
       );
       toast.success("Inscription Google réussie");
@@ -472,11 +447,9 @@ export const googleRegister = createAsyncThunk(
   }
 );
 
-// Dans store/slices/user.js - ajoutez cette action
 export const updateCagnotteBalance = createAsyncThunk(
   "user/updateCagnotteBalance",
   async (amount, { getState }) => {
-    // Mise à jour locale immédiate
     return amount;
   }
 );
@@ -494,18 +467,13 @@ const UserSlice = createSlice({
     lastFetch: null,
   },
   reducers: {
-    // Clear error state
     clearError: (state) => {
       state.error = null;
     },
-    
-    // Clear user profile
     clearUserProfile: (state) => {
       state.Userprofile = null;
       state.loggedInUser = null;
     },
-    
-    // Update user locally without API call
     updateUserLocal: (state, action) => {
       if (state.Userprofile) {
         state.Userprofile = { ...state.Userprofile, ...action.payload };
@@ -514,13 +482,9 @@ const UserSlice = createSlice({
         state.loggedInUser = { ...state.loggedInUser, ...action.payload };
       }
     },
-    
-    // Set last fetch timestamp
     setLastFetch: (state, action) => {
       state.lastFetch = action.payload;
     },
-    
-    // Clear all user data
     clearAllUserData: (state) => {
       state.Userprofile = null;
       state.loggedInUser = null;
@@ -531,7 +495,6 @@ const UserSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // ==================== SIGN UP ====================
       .addCase(signUp.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -546,7 +509,6 @@ const UserSlice = createSlice({
         state.error = action.error.message;
       })
 
-      // ==================== FETCH USER PROFILE ====================
       .addCase(fetchUserProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -561,14 +523,28 @@ const UserSlice = createSlice({
       .addCase(fetchUserProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        // Don't clear profile data on rate limit errors
         if (action.payload !== "Rate limit exceeded") {
           state.Userprofile = null;
           state.loggedInUser = null;
         }
       })
 
-      // ==================== UPDATE USER PROFILE ====================
+      .addCase(fetchUserProfileForce.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserProfileForce.fulfilled, (state, action) => {
+        state.loading = false;
+        state.Userprofile = action.payload;
+        state.loggedInUser = action.payload;
+        state.lastFetch = Date.now();
+        state.error = null;
+      })
+      .addCase(fetchUserProfileForce.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
       .addCase(updateUserProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -577,6 +553,7 @@ const UserSlice = createSlice({
         state.loading = false;
         state.Userprofile = action.payload;
         state.loggedInUser = action.payload;
+        state.lastFetch = Date.now();
         state.error = null;
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
@@ -584,7 +561,6 @@ const UserSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ==================== UPDATE CAGNOTTE ====================
       .addCase(updateCagnotteInDB.pending, (state) => {
         state.loading = true;
       })
@@ -598,7 +574,6 @@ const UserSlice = createSlice({
         state.error = action.payload;
       })
       
-      // ==================== FORGET PASSWORD ====================
       .addCase(forgetPassword.pending, (state) => {
         state.loading = true;
       })
@@ -610,7 +585,6 @@ const UserSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ==================== CHANGE PASSWORD ====================
       .addCase(changePassword.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -624,7 +598,6 @@ const UserSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ==================== GOOGLE LOGIN ====================
       .addCase(googleLogin.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -639,7 +612,6 @@ const UserSlice = createSlice({
         state.error = action.payload;
       })
 
-      // ==================== GOOGLE REGISTER ====================
       .addCase(googleRegister.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -658,7 +630,6 @@ const UserSlice = createSlice({
 
 // ==================== EXPORTS ====================
 
-// Export actions
 export const { 
   clearError, 
   clearUserProfile, 
@@ -667,12 +638,10 @@ export const {
   clearAllUserData 
 } = UserSlice.actions;
 
-// Selectors
 export const selectUserProfile = (state) => state.user.Userprofile;
 export const selectLoggedInUser = (state) => state.user.loggedInUser;
 export const selectUserLoading = (state) => state.user.loading;
 export const selectUserError = (state) => state.user.error;
 export const selectLastFetch = (state) => state.user.lastFetch;
 
-// Export reducer
 export default UserSlice.reducer;

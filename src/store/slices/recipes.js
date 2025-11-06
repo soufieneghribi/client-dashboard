@@ -1,17 +1,32 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-
-const API_BASE_URL = "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1";
+import { API_ENDPOINTS } from "../../services/api";
 
 // Fetch featured recipes
 export const fetchFeaturedRecipes = createAsyncThunk(
   "recipes/fetchFeatured",
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/recipes/featured`);
+      const { data } = await axios.get(API_ENDPOINTS.RECIPES.FEATURED);
       return data;
     } catch (error) {
       console.error("Error fetching featured recipes:", error);
+      return rejectWithValue(
+        error.response?.data?.message || "Erreur lors du chargement des recettes"
+      );
+    }
+  }
+);
+
+// Fetch all recipes
+export const fetchAllRecipes = createAsyncThunk(
+  "recipes/fetchAll",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get(API_ENDPOINTS.RECIPES.ALL);
+      return data;
+    } catch (error) {
+      console.error("Error fetching all recipes:", error);
       return rejectWithValue(
         error.response?.data?.message || "Erreur lors du chargement des recettes"
       );
@@ -24,7 +39,7 @@ export const fetchRecipeDetails = createAsyncThunk(
   "recipes/fetchDetails",
   async (recipeId, { rejectWithValue }) => {
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/recipes/${recipeId}`);
+      const { data } = await axios.get(API_ENDPOINTS.RECIPES.BY_ID(recipeId));
       return data;
     } catch (error) {
       console.error("Error fetching recipe details:", error);
@@ -39,6 +54,7 @@ const recipesSlice = createSlice({
   name: "recipes",
   initialState: {
     featuredRecipes: [],
+    allRecipes: [],
     currentRecipe: null,
     loading: false,
     error: null,
@@ -68,6 +84,21 @@ const recipesSlice = createSlice({
         state.error = action.payload;
         state.featuredRecipes = [];
       })
+      // All recipes
+      .addCase(fetchAllRecipes.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllRecipes.fulfilled, (state, action) => {
+        state.loading = false;
+        state.allRecipes = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchAllRecipes.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.allRecipes = [];
+      })
       // Recipe details
       .addCase(fetchRecipeDetails.pending, (state) => {
         state.loading = true;
@@ -88,6 +119,7 @@ const recipesSlice = createSlice({
 export const { clearError, clearCurrentRecipe } = recipesSlice.actions;
 
 export const selectFeaturedRecipes = (state) => state.recipes.featuredRecipes;
+export const selectAllRecipes = (state) => state.recipes.allRecipes;
 export const selectCurrentRecipe = (state) => state.recipes.currentRecipe;
 export const selectRecipesLoading = (state) => state.recipes.loading;
 export const selectRecipesError = (state) => state.recipes.error;

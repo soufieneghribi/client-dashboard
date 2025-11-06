@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCategories } from "../store/slices/categorie";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaCheckCircle } from "react-icons/fa";
+import { FaCheckCircle, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 /**
  * Categories Component - Carousel Automatique
@@ -56,6 +56,19 @@ const Categories = () => {
   const subCategories = selectedCategory
     ? categories.filter((cat) => cat.parent_id === selectedCategory.id)
     : [];
+
+  // 🔥 Fonctions de navigation du carousel
+  const goToPrevSlide = () => {
+    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+    setIsPaused(true);
+    setTimeout(() => setIsPaused(false), 5000); // Resume après 5 secondes
+  };
+
+  const goToNextSlide = () => {
+    setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    setIsPaused(true);
+    setTimeout(() => setIsPaused(false), 5000); // Resume après 5 secondes
+  };
 
   // Gérer la catégorie présélectionnée depuis la page Home (une seule fois)
   useEffect(() => {
@@ -169,12 +182,23 @@ const Categories = () => {
             </div>
           </div>
 
-          {/* Carousel - Pause au hover */}
+          {/* Carousel - Pause au hover avec flèches de navigation */}
           <div 
             className="relative"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
           >
+            {/* Flèche Gauche */}
+            {slides.length > 1 && (
+              <button
+                onClick={goToPrevSlide}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 -ml-4"
+                aria-label="Slide précédent"
+              >
+                <FaChevronLeft className="text-xl" />
+              </button>
+            )}
+
             <div className="overflow-hidden rounded-xl">
               {slides.map((slide, index) => (
                 <div
@@ -227,6 +251,17 @@ const Categories = () => {
                 </div>
               ))}
             </div>
+
+            {/* Flèche Droite */}
+            {slides.length > 1 && (
+              <button
+                onClick={goToNextSlide}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 -mr-4"
+                aria-label="Slide suivant"
+              >
+                <FaChevronRight className="text-xl" />
+              </button>
+            )}
 
             {/* Indicateurs de slides (points) */}
             {slides.length > 1 && (

@@ -10,13 +10,11 @@ import popularReducer from "./slices/Popular.js"
 import frequenceReducer from "./slices/frequence.js"
 import offreReducer from "./slices/offre.js"
 import anniversaireReducer from "./slices/anniversaire.js";
-import dealMarqueReducer from "./slices/dealMarque.js"
 import orderReducer from "./slices/order.js"
 import searchReducer from "./slices/search.js"
 import recipesReducer from "./slices/recipes"; // Ajoutez cette ligne
 import dealsReducer from "./slices/deals"; // au lieu de deal.js
 
-import dealDepenseReducer from "./slices/Dealdepense.js"; // Import the dealDepense slice
 
 // Import du middleware d'authentification
 import { authMiddleware } from "./slices/authSlice";
@@ -33,11 +31,9 @@ const store = configureStore({
         frequence: frequenceReducer,
         offre: offreReducer,
         anniversaire: anniversaireReducer,
-        marque: dealMarqueReducer,
         order: orderReducer,
         search: searchReducer,
             recipes: recipesReducer,
-    depense: dealDepenseReducer,
     deals: dealsReducer
 
     },

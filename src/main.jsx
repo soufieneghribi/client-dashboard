@@ -5,12 +5,12 @@ import store from "./store";
 import App from "./App";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
-import Products from "./components/ProductsBySubCategory";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
-import ProductDetails from "./components/ProductDetails";
 import MesDeals from "./pages/MesDeals";
-import Categories from "./components/Categories";
+import Categories from "./pages/Categories"; // ✅ AJOUTÉ
+import Products from "./pages/ProductsBySubCategory"; // ✅ CORRIGÉ - déplacé de components vers pages
+import ProductDetails from "./pages/ProductDetails"; // ✅ AJOUTÉ
 import SubCategory from "./components/SubCategory";
 import Catalogue from "./pages/Catalogue";
 import CartShopping from "./pages/CartShopping";
@@ -23,6 +23,7 @@ import ProtectedRoute from "./pages/ProtectedRoute";
 import Contact from "./components/Contact";
 import OrderDetails from "./pages/OrderDetails";
 import RecipeDetails from "./pages/RecipeDetails";
+import Recipes from "./pages/Recipies"; // 🍳 Correction: Recipies.jsx (avec 'i')
 import "./styles/index.css";
 
 /**
@@ -42,9 +43,9 @@ const router = createBrowserRouter(
       <Route path="/subcategory/:id" element={<SubCategory />} />
       <Route path="/products" element={<Products />} />
       <Route path="/product/:id" element={<ProductDetails />} />
-<Route path="/search" element={<SearchResult />} />
-
+      <Route path="/search" element={<SearchResult />} />
       <Route path="/recipe/:id" element={<RecipeDetails />} />
+      <Route path="/recipes" element={<Recipes />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/MesDeals" element={<ProtectedRoute><MesDeals /></ProtectedRoute>} />
 

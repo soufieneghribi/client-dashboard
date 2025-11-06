@@ -1,14 +1,12 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { API_ENDPOINTS, getAuthHeaders } from "../../services/api";
 
 /**
  * Order Redux Slice
  * Manages order state and API calls for fetching order history
  */
-
-// API Configuration
-const API_BASE_URL = "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1";
 
 /**
  * Async thunk for fetching order list
@@ -20,13 +18,9 @@ export const fetchOrder = createAsyncThunk(
   async (auth_token, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/customer/order/list`,
+        API_ENDPOINTS.ORDERS.LIST,
         {
-          headers: {
-            Authorization: `Bearer ${auth_token}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
+          headers: getAuthHeaders(auth_token)
         }
       );
       return response.data;

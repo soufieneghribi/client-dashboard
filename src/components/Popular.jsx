@@ -8,7 +8,6 @@ const Popular = () => {
   const products = popular.products || [];
   const dispatch = useDispatch();
   const navigate = useNavigate();
-console.log(popular)
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;

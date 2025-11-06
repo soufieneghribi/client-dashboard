@@ -1,15 +1,14 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { API_ENDPOINTS } from "../../services/api";
 
 // Async thunk for fetching Offre
 export const fetchOffre = createAsyncThunk(
   "offre/fetchOffre",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/offre"
-      );
+      const response = await axios.get(API_ENDPOINTS.OFFERS.ALL);
       return response.data;
     } catch (err) {
       toast.error("Erreur lors du chargement des offres.");
@@ -17,16 +16,15 @@ export const fetchOffre = createAsyncThunk(
     }
   }
 );
+
 export const fetchOffreById = createAsyncThunk(
-  "offre/etchOffreById",
+  "offre/fetchOffreById",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/offre/",id
-      );
+      const response = await axios.get(API_ENDPOINTS.OFFERS.BY_ID(id));
       return response.data;
     } catch (err) {
-      toast.error("Erreur lors du chargement des offres.");
+      toast.error("Erreur lors du chargement de l'offre.");
       return rejectWithValue(err.response ? err.response.data : err.message);
     }
   }
@@ -35,7 +33,7 @@ export const fetchOffreById = createAsyncThunk(
 const offreSlice = createSlice({
   name: "offre",
   initialState: {
-    offre: [], // Initializing as an empty array
+    offre: [],
     loading: false,
     error: null,
   },
@@ -47,19 +45,21 @@ const offreSlice = createSlice({
     });
     builder.addCase(fetchOffre.fulfilled, (state, action) => {
       state.loading = false;
-      state.offre = action.payload; // Fix: Update `state.offre` instead of `state.deal`
+      state.offre = action.payload;
     });
     builder.addCase(fetchOffre.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload;
     });
+    
+    // Handling the fetchOffreById actions
     builder.addCase(fetchOffreById.pending, (state) => {
       state.loading = true;
       state.error = null;
     });
     builder.addCase(fetchOffreById.fulfilled, (state, action) => {
       state.loading = false;
-      state.offre = action.payload; // Fix: Update `state.offre` instead of `state.deal`
+      state.offre = action.payload;
     });
     builder.addCase(fetchOffreById.rejected, (state, action) => {
       state.loading = false;

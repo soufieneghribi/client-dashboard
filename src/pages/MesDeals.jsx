@@ -1,26 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchClientDeals, transferDealToCagnotte } from "../store/slices/deals";
+import { fetchClientDeals, transferDealToCagnotte, isDealFullyCompleted } from "../store/slices/deals";
 import { fetchUserProfile } from "../store/slices/user";
+import { toast } from "react-hot-toast";
 
 const MesDeals = () => {
   const dispatch = useDispatch();
   const { isLoggedIn } = useSelector((state) => state.auth);
   const { Userprofile } = useSelector((state) => state.user);
-  const { depense, marque, frequence, anniversaire, loading } = useSelector((state) => state.deals);
+  const { 
+    depense = [], 
+    marque = [], 
+    frequence = [], 
+    anniversaire = [], 
+    loading,
+    transferLoading,
+    transferredDeals = [],
+    totalEarned,
+    totalPending
+  } = useSelector((state) => state.deals);
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showCongrats, setShowCongrats] = useState(false);
   const [congratsData, setCongratsData] = useState(null);
   
-  // 🔥 CORRECTION: Charger depuis le localStorage au démarrage
-  const [transferredLevels, setTransferredLevels] = useState(() => {
-    const saved = localStorage.getItem('transferredLevels');
-    return saved ? JSON.parse(saved) : {};
-  });
-
-  // 🔥 NOUVEAU: État local pour la cagnotte mise à jour immédiatement
-  const [localCagnotte, setLocalCagnotte] = useState(Userprofile?.cagnotte_balance || 0);
+  // État local pour les deals transférés
+  const [localTransferredDeals, setLocalTransferredDeals] = useState([]);
 
   const images = [
     "./src/assets/allmarque.jpg",
@@ -35,27 +40,22 @@ const MesDeals = () => {
     ...anniversaire.map((d) => ({ ...d, type: "anniversaire" })),
   ];
 
-  // 🔥 CORRECTION: Sauvegarder dans le localStorage à chaque changement
+  // Mettre à jour les deals transférés localement
   useEffect(() => {
-    localStorage.setItem('transferredLevels', JSON.stringify(transferredLevels));
-  }, [transferredLevels]);
+    setLocalTransferredDeals(transferredDeals);
+  }, [transferredDeals]);
 
-  // 🔥 CORRECTION: Mettre à jour la cagnotte locale quand le profil change
   useEffect(() => {
-    if (Userprofile?.cagnotte_balance !== undefined) {
-      setLocalCagnotte(Userprofile.cagnotte_balance);
+    if (isLoggedIn && !Userprofile) {
+      dispatch(fetchUserProfile());
     }
-  }, [Userprofile]);
-
-  useEffect(() => {
-    if (isLoggedIn && !Userprofile) dispatch(fetchUserProfile());
   }, [dispatch, isLoggedIn, Userprofile]);
 
   useEffect(() => {
     if (Userprofile?.ID_client) {
       dispatch(fetchClientDeals(Userprofile.ID_client));
     }
-  }, [dispatch, Userprofile]);
+  }, [dispatch, Userprofile?.ID_client]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -64,133 +64,316 @@ const MesDeals = () => {
     return () => clearInterval(timer);
   }, [images.length]);
 
-  const calculateTimeLeft = (endDate) => {
-    const end = new Date(endDate);
-    const diff = end - new Date();
-    if (diff <= 0) return null;
-    return {
-      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-      minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-      seconds: Math.floor((diff % (1000 * 60)) / 1000),
-    };
-  };
-
-  // Calculer le total gagné (montants transférables)
-  const totalGagne = allDeals.reduce((sum, deal) => {
-    const dealKey = `${deal.type}_${deal.ID}`;
-    const transferred = transferredLevels[dealKey] || 0;
+  // Helper pour obtenir la couleur de la marque
+  const getBrandColor = (brandName) => {
+    if (!brandName) return '#7C3AED';
     
-    const getCurrentEarned = () => {
-      if (deal.type === "frequence") {
-        const visites = Math.floor(parseFloat(deal.compteur_frequence) || 0);
-        if (visites >= 5 && transferred < 5) return 5;
-        else if (visites >= 4 && transferred < 4) return 4;
-        else if (visites >= 3 && transferred < 3) return 3;
-        else if (visites >= 2 && transferred < 2) return 2;
-        else if (visites >= 1 && transferred < 1) return 1;
-        return 0;
-      }
-      
-      const objectives = [
-        { value: parseFloat(deal.objectif_1) || 0, gain: parseFloat(deal.gain_objectif_1) || 0 },
-        { value: parseFloat(deal.objectif_2) || 0, gain: parseFloat(deal.gain_objectif_2) || 0 },
-        { value: parseFloat(deal.objectif_3) || 0, gain: parseFloat(deal.gain_objectif_3) || 0 },
-        { value: parseFloat(deal.objectif_4) || 0, gain: parseFloat(deal.gain_objectif_4) || 0 },
-        { value: parseFloat(deal.objectif_5) || 0, gain: parseFloat(deal.gain_objectif_5) || 0 },
-      ];
-      const current = parseFloat(deal.compteur_objectif) || 0;
-      
-      let earned = 0;
-      objectives.forEach((obj) => {
-        if (current >= obj.value && obj.value > 0 && obj.gain > transferred) {
-          earned = obj.gain;
-        }
-      });
-      return earned > transferred ? earned - transferred : 0;
-    };
-    return sum + getCurrentEarned();
-  }, 0);
-
-  // Calculer le total en attente
-  const totalEnAttente = allDeals.reduce((sum, deal) => {
-    const getCurrentReward = () => {
-      if (deal.type === "frequence") return parseFloat(deal.gain) || 5;
-      const objectives = [
-        { value: parseFloat(deal.objectif_1) || 0, gain: parseFloat(deal.gain_objectif_1) || 0 },
-        { value: parseFloat(deal.objectif_2) || 0, gain: parseFloat(deal.gain_objectif_2) || 0 },
-        { value: parseFloat(deal.objectif_3) || 0, gain: parseFloat(deal.gain_objectif_3) || 0 },
-        { value: parseFloat(deal.objectif_4) || 0, gain: parseFloat(deal.gain_objectif_4) || 0 },
-        { value: parseFloat(deal.objectif_5) || 0, gain: parseFloat(deal.gain_objectif_5) || 0 },
-      ];
-      const current = parseFloat(deal.compteur_objectif) || 0;
-      const active = objectives.find((o) => current < o.value) || objectives[4];
-      return active.gain;
-    };
-    return sum + getCurrentReward();
-  }, 0);
-
-  const handleTransfer = async (dealType, dealId, amount) => {
-    try {
-      // 🔥 CORRECTION: Mettre à jour immédiatement l'UI sans attendre la réponse
-      const dealKey = `${dealType}_${dealId}`;
-      
-      // Mettre à jour les transferts immédiatement
-      setTransferredLevels(prev => {
-        const updated = {
-          ...prev,
-          [dealKey]: (prev[dealKey] || 0) + amount
-        };
-        return updated;
-      });
-
-      // 🔥 CORRECTION: Mettre à jour la cagnotte immédiatement
-      setLocalCagnotte(prev => prev + amount);
-
-      // Afficher la confirmation immédiatement
-      setCongratsData({ amount, type: dealType });
-      setShowCongrats(true);
-      setTimeout(() => setShowCongrats(false), 5000);
-
-      // 🔥 CORRECTION: Envoyer la requête en arrière-plan
-      dispatch(transferDealToCagnotte({ 
-        dealType, 
-        dealId, 
-        amount 
-      })).unwrap()
-      .then(() => {
-        // Recharger les données en arrière-plan pour synchroniser
-        if (Userprofile?.ID_client) {
-          dispatch(fetchUserProfile());
-        }
-      })
-      .catch((error) => {
-        console.error("Transfer failed:", error);
-        // 🔥 CORRECTION: Revenir en arrière en cas d'erreur
-        setTransferredLevels(prev => {
-          const reverted = { ...prev };
-          delete reverted[dealKey];
-          return reverted;
-        });
-        setLocalCagnotte(prev => prev - amount);
-        alert("Erreur lors du transfert. Veuillez réessayer.");
-      });
-      
-    } catch (error) {
-      console.error("Transfer failed:", error);
+    const brand = brandName.toUpperCase();
+    switch (brand) {
+      case 'CARREFOUR': return '#0066CC';
+      case 'MONOPRIX': return '#E31837';
+      case 'AZIZA': return '#FF6B35';
+      case 'MG': return '#00A651';
+      default: return '#7C3AED';
     }
   };
 
-  const DealCard = ({ deal }) => {
-    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(deal.date_fin));
-    const [imageError, setImageError] = useState(false);
+  // Helper pour obtenir les initiales de la marque
+  const getBrandInitials = (brandName) => {
+    if (!brandName) return '?';
+    const words = brandName.split(' ');
+    if (words.length >= 2) {
+      return `${words[0][0]}${words[1][0]}`.toUpperCase();
+    }
+    return brandName.length >= 2 
+      ? brandName.substring(0, 2).toUpperCase()
+      : brandName[0].toUpperCase();
+  };
 
-    useEffect(() => {
-      const timer = setInterval(() => {
-        setTimeLeft(calculateTimeLeft(deal.date_fin));
-      }, 1000);
-      return () => clearInterval(timer);
-    }, [deal.date_fin]);
+  // Fonction pour obtenir le gain maximum
+  const getHighestGain = (deal) => {
+    if (deal.type === "frequence") {
+      return parseFloat(deal.gain) || 0;
+    }
+    
+    let highestGain = 0;
+    if ((deal.gain_objectif_5 ?? 0) > 0) {
+      highestGain = deal.gain_objectif_5;
+    } else if ((deal.gain_objectif_4 ?? 0) > 0) {
+      highestGain = deal.gain_objectif_4;
+    } else if ((deal.gain_objectif_3 ?? 0) > 0) {
+      highestGain = deal.gain_objectif_3;
+    } else if ((deal.gain_objectif_2 ?? 0) > 0) {
+      highestGain = deal.gain_objectif_2;
+    } else if ((deal.gain_objectif_1 ?? 0) > 0) {
+      highestGain = deal.gain_objectif_1;
+    }
+    return highestGain;
+  };
+
+  // Vérifier si un deal a déjà été transféré (version locale)
+  const isDealTransferred = (deal) => {
+    const dealKey = `${deal.type}_${deal.ID}`;
+    return localTransferredDeals.includes(dealKey);
+  };
+
+  // Fonction pour gérer le transfert MANUEL - SEULEMENT SI COMPLÈTEMENT TERMINÉ
+  const handleManualTransfer = async (deal) => {
+    if (!isDealFullyCompleted(deal)) {
+      toast.error("Le deal n'est pas encore complètement terminé!");
+      return;
+    }
+
+    if (isDealTransferred(deal)) {
+      toast.error("Ce deal a déjà été transféré!");
+      return;
+    }
+
+    const highestGain = getHighestGain(deal);
+    
+    if (highestGain <= 0) {
+      toast.error("Aucun montant à transférer!");
+      return;
+    }
+
+    try {
+      // Marquer comme transféré localement
+      setLocalTransferredDeals(prev => [...prev, `${deal.type}_${deal.ID}`]);
+
+      // Effectuer le transfert - le rechargement se fait automatiquement dans deals.js
+      await dispatch(transferDealToCagnotte({
+        dealType: deal.type,
+        dealId: deal.ID,
+        amount: highestGain
+      })).unwrap();
+
+      // Afficher la modal de félicitations
+      setCongratsData({ amount: highestGain, type: deal.type });
+      setShowCongrats(true);
+
+      // Note: Le profil et les deals sont déjà rechargés dans transferDealToCagnotte
+      // La cagnotte se mettra à jour automatiquement via Redux
+
+    } catch (error) {
+      console.error("Transfer failed:", error);
+      // Annuler le marquage local en cas d'erreur
+      setLocalTransferredDeals(prev => prev.filter(id => id !== `${deal.type}_${deal.ID}`));
+      toast.error("Échec du transfert. Veuillez réessayer.");
+    }
+  };
+
+  // Victory Card Component - SEULEMENT POUR LES DEALS COMPLÈTEMENT TERMINÉS
+  const VictoryCard = ({ deal }) => {
+    const [isTransferring, setIsTransferring] = useState(false);
+    const isTransferred = isDealTransferred(deal);
+    const isFullyCompleted = isDealFullyCompleted(deal);
+    const highestGain = getHighestGain(deal);
+
+    if (!isFullyCompleted) {
+      return null;
+    }
+
+    const handleTransfer = async () => {
+      if (isTransferred || isTransferring || !isFullyCompleted) return;
+      
+      setIsTransferring(true);
+      await handleManualTransfer(deal);
+      setIsTransferring(false);
+    };
+
+    return (
+      <div className="col-12 col-md-6 col-lg-4 mb-3">
+        <div style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: '16px',
+          padding: '20px',
+          boxShadow: '0 8px 20px rgba(102, 126, 234, 0.3)',
+          position: 'relative',
+          overflow: 'hidden',
+          border: '2px solid #FFD700',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: 0.1,
+            background: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Ccircle cx=\'10\' cy=\'10\' r=\'5\' fill=\'%23FFD700\'/%3E%3Ccircle cx=\'50\' cy=\'30\' r=\'3\' fill=\'%23FF6B6B\'/%3E%3Ccircle cx=\'80\' cy=\'20\' r=\'4\' fill=\'%234ECDC4\'/%3E%3C/svg%3E")',
+            pointerEvents: 'none'
+          }} />
+
+          <div style={{
+            fontSize: '48px',
+            textAlign: 'center',
+            marginBottom: '12px',
+            animation: 'bounce 2s infinite'
+          }}>
+            🏆
+          </div>
+
+          <div style={{
+            textAlign: 'center',
+            color: 'white',
+            marginBottom: '16px'
+          }}>
+            <h2 style={{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              margin: '0 0 6px 0',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
+            }}>
+              FÉLICITATIONS ! 🎉
+            </h2>
+            <p style={{
+              fontSize: '13px',
+              margin: 0,
+              opacity: 0.9
+            }}>
+              Vous avez complété tous les objectifs !
+            </p>
+          </div>
+
+          <div style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '12px',
+            padding: '16px',
+            textAlign: 'center',
+            marginBottom: '16px',
+            border: '2px solid rgba(255, 255, 255, 0.3)'
+          }}>
+            <div style={{
+              color: 'rgba(255, 255, 255, 0.8)',
+              fontSize: '12px',
+              marginBottom: '6px',
+              textTransform: 'uppercase',
+              letterSpacing: '1px'
+            }}>
+              {isTransferred ? 'Montant transféré' : 'Gain total à transférer'}
+            </div>
+            <div style={{
+              color: '#FFD700',
+              fontSize: '36px',
+              fontWeight: 'bold',
+              textShadow: '2px 2px 8px rgba(0,0,0,0.3)',
+              marginBottom: '4px'
+            }}>
+              {Number(highestGain).toFixed(1)} DT
+            </div>
+            <div style={{
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '11px'
+            }}>
+              {isTransferred ? 'déjà dans votre cagnotte' : 'Tous les objectifs atteints!'}
+            </div>
+          </div>
+
+          {deal.type === 'marque' && deal.marque_name && (
+            <div style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              borderRadius: '12px',
+              padding: '12px',
+              textAlign: 'center',
+              marginBottom: '16px',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px'
+            }}>
+              {deal.marque_logo ? (
+                <img 
+                  src={deal.marque_logo} 
+                  alt={deal.marque_name}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
+                    objectFit: 'cover'
+                  }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div style={{
+                display: deal.marque_logo ? 'none' : 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                backgroundColor: getBrandColor(deal.marque_name),
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}>
+                {getBrandInitials(deal.marque_name)}
+              </div>
+              <div>
+                <div style={{ fontSize: '11px', opacity: 0.8 }}>Marque</div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                  {deal.marque_name}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={handleTransfer}
+            disabled={isTransferred || isTransferring || transferLoading || !isFullyCompleted}
+            className="w-100"
+            style={{
+              backgroundColor: isTransferred ? '#4CAF50' : 
+                             isTransferring ? '#FFA000' : '#FFD700',
+              color: isTransferred ? 'white' : '#1A202C',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '12px',
+              fontSize: '15px',
+              fontWeight: 'bold',
+              cursor: (isTransferred || isTransferring || !isFullyCompleted) ? 'not-allowed' : 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              opacity: (isTransferred || isTransferring || !isFullyCompleted) ? 0.7 : 1,
+              marginTop: 'auto'
+            }}
+          >
+            {isTransferring ? (
+              <span>🔄 Transfert en cours...</span>
+            ) : isTransferred ? (
+              <span>✅ Déjà transféré</span>
+            ) : !isFullyCompleted ? (
+              <span>⏳ Objectifs en cours...</span>
+            ) : (
+              <span>💰 Transférer {Number(highestGain).toFixed(1)} DT</span>
+            )}
+          </button>
+
+          {isTransferred && (
+            <div style={{
+              marginTop: '10px',
+              textAlign: 'center',
+              color: 'white',
+              fontSize: '12px',
+              opacity: 0.9
+            }}>
+              🎊 Le montant a été ajouté à votre cagnotte !
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Regular Deal Card Component
+  const DealCard = ({ deal }) => {
+    const [imageError, setImageError] = useState(false);
 
     const getCurrentObjective = () => {
       if (deal.type === "frequence") {
@@ -202,63 +385,31 @@ const MesDeals = () => {
           maxReward: parseFloat(deal.gain) || 5
         };
       }
+      
       const objectives = [
         { value: parseFloat(deal.objectif_1) || 0, gain: parseFloat(deal.gain_objectif_1) || 0, level: 1 },
         { value: parseFloat(deal.objectif_2) || 0, gain: parseFloat(deal.gain_objectif_2) || 0, level: 2 },
         { value: parseFloat(deal.objectif_3) || 0, gain: parseFloat(deal.gain_objectif_3) || 0, level: 3 },
         { value: parseFloat(deal.objectif_4) || 0, gain: parseFloat(deal.gain_objectif_4) || 0, level: 4 },
         { value: parseFloat(deal.objectif_5) || 0, gain: parseFloat(deal.gain_objectif_5) || 0, level: 5 },
-      ];
+      ].filter(obj => obj.value > 0);
+      
       const current = parseFloat(deal.compteur_objectif) || 0;
-      const activeObjective = objectives.find((o) => current < o.value) || objectives[4];
+      const activeObjective = objectives.find((o) => current < o.value) || objectives[objectives.length - 1];
+      
       return {
         current,
-        target: activeObjective.value,
-        reward: activeObjective.gain,
+        target: activeObjective?.value || 0,
+        reward: activeObjective?.gain || 0,
         objectives,
-        maxReward: objectives[4].gain
+        maxReward: objectives[objectives.length - 1]?.gain || 0
       };
     };
 
     const objective = getCurrentObjective();
-    const progress = Math.min((objective.current / objective.target) * 100, 100);
+    const progress = objective.target > 0 ? Math.min((objective.current / objective.target) * 100, 100) : 0;
+    const isFullyCompleted = isDealFullyCompleted(deal);
 
-    // 🔥 CORRECTION: Utiliser l'état persisté
-    const dealKey = `${deal.type}_${deal.ID}`;
-    const alreadyTransferred = transferredLevels[dealKey] || 0;
-    
-    let earnedAmount = 0;
-    if (deal.type === "frequence") {
-      const visites = Math.floor(objective.current);
-      // Système de paliers pour fréquence
-      if (visites >= 5 && alreadyTransferred < 5) earnedAmount = 5;
-      else if (visites >= 4 && alreadyTransferred < 4) earnedAmount = 4;
-      else if (visites >= 3 && alreadyTransferred < 3) earnedAmount = 3;
-      else if (visites >= 2 && alreadyTransferred < 2) earnedAmount = 2;
-      else if (visites >= 1 && alreadyTransferred < 1) earnedAmount = 1;
-    } else {
-      const objectives = objective.objectives || [];
-      objectives.forEach((obj) => {
-        if (objective.current >= obj.value && obj.value > 0 && obj.gain > alreadyTransferred) {
-          earnedAmount = obj.gain;
-        }
-      });
-      // Ne transférer que la différence
-      if (earnedAmount > alreadyTransferred) {
-        earnedAmount = earnedAmount - alreadyTransferred;
-      } else {
-        earnedAmount = 0;
-      }
-    }
-
-    const getIllustration = () => {
-      if (deal.type === "depense") return "📊";
-      if (deal.type === "frequence") return "🔄";
-      if (deal.type === "anniversaire") return "🎂";
-      return "🎁";
-    };
-
-    const getBadgeColor = () => "#7C3AED";
     const getBadgeName = () => {
       if (deal.type === "marque") return "Marque";
       if (deal.type === "depense") return "Dépense";
@@ -267,573 +418,277 @@ const MesDeals = () => {
       return deal.type;
     };
 
+    if (isFullyCompleted) {
+      return null;
+    }
+
+    const brandColor = deal.type === 'marque' ? getBrandColor(deal.marque_name) : '#7C3AED';
+
     return (
-      <div style={{
-        backgroundColor: '#E8E4F3',
-        borderRadius: '24px',
-        padding: '20px',
-        marginBottom: '20px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-      }}>
-        {timeLeft && (
-          <div>
-            <div style={{
-              textAlign: 'center',
-              color: '#FF6B6B',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              marginBottom: '15px',
-              letterSpacing: '1px'
-            }}>
-              TEMPS RESTANT
-            </div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '10px',
-              marginBottom: '20px'
-            }}>
-              {[
-                { value: timeLeft.days, label: 'JOURS' },
-                { value: timeLeft.hours, label: 'HEURES' },
-                { value: timeLeft.minutes, label: 'MIN' },
-                { value: timeLeft.seconds, label: 'SEC' }
-              ].map((item, idx) => (
-                <div key={idx} style={{
-                  backgroundColor: '#2D3561',
-                  borderRadius: '16px',
-                  padding: '15px 10px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{
-                    color: 'white',
-                    fontSize: '32px',
-                    fontWeight: 'bold',
-                    lineHeight: '1'
-                  }}>
-                    {String(item.value).padStart(2, '0')}
-                  </div>
-                  <div style={{
-                    color: '#FF6B6B',
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    marginTop: '5px',
-                    letterSpacing: '0.5px'
-                  }}>
-                    {item.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
+      <div className="col-12 col-md-6 col-lg-4 mb-3">
         <div style={{
-          display: 'inline-block',
-          backgroundColor: getBadgeColor(),
-          color: 'white',
-          padding: '10px 24px',
-          borderRadius: '20px',
-          fontSize: '16px',
-          fontWeight: 'bold',
-          marginBottom: '15px'
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '16px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          border: '1px solid #E2E8F0',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column'
         }}>
-          {getBadgeName()}
-        </div>
+          <div style={{
+            display: 'inline-block',
+            backgroundColor: brandColor,
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: '12px',
+            fontSize: '11px',
+            fontWeight: 'bold',
+            marginBottom: '12px',
+            alignSelf: 'flex-start'
+          }}>
+            {getBadgeName()}
+          </div>
 
-        {deal.type === "frequence" ? (
-          <div>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '20px',
-              gap: '15px'
-            }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '12px'
+          }}>
+            {deal.type === 'marque' && deal.marque_name ? (
               <div style={{
-                flex: 1,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                fontSize: '100px'
-              }}>
-                🎁
-              </div>
-              <div style={{
+                width: '60px',
+                height: '60px',
                 backgroundColor: 'white',
-                borderRadius: '16px',
-                padding: '16px 20px',
-                textAlign: 'center',
-                minWidth: '140px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                borderRadius: '12px',
+                border: `2px solid ${brandColor}`,
+                boxShadow: `0 4px 12px ${brandColor}30`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden'
               }}>
-                <div style={{
-                  color: '#2D3748',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  marginBottom: '5px'
-                }}>
-                  Gagné
-                </div>
-                <div style={{
-                  color: '#FF6B6B',
-                  fontSize: '28px',
-                  fontWeight: 'bold',
-                  marginBottom: '5px'
-                }}>
-                  {Number(objective.reward).toFixed(1)} dt
-                </div>
-                <div style={{
-                  color: '#718096',
-                  fontSize: '11px',
-                  lineHeight: '1.4'
-                }}>
-                  si vous atteignez<br/>l'objectif
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <h3 style={{
-                color: '#2D3748',
-                fontSize: '20px',
-                fontWeight: 'bold',
-                marginBottom: '8px'
-              }}>
-                Deal Fréquence
-              </h3>
-              <p style={{
-                color: '#718096',
-                fontSize: '14px',
-                margin: 0
-              }}>
-                Commandez régulièrement et gagnez jusqu'à {Number(objective.reward).toFixed(1)} DT
-              </p>
-            </div>
-
-            <div style={{
-              background: 'linear-gradient(90deg, #10B981 0%, #3B82F6 100%)',
-              height: '10px',
-              borderRadius: '10px',
-              marginBottom: '15px',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                height: '100%',
-                width: `${progress}%`,
-                background: 'linear-gradient(90deg, #FCD34D 0%, #10B981 50%, #3B82F6 100%)',
-                borderRadius: '10px'
-              }} />
-            </div>
-
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginBottom: '20px',
-              gap: '8px'
-            }}>
-              {[1, 2, 3, 4, 5].map((level) => {
-                const isCompleted = objective.current >= level;
-                const isTransferred = alreadyTransferred >= level;
-                const colors = ['#FCD34D', '#84CC16', '#10B981', '#06B6D4', '#3B82F6'];
-                let bgColor = '#E2E8F0';
-                
-                if (isTransferred) {
-                  bgColor = '#9CA3AF'; // Gris pour transféré
-                } else if (isCompleted) {
-                  bgColor = colors[level - 1];
-                }
-                
-                return (
-                  <div key={level} style={{
-                    textAlign: 'center',
-                    flex: 1
-                  }}>
-                    <div style={{
-                      width: '56px',
-                      height: '56px',
-                      borderRadius: '16px',
-                      backgroundColor: bgColor,
+                {deal.marque_logo && !imageError ? (
+                  <img 
+                    src={deal.marque_logo} 
+                    alt={deal.marque_name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                    onError={() => setImageError(true)}
+                  />
+                ) : (
+                  <div 
+                    style={{
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      margin: '0 auto 8px',
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      color: (isCompleted || isTransferred) ? 'white' : '#A0AEC0',
-                      boxShadow: isCompleted && !isTransferred ? `0 4px 12px ${bgColor}80` : 'none',
-                      transition: 'all 0.3s ease'
-                    }}>
-                      {isTransferred && (
-                        <div style={{ fontSize: '18px', marginBottom: '2px' }}>💰</div>
-                      )}
-                      {isCompleted && !isTransferred && (
-                        <div style={{ fontSize: '18px', marginBottom: '2px' }}>✓</div>
-                      )}
-                      <div style={{ fontSize: '10px', opacity: 0.9 }}>
-                        {level === 1 ? '1ère' : `${level}ème`}
-                      </div>
-                    </div>
+                      width: '100%',
+                      height: '100%',
+                      background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)`,
+                      color: 'white',
+                      padding: '8px'
+                    }}
+                  >
                     <div style={{
-                      fontSize: '13px',
-                      color: '#2D3748',
+                      fontSize: '18px',
                       fontWeight: 'bold',
                       marginBottom: '2px'
                     }}>
-                      {level * 10} DT
+                      {getBrandInitials(deal.marque_name)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ fontSize: '40px', textAlign: 'center' }}>
+                {deal.type === "depense" ? "💰" : 
+                 deal.type === "frequence" ? "🔄" : 
+                 deal.type === "anniversaire" ? "🎂" : "🎁"}
+              </div>
+            )}
+          </div>
+
+          <div style={{
+            backgroundColor: '#F7FAFC',
+            borderRadius: '10px',
+            padding: '12px',
+            textAlign: 'center',
+            marginBottom: '12px'
+          }}>
+            <div style={{ color: '#718096', fontSize: '11px', marginBottom: '4px' }}>
+              Gagnez jusqu'à
+            </div>
+            <div style={{ 
+              color: brandColor, 
+              fontSize: '22px', 
+              fontWeight: 'bold'
+            }}>
+              {Number(objective.maxReward).toFixed(1)} DT
+            </div>
+            <div style={{ color: '#718096', fontSize: '10px' }}>
+              {deal.type === 'marque' && deal.marque_name ? (
+                `avec ${deal.marque_name}`
+              ) : (
+                "si vous atteignez l'objectif"
+              )}
+            </div>
+          </div>
+
+          {objective.objectives && objective.objectives.length > 0 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-end',
+              marginBottom: '12px',
+              padding: '8px 0'
+            }}>
+              {objective.objectives.map((obj, idx) => {
+                const isCompleted = objective.current >= obj.value;
+                const isActive = !isCompleted && objective.current < obj.value && 
+                               (idx === 0 || objective.current >= objective.objectives[idx - 1].value);
+                
+                return (
+                  <div key={idx} style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    position: 'relative'
+                  }}>
+                    {idx < objective.objectives.length - 1 && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '16px',
+                        left: '50%',
+                        width: '100%',
+                        height: '2px',
+                        backgroundColor: isCompleted ? brandColor : '#E2E8F0',
+                        zIndex: 0
+                      }} />
+                    )}
+                    
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      backgroundColor: isCompleted ? brandColor : 
+                                     isActive ? `${brandColor}40` : '#F7FAFC',
+                      border: `2px solid ${isCompleted || isActive ? brandColor : '#E2E8F0'}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '6px',
+                      position: 'relative',
+                      zIndex: 1,
+                      transition: 'all 0.3s ease'
+                    }}>
+                      {isCompleted ? (
+                        <span style={{ color: 'white', fontSize: '14px' }}>✓</span>
+                      ) : (
+                        <span style={{
+                          color: isActive ? brandColor : '#CBD5E0',
+                          fontSize: '10px',
+                          fontWeight: 'bold'
+                        }}>
+                          {obj.level}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div style={{
+                      fontSize: '9px',
+                      color: isCompleted || isActive ? brandColor : '#A0AEC0',
+                      fontWeight: isCompleted || isActive ? 'bold' : 'normal',
+                      textAlign: 'center'
+                    }}>
+                      {obj.value} DT
                     </div>
                     <div style={{
-                      fontSize: '12px',
-                      color: isTransferred ? '#9CA3AF' : '#10B981',
-                      fontWeight: 'bold'
+                      fontSize: '8px',
+                      color: '#718096',
+                      textAlign: 'center'
                     }}>
-                      {isTransferred ? '✓ Transféré' : `+${level} DT`}
+                      +{obj.gain} DT
                     </div>
                   </div>
                 );
               })}
             </div>
+          )}
 
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '14px 16px',
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              marginBottom: '15px',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
-            }}>
-              <div style={{ fontSize: '28px' }}>🛒</div>
-              <div>
-                <div style={{
-                  color: '#FF6B6B',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  marginBottom: '2px'
-                }}>
-                  Mes visites :
-                </div>
-                <div style={{
-                  color: '#FF6B6B',
-                  fontSize: '20px',
-                  fontWeight: 'bold'
-                }}>
-                  {Math.floor(objective.current)}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : deal.type === "marque" ? (
-          <div>
-            <div style={{
-              textAlign: 'center',
-              margin: '20px 0',
-              padding: '30px',
-              backgroundColor: 'white',
-              borderRadius: '20px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-            }}>
-              {deal.marque_logo && !imageError ? (
-                <img
-                  src={deal.marque_logo}
-                  alt={deal.marque_name || "Marque"}
-                  onError={() => setImageError(true)}
-                  style={{
-                    maxWidth: '160px',
-                    maxHeight: '90px',
-                    objectFit: 'contain'
-                  }}
-                />
-              ) : (
-                <div style={{
-                  color: '#2D3748',
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  letterSpacing: '2px'
-                }}>
-                  {deal.marque_name || "MARQUE"}
-                </div>
-              )}
+          <div style={{ marginBottom: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <span style={{ fontSize: '11px', color: '#718096' }}>
+                {deal.type === "frequence" 
+                  ? `${Math.floor(objective.current)} visite${Math.floor(objective.current) > 1 ? 's' : ''}`
+                  : `${Number(objective.current).toFixed(1)} DT`
+                }
+              </span>
+              <span style={{ fontSize: '11px', fontWeight: 'bold', color: brandColor }}>
+                {deal.type === "frequence"
+                  ? `${objective.target} visite${objective.target > 1 ? 's' : ''}`
+                  : `${objective.target} DT`
+                }
+              </span>
             </div>
             <div style={{
-              backgroundColor: 'white',
-              borderRadius: '16px',
-              padding: '16px 20px',
-              textAlign: 'center',
-              marginBottom: '20px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-            }}>
-              {deal.marque_name && (
-                <div style={{
-                  color: '#2D3561',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  marginBottom: '8px'
-                }}>
-                  {deal.marque_name}
-                </div>
-              )}
-              <div style={{
-                color: '#718096',
-                fontSize: '13px',
-                marginBottom: '5px'
-              }}>
-                Gagné jusqu'à
-              </div>
-              <div style={{
-                color: '#FF6B6B',
-                fontSize: '28px',
-                fontWeight: 'bold',
-                marginBottom: '5px'
-              }}>
-                {Number(objective.maxReward).toFixed(2)} dt
-              </div>
-              <div style={{
-                color: '#718096',
-                fontSize: '11px',
-                lineHeight: '1.4'
-              }}>
-                si vous atteignez l'objectif
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '20px',
-            gap: '15px'
-          }}>
-            <div style={{
-              flex: 1,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              fontSize: '80px'
-            }}>
-              {getIllustration()}
-            </div>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '16px',
-              padding: '16px 20px',
-              textAlign: 'center',
-              minWidth: '140px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-            }}>
-              <div style={{
-                color: '#718096',
-                fontSize: '13px',
-                marginBottom: '5px'
-              }}>
-                Gagné jusqu'à
-              </div>
-              <div style={{
-                color: '#FF6B6B',
-                fontSize: '28px',
-                fontWeight: 'bold',
-                marginBottom: '5px'
-              }}>
-                {Number(objective.maxReward).toFixed(2)} dt
-              </div>
-              <div style={{
-                color: '#718096',
-                fontSize: '11px',
-                lineHeight: '1.4'
-              }}>
-                si vous atteignez<br/>l'objectif
-              </div>
-            </div>
-          </div>
-        )}
-
-        {deal.type !== "frequence" && (
-          <>
-            <div style={{ marginBottom: '15px' }}>
-              <h3 style={{
-                color: '#2D3748',
-                fontSize: '20px',
-                fontWeight: 'bold',
-                marginBottom: '8px'
-              }}>
-                {deal.type === "marque" && "Deal Marques"}
-                {deal.type === "depense" && "Deal Dépense"}
-                {deal.type === "anniversaire" && "Deal Anniversaire"}
-              </h3>
-              <p style={{
-                color: '#718096',
-                fontSize: '14px',
-                margin: 0
-              }}>
-                {deal.type === "marque" && `Découvrez nos marques et gagnez jusqu'à ${Number(objective.maxReward).toFixed(0)} DT`}
-                {deal.type === "depense" && `Dépensez et gagnez jusqu'à ${Number(objective.maxReward).toFixed(0)} DT`}
-                {deal.type === "anniversaire" && "Offre spéciale anniversaire"}
-              </p>
-            </div>
-
-            <div style={{
-              backgroundColor: '#FFE5B4',
+              width: '100%',
               height: '8px',
+              backgroundColor: '#F7FAFC',
               borderRadius: '10px',
-              marginBottom: '15px',
-              position: 'relative',
               overflow: 'hidden'
             }}>
               <div style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                height: '100%',
                 width: `${progress}%`,
-                backgroundColor: '#FFC107',
+                height: '100%',
+                backgroundColor: brandColor,
+                transition: 'width 0.3s ease',
                 borderRadius: '10px'
               }} />
             </div>
+          </div>
 
-            {objective.objectives && (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginBottom: '20px',
-                gap: '8px'
-              }}>
-                {objective.objectives.map((obj, index) => {
-                  const isCompleted = objective.current >= obj.value;
-                  const isTransferred = alreadyTransferred >= obj.gain;
-                  let bgColor = '#E2E8F0';
-                  
-                  if (isTransferred) {
-                    bgColor = '#9CA3AF';
-                  } else if (isCompleted) {
-                    bgColor = '#FFC107';
-                  }
-                  
-                  return (
-                    <div key={index} style={{
-                      textAlign: 'center',
-                      flex: 1
-                    }}>
-                      <div style={{
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: '16px',
-                        backgroundColor: bgColor,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 8px',
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        color: (isCompleted || isTransferred) ? 'white' : '#A0AEC0',
-                        boxShadow: isCompleted && !isTransferred ? '0 4px 12px rgba(255, 193, 7, 0.3)' : 'none'
-                      }}>
-                        {isTransferred && (
-                          <div style={{ fontSize: '16px', marginBottom: '2px' }}>💰</div>
-                        )}
-                        {isCompleted && !isTransferred && (
-                          <div style={{ fontSize: '16px', marginBottom: '2px' }}>✓</div>
-                        )}
-                        <div style={{ fontSize: '10px', opacity: 0.8 }}>
-                          {obj.level === 1 ? '1ère' : `${obj.level}ème`}
-                        </div>
-                      </div>
-                      <div style={{
-                        fontSize: '13px',
-                        color: '#2D3748',
-                        fontWeight: 'bold',
-                        marginBottom: '2px'
-                      }}>
-                        {Number(obj.value).toFixed(0)} DT
-                      </div>
-                      <div style={{
-                        fontSize: '12px',
-                        color: isTransferred ? '#9CA3AF' : '#10B981',
-                        fontWeight: 'bold'
-                      }}>
-                        {isTransferred ? '✓ Transféré' : `+${Number(obj.gain).toFixed(0)} DT`}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px',
+            backgroundColor: '#F7FAFC',
+            borderRadius: '8px',
+            fontSize: '11px'
+          }}>
+            <span style={{ fontSize: '16px' }}>🎁</span>
+            <span style={{ color: '#718096', fontWeight: '600' }}>
+              {deal.type === "frequence" 
+                ? `Mes visites : ${Math.floor(objective.current)}`
+                : `Mes achats : ${Number(deal.compteur_objectif || 0).toFixed(1)} DT`
+              }
+            </span>
+          </div>
 
+          {!isFullyCompleted && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
-              padding: '14px 16px',
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              marginBottom: '15px',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+              gap: '6px',
+              padding: '8px',
+              backgroundColor: '#E6FFFA',
+              borderRadius: '8px',
+              marginTop: '8px',
+              border: '1px solid #81E6D9'
             }}>
-              <div style={{ fontSize: '28px' }}>🛒</div>
-              <div>
-                <div style={{
-                  color: '#FF6B6B',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  marginBottom: '2px'
-                }}>
-                  Mes achats :
-                </div>
-                <div style={{
-                  color: '#FF6B6B',
-                  fontSize: '20px',
-                  fontWeight: 'bold'
-                }}>
-                  {Number(objective.current).toFixed(1)} dt
-                </div>
-              </div>
+              <span style={{ fontSize: '16px', color: '#319795' }}>⏳</span>
+              <span style={{ color: '#319795', fontSize: '11px', fontWeight: '600' }}>
+                Objectif en cours: {Math.round(progress)}% complété
+              </span>
             </div>
-          </>
-        )}
-
-        {earnedAmount > 0 && (
-          <button
-            style={{
-              width: '100%',
-              backgroundColor: '#10B981',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '14px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
-            }}
-            onClick={() => handleTransfer(deal.type, deal.ID, earnedAmount)}
-          >
-            Transférer {Number(earnedAmount).toFixed(0)} DT à la cagnotte
-          </button>
-        )}
-        
-        {alreadyTransferred > 0 && earnedAmount === 0 && (
-          <div style={{
-            width: '100%',
-            backgroundColor: '#F3F4F6',
-            color: '#6B7280',
-            border: '2px solid #E5E7EB',
-            borderRadius: '12px',
-            padding: '14px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            textAlign: 'center'
-          }}>
-            ✓ {Number(alreadyTransferred).toFixed(0)} DT déjà transféré
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   };
@@ -849,43 +704,44 @@ const MesDeals = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 9999
+      zIndex: 9999,
+      padding: '20px'
     }}>
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '24px',
-        padding: '40px',
+        borderRadius: '20px',
+        padding: '30px',
         textAlign: 'center',
-        maxWidth: '400px',
-        margin: '20px'
+        maxWidth: '350px',
+        width: '100%'
       }}>
-        <div style={{ fontSize: '60px', marginBottom: '20px' }}>🎉</div>
+        <div style={{ fontSize: '50px', marginBottom: '16px' }}>🎉</div>
         <h2 style={{
           color: '#2D3748',
-          fontSize: '28px',
+          fontSize: '24px',
           fontWeight: 'bold',
-          marginBottom: '10px'
+          marginBottom: '8px'
         }}>
           Félicitations!
         </h2>
         <p style={{
           color: '#718096',
-          fontSize: '16px',
-          marginBottom: '20px'
+          fontSize: '14px',
+          marginBottom: '16px'
         }}>
           Vous avez transféré
         </p>
         <div style={{
           color: '#10B981',
-          fontSize: '48px',
+          fontSize: '40px',
           fontWeight: 'bold',
-          marginBottom: '30px'
+          marginBottom: '20px'
         }}>
           {data?.amount} DT
         </div>
         <p style={{
           color: '#718096',
-          fontSize: '14px',
+          fontSize: '13px',
           marginBottom: '20px'
         }}>
           vers votre cagnotte
@@ -896,9 +752,9 @@ const MesDeals = () => {
             backgroundColor: '#7C3AED',
             color: 'white',
             border: 'none',
-            borderRadius: '12px',
-            padding: '14px',
-            fontSize: '16px',
+            borderRadius: '10px',
+            padding: '12px',
+            fontSize: '15px',
             fontWeight: 'bold',
             cursor: 'pointer'
           }}
@@ -912,20 +768,15 @@ const MesDeals = () => {
 
   if (!isLoggedIn) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#F7FAFC',
-        textAlign: 'center',
-        padding: '20px'
-      }}>
-        <div>
-          <div style={{ fontSize: '80px', marginBottom: '20px' }}>🎁</div>
-          <h2 style={{ color: '#2D3748', fontSize: '24px' }}>
-            Connectez-vous pour voir vos offres
+      <div className="container-fluid vh-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: '#F7FAFC' }}>
+        <div className="text-center">
+          <div style={{ fontSize: '60px', marginBottom: '16px' }}>🎁</div>
+          <h2 style={{ color: '#1A202C', fontSize: '20px', marginBottom: '8px' }}>
+            Connectez-vous
           </h2>
+          <p style={{ color: '#718096', fontSize: '14px' }}>
+            pour voir vos offres fidélité
+          </p>
         </div>
       </div>
     );
@@ -938,189 +789,302 @@ const MesDeals = () => {
       paddingBottom: '80px'
     }}>
       <div style={{
-        background: 'linear-gradient(135deg, #5B4BB4 0%, #7C3AED 100%)',
-        padding: '25px 20px 20px 20px',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: '32px 20px 40px',
         color: 'white',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+        {/* Effet de vagues en arrière-plan */}
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '15px'
-        }}>
-          <button style={{
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            border: 'none',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '100px',
+          background: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1440 320\'%3E%3Cpath fill=\'%23ffffff\' fill-opacity=\'0.1\' d=\'M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z\'%3E%3C/path%3E%3C/svg%3E")',
+          backgroundSize: 'cover',
+          opacity: 0.3
+        }} />
+        
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'white',
-            fontSize: '20px',
-            cursor: 'pointer'
+            gap: '12px',
+            marginBottom: '8px'
           }}>
-            ‹
-          </button>
-          <div style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{
+              fontSize: '32px',
+              filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))'
+            }}>
+              🎁
+            </div>
             <h1 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              margin: '0 0 5px 0'
-            }}>
-              Offres Fidélité
-            </h1>
-            <p style={{
+              fontSize: '26px',
+              fontWeight: '800',
               margin: 0,
-              opacity: 0.9,
-              fontSize: '14px'
+              textShadow: '0 2px 4px rgba(0,0,0,0.2)'
             }}>
-              {allDeals.length} offres disponibles
-            </p>
+              Mes Offres Fidélité
+            </h1>
           </div>
-          <div style={{
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '20px'
-          }}>
-            🏷️
-          </div>
-        </div>
-      </div>
-
-      <div style={{
-        padding: '20px',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '12px',
-        marginBottom: '10px'
-      }}>
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '16px',
-          padding: '16px 12px',
-          textAlign: 'center',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          border: '2px solid #7C3AED'
-        }}>
-          <div style={{ fontSize: '24px', marginBottom: '8px' }}>💰</div>
-          <div style={{
-            color: '#718096',
-            fontSize: '12px',
-            marginBottom: '5px',
-            fontWeight: '600'
-          }}>
-            Cagnotte
-          </div>
-          <div style={{
-            color: '#7C3AED',
-            fontSize: '22px',
-            fontWeight: 'bold'
-          }}>
-            {/* 🔥 CORRECTION: Utiliser la cagnotte locale mise à jour immédiatement */}
-            {Number(localCagnotte || 0).toFixed(1)} DT
-          </div>
-        </div>
-
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '16px',
-          padding: '16px 12px',
-          textAlign: 'center',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          border: '2px solid #10B981'
-        }}>
-          <div style={{ fontSize: '24px', marginBottom: '8px' }}>✅</div>
-          <div style={{
-            color: '#718096',
-            fontSize: '12px',
-            marginBottom: '5px',
-            fontWeight: '600'
-          }}>
-            Gagné
-          </div>
-          <div style={{
-            color: '#10B981',
-            fontSize: '22px',
-            fontWeight: 'bold'
-          }}>
-            {Number(totalGagne).toFixed(1)} DT
-          </div>
-        </div>
-
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '16px',
-          padding: '16px 12px',
-          textAlign: 'center',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          border: '2px solid #FF6B6B'
-        }}>
-          <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
-          <div style={{
-            color: '#718096',
-            fontSize: '12px',
-            marginBottom: '5px',
-            fontWeight: '600'
-          }}>
-            En Attente
-          </div>
-          <div style={{
-            color: '#FF6B6B',
-            fontSize: '22px',
-            fontWeight: 'bold'
-          }}>
-            {Number(totalEnAttente).toFixed(1)} DT
-          </div>
-        </div>
-      </div>
-
-      <div style={{ padding: '0 20px 20px 20px' }}>
-        {loading ? (
-          <div style={{
+          <p style={{
+            margin: 0,
+            fontSize: '14px',
             textAlign: 'center',
-            padding: '50px',
-            color: '#718096'
+            opacity: 0.95,
+            fontWeight: '500',
+            letterSpacing: '0.5px'
           }}>
-            <div style={{ fontSize: '40px', marginBottom: '15px' }}>⏳</div>
-            Chargement des offres...
+            {allDeals.length} {allDeals.length > 1 ? 'offres actives' : 'offre active'}
+          </p>
+        </div>
+      </div>
+
+      <div className="container-fluid px-3 py-3">
+        <div className="row g-2">
+          <div className="col-4">
+            <div style={{
+              background: 'linear-gradient(135deg, #9e6af9ff 0%, #9898deff 100%)',
+
+              borderRadius: '16px',
+              padding: '18px 10px',
+              textAlign: 'center',
+              boxShadow: '0 8px 16px rgba(139, 92, 246, 0.3)',
+              border: 'none',
+              position: 'relative',
+              overflow: 'hidden',
+              transform: 'translateY(0)',
+              transition: 'all 0.3s ease'
+            }}
+            className="stat-card">
+              {/* Effet de brillance */}
+              <div style={{
+                position: 'absolute',
+                top: '-50%',
+                right: '-50%',
+                width: '100%',
+                height: '100%',
+                background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
+                pointerEvents: 'none'
+              }} />
+              
+              <div style={{ 
+                fontSize: '36px', 
+                marginBottom: '8px',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+              }}>💰</div>
+              <div style={{
+                color: 'rgba(255,255,255,0.9)',
+                fontSize: '11px',
+                marginBottom: '6px',
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                Cagnotte
+              </div>
+              <div style={{
+                color: '#FFFFFF',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              }}>
+                {Number(Userprofile?.cagnotte_balance || 0).toFixed(1)} DT
+              </div>
+            </div>
+          </div>
+
+          <div className="col-4">
+            <div style={{
+              background: 'linear-gradient(135deg, #3bcc9cff 0%, #0ca373ff 100%)',
+              borderRadius: '16px',
+              padding: '18px 10px',
+              textAlign: 'center',
+              boxShadow: '0 8px 16px rgba(16, 185, 129, 0.3)',
+              border: 'none',
+              position: 'relative',
+              overflow: 'hidden',
+              transform: 'translateY(0)',
+              transition: 'all 0.3s ease'
+            }}
+            className="stat-card">
+              {/* Effet de brillance */}
+              <div style={{
+                position: 'absolute',
+                top: '-50%',
+                right: '-50%',
+                width: '100%',
+                height: '100%',
+                background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
+                pointerEvents: 'none'
+              }} />
+              
+              <div style={{ 
+                fontSize: '36px', 
+                marginBottom: '8px',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+              }}>✅</div>
+              <div style={{
+                color: 'rgba(255,255,255,0.9)',
+                fontSize: '11px',
+                marginBottom: '6px',
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                Gagné
+              </div>
+              <div style={{
+                color: '#FFFFFF',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              }}>
+                {Number(totalEarned || 0).toFixed(1)} DT
+              </div>
+            </div>
+          </div>
+
+          <div className="col-4">
+            <div style={{
+              background: 'linear-gradient(135deg, #64748B 0%, #475569 100%)',
+              borderRadius: '16px',
+              padding: '18px 10px',
+              textAlign: 'center',
+              boxShadow: '0 8px 16px rgba(100, 116, 139, 0.3)',
+              border: 'none',
+              position: 'relative',
+              overflow: 'hidden',
+              transform: 'translateY(0)',
+              transition: 'all 0.3s ease'
+            }}
+            className="stat-card">
+              {/* Effet de brillance */}
+              <div style={{
+                position: 'absolute',
+                top: '-50%',
+                right: '-50%',
+                width: '100%',
+                height: '100%',
+                background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
+                pointerEvents: 'none'
+              }} />
+              
+              <div style={{ 
+                fontSize: '36px', 
+                marginBottom: '8px',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+              }}>⏳</div>
+              <div style={{
+                color: 'rgba(255,255,255,0.9)',
+                fontSize: '11px',
+                marginBottom: '6px',
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                En attente
+              </div>
+              <div style={{
+                color: '#FFFFFF',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              }}>
+                {Number(totalPending || 0).toFixed(1)} DT
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container-fluid px-3">
+        {loading ? (
+          <div className="text-center py-5">
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>⏳</div>
+            <p style={{ color: '#718096' }}>Chargement des offres...</p>
           </div>
         ) : allDeals.length > 0 ? (
-          allDeals.map((deal) => (
-            <DealCard key={`${deal.type}_${deal.ID}`} deal={deal} />
-          ))
+          <div className="row">
+            {allDeals.map((deal, index) => {
+              const isFullyCompleted = isDealFullyCompleted(deal);
+              
+              return isFullyCompleted ? (
+                <VictoryCard key={`${deal.type}_${deal.ID || index}`} deal={deal} />
+              ) : (
+                <DealCard key={`${deal.type}_${deal.ID || index}`} deal={deal} />
+              );
+            })}
+          </div>
         ) : (
-          <div style={{
-            textAlign: 'center',
-            padding: '50px',
+          <div className="text-center py-5" style={{
             backgroundColor: 'white',
-            borderRadius: '20px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            borderRadius: '16px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
           }}>
-            <div style={{ fontSize: '60px', marginBottom: '15px' }}>🎁</div>
+            <div style={{ fontSize: '60px', marginBottom: '16px' }}>🎁</div>
             <p style={{
               fontSize: '18px',
               fontWeight: 'bold',
-              color: '#2D3748',
-              marginBottom: '5px'
+              color: '#1A202C',
+              marginBottom: '8px'
             }}>
               Aucune offre active
             </p>
             <p style={{ color: '#718096', fontSize: '14px' }}>
-              Revenez plus tard!
+              Revenez bientôt pour de nouvelles offres !
             </p>
           </div>
         )}
       </div>
 
       {showCongrats && congratsData && <CongratsModal data={congratsData} />}
+
+      <style>{`
+        @keyframes bounce {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-20px);
+          }
+        }
+        
+        .stat-card:hover {
+          transform: translateY(-5px) !important;
+          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .stat-card {
+          animation: fadeIn 0.5s ease-out;
+        }
+        
+        .stat-card:nth-child(1) {
+          animation-delay: 0.1s;
+        }
+        
+        .stat-card:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+        
+        .stat-card:nth-child(3) {
+          animation-delay: 0.3s;
+        }
+      `}</style>
     </div>
   );
 };

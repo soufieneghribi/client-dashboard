@@ -2,25 +2,25 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCategories } from "../store/slices/categorie";
-import { fetchRecommendedProduct } from "../store/slices/recommended"; // Add this import
+import { fetchRecommendedProduct } from "../store/slices/recommended";
 import { useNavigate } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import FeaturedRecipes from "../components/FeaturedRecipes";
-import ProductRecommande from "../components/ProductRecommande";
 import Banners from "../components/Banners";
 import Popular from "../components/Popular";
 import { Row, Col } from 'react-bootstrap';
 import mydealsImg from '../assets/mydealsImg.png';
 import recommnededImg from '../assets/recommnededImg.png';
+import recettesImg from '../assets/images/recettes.jpg';
 
 const Home = () => {
   const { categories = [], loading: categoriesLoading, error: categoriesError } = useSelector(
     (state) => state.categorie
   );
   
-  // Add recommended products state
+  // Add recommended products state - avec valeur par défaut de tableau
   const { recommended = [], loading: recommendedLoading, error: recommendedError } = useSelector(
-    (state) => state.recommended
+    (state) => state.recommended || {}
   );
 
   const dispatch = useDispatch();
@@ -31,7 +31,7 @@ const Home = () => {
 
   useEffect(() => {
     dispatch(fetchCategories());
-    dispatch(fetchRecommendedProduct()); // Fetch recommended products
+    dispatch(fetchRecommendedProduct());
   }, [dispatch]);
 
   useEffect(() => {
@@ -73,6 +73,14 @@ const Home = () => {
       } 
     });
   };
+
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`);
+  };
+
+  // S'assurer que recommended est toujours un tableau avant d'utiliser slice
+  const safeRecommended = Array.isArray(recommended) ? recommended : [];
+  const displayRecommended = safeRecommended.slice(0, 12);
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -201,10 +209,11 @@ const Home = () => {
           )}
         </section>
 
-        {/* 🔹 Mes Deals & Catalogue */}
+        {/* 🔹 Mes Deals, Recettes & Catalogue - 3 CARTES */}
         <div>
-          <Row className="mt-4 px-2">
-            <Col xs={6}>
+          <Row className="mt-4 px-2 g-3">
+            {/* Carte Mes Deals */}
+            <Col xs={12} md={4}>
               <div
                 className="position-relative border rounded-3 shadow h-40 bg-cover bg-center overflow-hidden cursor-pointer hover-scale transition-transform"
                 style={{ backgroundImage: `url(${mydealsImg})`, height: '160px' }}
@@ -215,7 +224,28 @@ const Home = () => {
                 </div>
               </div>
             </Col>
-            <Col xs={6}>
+
+           <Col xs={12} md={4}>
+  <div
+    className="position-relative border rounded-3 shadow h-40 bg-cover bg-center overflow-hidden cursor-pointer hover-scale transition-transform"
+    style={{ 
+      backgroundImage: `url(${recettesImg})`,  // ← ICI utiliser l'image importée
+      height: '160px' 
+    }}
+    onClick={() => navigate("/recipes")}
+  >
+    {/* Overlay sombre pour meilleure lisibilité */}
+    <div className="position-absolute top-0 start-0 w-100 h-100 bg-black/30 hover:bg-black/20 transition-all duration-300"></div>
+    
+    <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+      <span className="fs-5 fw-bold text-white" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+      </span>
+    </div>
+  </div>
+</Col>
+
+            {/* Carte Catalogue */}
+            <Col xs={12} md={4}>
               <div
                 className="position-relative border rounded-3 shadow h-40 bg-cover bg-center overflow-hidden cursor-pointer hover-scale transition-transform"
                 style={{ backgroundImage: `url(${recommnededImg})`, height: '160px' }}
@@ -229,9 +259,8 @@ const Home = () => {
           </Row>
         </div>
 
-       
 
-        {/* 🔹 Section Recettes en vedette */}
+         {/* 🔹 Section Recettes en vedette */}
         <section className="pt-8 border-t border-gray-200">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-800 mb-3">
@@ -244,8 +273,97 @@ const Home = () => {
           <FeaturedRecipes />
         </section>
 
+        {/* 🔹 Section Articles Suggerés */}
+        <section className="pt-8 border-t border-gray-200">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-800 mb-3">
+              Articles Suggerés
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Découvrez nos sélections spéciales faites pour vous
+            </p>
+          </div>
 
-        
+          {recommendedLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          ) : recommendedError ? (
+            <div className="text-center py-8">
+              <p className="text-red-500 bg-red-50 inline-block px-4 py-2 rounded-lg">
+                Erreur lors du chargement des articles suggérés
+              </p>
+            </div>
+          ) : displayRecommended.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Aucun article suggéré disponible pour le moment</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {displayRecommended.map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  onClick={() => handleProductClick(product.id)}
+                >
+                  <div 
+                    className="h-32 bg-cover bg-center relative"
+                    style={{
+                      backgroundImage: `url(https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.picture})`
+                    }}
+                  >
+                    {/* Badge promotionnel */}
+                    {product.discount_price && (
+                      <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        PROMO
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-medium text-gray-800 text-sm mb-2 line-clamp-2 h-10">
+                      {product.name}
+                    </h3>
+                    <div className="flex items-center justify-between">
+                      <span className="text-blue-600 font-bold text-sm">
+                        {product.price} TND
+                      </span>
+                      {product.discount_price && product.discount_price !== product.price && (
+                        <span className="text-xs text-red-500 line-through">
+                          {product.discount_price} TND
+                        </span>
+                      )}
+                    </div>
+                    {/* Bouton d'action */}
+                    <button 
+                      className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2 px-3 rounded-lg transition-colors duration-200"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleProductClick(product.id);
+                      }}
+                    >
+                      Voir détails
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* 🔹 Section Produits Populaires */}
+        <section className="pt-8 border-t border-gray-200">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-800 mb-3">
+              Produits Populaires
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Les produits les plus appréciés par nos clients
+            </p>
+          </div>
+          <Popular />
+        </section>
+
+       
 
       </div>
     </div>

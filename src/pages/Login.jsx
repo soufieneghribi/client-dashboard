@@ -6,28 +6,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Container, Row, Col, Form, Button, Card, Alert, Spinner, Modal, InputGroup } from 'react-bootstrap';
 
 // ==================== API CONFIGURATION ====================
-/**
- * Fonction pour obtenir l'URL de base de l'API en fonction de l'environnement
- */
-const getApiBaseUrl = () => {
-  const isDevelopment = import.meta.env.VITE_NODE_ENV === 'development' || 
-                        import.meta.env.MODE === 'development';
-  
-  if (isDevelopment) {
-    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-  } else {
-    return import.meta.env.VITE_API_BASE_URL_PROD || 
-           'https://tn360-back-office-122923924979.europe-west1.run.app';
-  }
-};
-
-const BASE_URL =  "https://tn360-back-office-122923924979.europe-west1.run.app";
-
-
-const API_BASE_URL = `${BASE_URL}/api/v1`;
-
-
-
+// ✅ Import depuis api.js
+import { API_ENDPOINTS } from "../services/api";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -63,8 +43,9 @@ const Login = () => {
     setLoading(true);
     setErrorMessage(null);
     try {
+      // ✅ Utilise API_ENDPOINTS.AUTH.LOGIN au lieu de construire l'URL manuellement
       const response = await fetch(
-        `${API_BASE_URL}/auth/login`, // Utilise maintenant la variable d'environnement
+        API_ENDPOINTS.AUTH.LOGIN,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -256,15 +237,15 @@ const Login = () => {
         }
         
         .alert-success {
-          background: #d4edda;
-          color: #155724;
+          background: #f0fdf4;
+          color: #15803d;
         }
         
         .divider {
           display: flex;
           align-items: center;
           text-align: center;
-          margin: 25px 0;
+          margin: 20px 0;
         }
         
         .divider::before,
@@ -276,8 +257,8 @@ const Login = () => {
         
         .divider span {
           padding: 0 15px;
-          color: #a0aec0;
-          font-size: 0.875rem;
+          color: #718096;
+          font-size: 0.85rem;
           font-weight: 500;
         }
         

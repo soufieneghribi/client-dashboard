@@ -8,11 +8,13 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import MesDeals from "./pages/MesDeals";
-import Categories from "./pages/Categories"; // ✅ AJOUTÉ
-import Products from "./pages/ProductsBySubCategory"; // ✅ CORRIGÉ - déplacé de components vers pages
-import ProductDetails from "./pages/ProductDetails"; // ✅ AJOUTÉ
+import Categories from "./pages/Categories";
+import Products from "./pages/ProductsBySubCategory";
+import ProductDetails from "./pages/ProductDetails";
 import SubCategory from "./components/SubCategory";
 import Catalogue from "./pages/Catalogue";
+import Promotions from "./pages/Promotions"; // ✅ NOUVEAU - Page Promotions
+import Cadeaux from "./pages/Cadeaux"; // ✅ NOUVEAU - Page Cadeaux
 import CartShopping from "./pages/CartShopping";
 import Favoris from "./pages/Favoris";
 import Profile from "./pages/Profile";
@@ -23,8 +25,37 @@ import ProtectedRoute from "./pages/ProtectedRoute";
 import Contact from "./components/Contact";
 import OrderDetails from "./pages/OrderDetails";
 import RecipeDetails from "./pages/RecipeDetails";
-import Recipes from "./pages/Recipies"; // 🍳 Correction: Recipies.jsx (avec 'i')
+import Recipes from "./pages/Recipies";
 import "./styles/index.css";
+
+/**
+ * Suppress non-critical warnings from google-map-react library
+ * These warnings don't affect functionality but clutter the console
+ */
+const originalError = console.error;
+console.error = (...args) => {
+  if (
+    typeof args[0] === 'string' &&
+    (args[0].includes('Invalid attribute name') ||
+     args[0].includes('findDOMNode is deprecated') ||
+     args[0].includes('React does not recognize the') ||
+     (args[0].includes('Received `') && args[0].includes('for a non-boolean attribute')))
+  ) {
+    return;
+  }
+  originalError.apply(console, args);
+};
+
+const originalWarn = console.warn;
+console.warn = (...args) => {
+  if (
+    typeof args[0] === 'string' &&
+    args[0].includes('findDOMNode')
+  ) {
+    return;
+  }
+  originalWarn.apply(console, args);
+};
 
 /**
  * Application Router Configuration
@@ -39,6 +70,8 @@ const router = createBrowserRouter(
       <Route path='/inscrire' element={<Register/>} />
       <Route path="/login" element={<Login />} />
       <Route path="/catalogue" element={<Catalogue />} />
+      <Route path="/promotions" element={<Promotions />} /> {/* ✅ NOUVEAU */}
+      <Route path="/cadeaux" element={<Cadeaux />} /> {/* ✅ NOUVEAU */}
       <Route path="/categories" element={<Categories />} />
       <Route path="/subcategory/:id" element={<SubCategory />} />
       <Route path="/products" element={<Products />} />

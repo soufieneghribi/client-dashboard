@@ -1,11 +1,16 @@
 // ==================== CONFIGURATION ====================
 
-// URL de base de l'API (production uniquement)
-const BASE_URL = 'https://tn360-back-office-122923924979.europe-west1.run.app';
+const BASE_URL = 'https://tn360-back-office-122923924979.europe-west1.run.app/';
+// ==================== CONFIGURATION ====================
+
 const API_BASE_URL = `${BASE_URL}/api/v1`;
+
 
 // Configuration du timeout
 const API_TIMEOUT = 15000;
+
+// Google Maps API Key
+export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 // ==================== API ENDPOINTS ====================
 
@@ -84,6 +89,11 @@ export const API_ENDPOINTS = {
     BY_ID: (id) => `${API_BASE_URL}/offre/${id}`,
   },
 
+  // ==================== PROMOTIONS ====================
+  PROMOTIONS: {
+    BY_CLIENT: (clientId) => `${API_BASE_URL}/promotions/client/${clientId}`,
+  },
+
   // ==================== BANNERS ====================
   BANNERS: {
     ALL: `${API_BASE_URL}/banners/get-all`,
@@ -104,6 +114,7 @@ export const API_ENDPOINTS = {
     BY_ID: (orderId) => `${API_BASE_URL}/orders/${orderId}`,
     UPDATE: (orderId) => `${API_BASE_URL}/orders/${orderId}`,
     CANCEL: (orderId) => `${API_BASE_URL}/orders/${orderId}/cancel`,
+    PDF: (orderId) => `${API_BASE_URL}/orders/orderpdf/${orderId}`,
   },
 
   // ==================== PAYMENTS ====================
@@ -125,6 +136,20 @@ export const API_ENDPOINTS = {
   UPLOADS: {
     AVATAR: `${API_BASE_URL}/upload/avatar`,
     DOCUMENT: `${API_BASE_URL}/upload/document`,
+  },
+
+  // ==================== CADEAUX ====================
+  CADEAUX: {
+    ALL: `${API_BASE_URL}/cadeaux`,
+    BY_ID: (id) => `${API_BASE_URL}/cadeaux/${id}`,
+    BY_CLIENT: (clientId) => `${API_BASE_URL}/cadeaux/client/${clientId}`,
+    ALL_BY_CLIENT: (clientId) => `${API_BASE_URL}/cadeaux/client/${clientId}/all`,
+    BY_TYPE: (type) => `${API_BASE_URL}/cadeaux/type/${type}`,
+    ACTIVE_COUNT: `${API_BASE_URL}/cadeaux/active-count`,
+    CREATE: `${API_BASE_URL}/cadeaux`,
+    UPDATE: (id) => `${API_BASE_URL}/cadeaux/${id}`,
+    DELETE: (id) => `${API_BASE_URL}/cadeaux/${id}`,
+    TOGGLE_STATUS: (id) => `${API_BASE_URL}/cadeaux/${id}/toggle-status`,
   },
 };
 
@@ -230,6 +255,7 @@ export default {
   BASE_URL,
   API_BASE_URL,
   API_TIMEOUT,
+  GOOGLE_MAPS_API_KEY,
   ENDPOINTS: API_ENDPOINTS,
   getAuthHeaders,
   getAuthHeadersMultipart,

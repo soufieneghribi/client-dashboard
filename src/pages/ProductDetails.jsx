@@ -16,9 +16,7 @@ import {
   FaWhatsapp,
   FaHeart,
   FaRegHeart,
-  FaTruck,
-  FaShieldAlt,
-  FaUndo
+  FaTag
 } from "react-icons/fa";
 
 const ProductDetails = () => {
@@ -27,7 +25,9 @@ const ProductDetails = () => {
   const dispatch = useDispatch();
   const { id } = useParams();
   
-  const { subId } = location.state || {};
+  // Récupérer les données de promotion depuis la navigation (si disponibles)
+  const { isPromotion, pivot, promo_name } = location.state || {};
+  
   const { product = {}, loading, error } = useSelector((state) => state.product);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
@@ -54,13 +54,34 @@ const ProductDetails = () => {
     }
   }, [dispatch, id]);
 
-  const totalPrice = ((product.price || 0) * quantity).toFixed(2);
-  const isEligibleForDiscount = [2, 3].includes(Number(subId));
-  const discountedPrice = isEligibleForDiscount
-    ? (totalPrice * 0.9).toFixed(2)
-    : totalPrice;
-  const savings = isEligibleForDiscount 
-    ? (totalPrice - discountedPrice).toFixed(2) 
+  // ===================================
+  // CALCUL DES PRIX AVEC PROMOTIONS
+  // ===================================
+  
+  // Déterminer si le produit est en promotion
+  const hasPromotion = isPromotion && pivot;
+  
+  // Prix de base
+  const basePrice = hasPromotion 
+    ? parseFloat(pivot.original_price) 
+    : parseFloat(product.price || 0);
+  
+  // Prix final (promotionnel ou normal)
+  const unitPrice = hasPromotion 
+    ? parseFloat(pivot.promo_price) 
+    : basePrice;
+  
+  // Prix total selon la quantité
+  const totalPrice = (unitPrice * quantity).toFixed(3);
+  
+  // Économies si promotion
+  const savings = hasPromotion 
+    ? ((basePrice - unitPrice) * quantity).toFixed(3)
+    : 0;
+  
+  // Pourcentage de réduction
+  const discountPercent = hasPromotion && pivot.discount_percent
+    ? parseFloat(pivot.discount_percent).toFixed(0)
     : 0;
 
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
@@ -79,19 +100,18 @@ const ProductDetails = () => {
 
     try {
       const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
-      
-      const price = isEligibleForDiscount 
-        ? (product.price * 0.9).toFixed(2) 
-        : product.price;
 
       const newItem = {
         id: product?.id,
         name: product?.name,
         img: product?.img,
-        initialPrice: product?.price,
-        price: parseFloat(price),
-        total: parseFloat(discountedPrice),
+        Initialprice: basePrice.toFixed(3),
+        price: unitPrice.toFixed(3),
+        total: totalPrice,
         quantity,
+        // Ajouter les infos de promotion pour référence
+        isPromotion: hasPromotion,
+        promo_name: hasPromotion ? promo_name : null
       };
 
       const existingItemIndex = cart.findIndex((item) => item.id === newItem.id);
@@ -100,14 +120,19 @@ const ProductDetails = () => {
         cart[existingItemIndex].quantity += newItem.quantity;
         cart[existingItemIndex].total = (
           parseFloat(cart[existingItemIndex].total) + parseFloat(newItem.total)
-        ).toFixed(2);
+        ).toFixed(3);
       } else {
         cart.push(newItem);
       }
 
       Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
       setIsAdded(true);
-      toast.success("Produit ajouté au panier !");
+      
+      if (hasPromotion) {
+        toast.success(`Produit en promotion ajouté ! Vous économisez ${((basePrice - unitPrice) * quantity).toFixed(3)} DT`);
+      } else {
+        toast.success("Produit ajouté au panier !");
+      }
       
       setTimeout(() => {
         setIsAdded(false);
@@ -215,6 +240,14 @@ const ProductDetails = () => {
             <p className="text-sm sm:text-base opacity-90">
               {product.description}
             </p>
+            
+            {/* Badge promotion dans le header */}
+            {hasPromotion && promo_name && (
+              <div className="mt-4 inline-flex items-center gap-2 bg-red-500 px-4 py-2 rounded-full font-semibold animate-pulse">
+                <FaTag />
+                <span>{promo_name}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -240,33 +273,58 @@ const ProductDetails = () => {
               )}
             </button>
 
-            {isEligibleForDiscount && (
-              <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg">
-                -10% OFF
+            {hasPromotion && (
+              <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg animate-bounce">
+                -{discountPercent}% OFF
               </div>
             )}
           </div>
 
           <div className="flex flex-col justify-between space-y-6">
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl">
+            {/* SECTION PRIX AVEC PROMOTION */}
+            <div className={`p-6 rounded-xl ${hasPromotion ? 'bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-200' : 'bg-gradient-to-r from-blue-50 to-purple-50'}`}>
               <h2 className="text-lg font-semibold text-gray-700 mb-3">Prix</h2>
-              <div className="flex items-baseline gap-3 flex-wrap">
-                <span className="text-3xl sm:text-4xl font-bold text-blue-600">
-                  {discountedPrice} DT
-                </span>
-                {isEligibleForDiscount && (
-                  <>
+              
+              {hasPromotion ? (
+                <div className="space-y-3">
+                  {/* Prix promotionnel */}
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <span className="text-3xl sm:text-4xl font-bold text-red-600">
+                      {unitPrice.toFixed(3)} DT
+                    </span>
                     <span className="text-xl text-gray-400 line-through">
-                      {totalPrice} DT
+                      {basePrice.toFixed(3)} DT
+                    </span>
+                  </div>
+                  
+                  {/* Badge économies */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-semibold text-white bg-red-500 px-3 py-1 rounded-full">
+                      -{discountPercent}%
                     </span>
                     <span className="text-sm font-semibold text-green-600 bg-green-100 px-3 py-1 rounded-full">
-                      Économisez {savings} DT
+                      Économisez {(basePrice - unitPrice).toFixed(3)} DT
                     </span>
-                  </>
-                )}
-              </div>
+                  </div>
+                  
+                  {/* Nom de la promotion */}
+                  {promo_name && (
+                    <div className="flex items-center gap-2 text-red-600 font-medium">
+                      <FaTag className="text-sm" />
+                      <span className="text-sm">{promo_name}</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  <span className="text-3xl sm:text-4xl font-bold text-blue-600">
+                    {unitPrice.toFixed(3)} DT
+                  </span>
+                </div>
+              )}
             </div>
 
+            {/* SECTION QUANTITÉ */}
             <div>
               <h3 className="text-lg font-semibold text-gray-700 mb-3">
                 Quantité
@@ -289,8 +347,24 @@ const ProductDetails = () => {
                   <FaPlus className="text-gray-700" />
                 </button>
               </div>
+              
+              {/* Affichage du total */}
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 font-medium">Total:</span>
+                  <span className="text-2xl font-bold text-blue-600">
+                    {totalPrice} DT
+                  </span>
+                </div>
+                {hasPromotion && savings > 0 && (
+                  <div className="mt-2 text-sm text-green-600 font-medium">
+                    🎉 Vous économisez {savings} DT au total !
+                  </div>
+                )}
+              </div>
             </div>
 
+            {/* BOUTONS D'ACTION */}
             <div className="space-y-3">
               <button
                 onClick={addToCartHandler}
@@ -298,11 +372,13 @@ const ProductDetails = () => {
                 className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 shadow-lg ${
                   isAdded
                     ? "bg-green-500 text-white cursor-not-allowed"
+                    : hasPromotion
+                    ? "bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700 hover:shadow-xl transform hover:scale-[1.02]"
                     : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:shadow-xl transform hover:scale-[1.02]"
                 }`}
               >
                 <FaShoppingCart className="text-xl" />
-                {isAdded ? "Produit ajouté !" : "Ajouter au Panier"}
+                {isAdded ? "Produit ajouté !" : hasPromotion ? "Profiter de l'offre !" : "Ajouter au Panier"}
               </button>
 
               <div className="relative">
@@ -366,27 +442,3 @@ const ProductDetails = () => {
 };
 
 export default ProductDetails;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

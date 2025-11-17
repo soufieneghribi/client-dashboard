@@ -788,23 +788,28 @@ const MesDeals = () => {
       backgroundColor: '#F7FAFC',
       paddingBottom: '80px'
     }}>
+      {/*
+      *
+      * NOUVEAU HEADER
+      *
+      */}
       <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        backgroundColor: '#4F46E5', // Un violet/indigo moderne et simple
         padding: '32px 20px 40px',
-        color: 'white',
+        color: 'white', // Texte blanc pour le contraste
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Effet de vagues en arrière-plan */}
+        {/* Motif SVG subtil en arrière-plan */}
         <div style={{
           position: 'absolute',
-          bottom: 0,
+          top: 0,
           left: 0,
           right: 0,
-          height: '100px',
-          background: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1440 320\'%3E%3Cpath fill=\'%23ffffff\' fill-opacity=\'0.1\' d=\'M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z\'%3E%3C/path%3E%3C/svg%3E")',
-          backgroundSize: 'cover',
-          opacity: 0.3
+          bottom: 0,
+          opacity: 0.1,
+          background: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'%3E%3Cg fill=\'%23FFFFFF\'%3E%3Ccircle cx=\'10\' cy=\'10\' r=\'3\'/%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'3\'/%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'3\'/%3E%3Ccircle cx=\'70\' cy=\'70\' r=\'3\'/%3E%3Ccircle cx=\'90\' cy=\'90\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E")',
+          pointerEvents: 'none'
         }} />
         
         <div style={{ position: 'relative', zIndex: 1 }}>
@@ -815,17 +820,14 @@ const MesDeals = () => {
             gap: '12px',
             marginBottom: '8px'
           }}>
-            <div style={{
-              fontSize: '32px',
-              filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))'
-            }}>
+            <div style={{ fontSize: '32px' }}>
               🎁
             </div>
             <h1 style={{
               fontSize: '26px',
               fontWeight: '800',
               margin: 0,
-              textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              textShadow: '0 1px 2px rgba(0,0,0,0.2)' // Ombre légère pour le texte
             }}>
               Mes Offres Fidélité
             </h1>
@@ -834,165 +836,167 @@ const MesDeals = () => {
             margin: 0,
             fontSize: '14px',
             textAlign: 'center',
-            opacity: 0.95,
-            fontWeight: '500',
-            letterSpacing: '0.5px'
+            color: '#E0E7FF', // Un blanc cassé/lavande pour le sous-titre
+            fontWeight: '500'
           }}>
             {allDeals.length} {allDeals.length > 1 ? 'offres actives' : 'offre active'}
           </p>
         </div>
       </div>
 
+      {/*
+      *
+      * NOUVELLES CARTES DE STATS
+      *
+      */}
       <div className="container-fluid px-3 py-3">
         <div className="row g-2">
+          
+          {/* CARTE CAGNOTTE */}
           <div className="col-4">
             <div style={{
-              background: 'linear-gradient(135deg, #9e6af9ff 0%, #9898deff 100%)',
-
+              background: '#FFFFFF', // Fond blanc
               borderRadius: '16px',
-              padding: '18px 10px',
+              padding: '16px 10px',
               textAlign: 'center',
-              boxShadow: '0 8px 16px rgba(139, 92, 246, 0.3)',
-              border: 'none',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)', // Ombre subtile
+              border: '1px solid #E2E8F0', // Bordure grise
               position: 'relative',
               overflow: 'hidden',
               transform: 'translateY(0)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              height: '100%'
             }}
             className="stat-card">
-              {/* Effet de brillance */}
-              <div style={{
-                position: 'absolute',
-                top: '-50%',
-                right: '-50%',
-                width: '100%',
-                height: '100%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
-                pointerEvents: 'none'
-              }} />
               
-              <div style={{ 
-                fontSize: '36px', 
-                marginBottom: '8px',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-              }}>💰</div>
+              {/* Icone dans un cercle coloré */}
               <div style={{
-                color: 'rgba(255,255,255,0.9)',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: '#FEF9C3', // Jaune pâle
+                color: '#B45309', // Jaune foncé
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                margin: '0 auto 12px'
+              }}>
+                💰
+              </div>
+              <div style={{
+                color: '#9CA3AF', // Gris pour le label
                 fontSize: '11px',
-                marginBottom: '6px',
+                marginBottom: '4px',
                 fontWeight: '600',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px'
               }}>
                 Cagnotte
               </div>
               <div style={{
-                color: '#FFFFFF',
+                color: '#1F2937', // Texte noir/gris foncé
                 fontSize: '20px',
                 fontWeight: 'bold',
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)'
               }}>
                 {Number(Userprofile?.cagnotte_balance || 0).toFixed(1)} DT
               </div>
             </div>
           </div>
 
+          {/* CARTE GAGNÉ */}
           <div className="col-4">
             <div style={{
-              background: 'linear-gradient(135deg, #3bcc9cff 0%, #0ca373ff 100%)',
+              background: '#FFFFFF',
               borderRadius: '16px',
-              padding: '18px 10px',
+              padding: '16px 10px',
               textAlign: 'center',
-              boxShadow: '0 8px 16px rgba(16, 185, 129, 0.3)',
-              border: 'none',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+              border: '1px solid #E2E8F0',
               position: 'relative',
               overflow: 'hidden',
               transform: 'translateY(0)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              height: '100%'
             }}
             className="stat-card">
-              {/* Effet de brillance */}
-              <div style={{
-                position: 'absolute',
-                top: '-50%',
-                right: '-50%',
-                width: '100%',
-                height: '100%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
-                pointerEvents: 'none'
-              }} />
               
-              <div style={{ 
-                fontSize: '36px', 
-                marginBottom: '8px',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-              }}>✅</div>
               <div style={{
-                color: 'rgba(255,255,255,0.9)',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: '#F0FDF4', // Vert pâle
+                color: '#15803D', // Vert foncé
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                margin: '0 auto 12px'
+              }}>
+                ✅
+              </div>
+              <div style={{
+                color: '#9CA3AF',
                 fontSize: '11px',
-                marginBottom: '6px',
+                marginBottom: '4px',
                 fontWeight: '600',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px'
               }}>
                 Gagné
               </div>
               <div style={{
-                color: '#FFFFFF',
+                color: '#1F2937',
                 fontSize: '20px',
                 fontWeight: 'bold',
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)'
               }}>
                 {Number(totalEarned || 0).toFixed(1)} DT
               </div>
             </div>
           </div>
 
+          {/* CARTE EN ATTENTE */}
           <div className="col-4">
             <div style={{
-              background: 'linear-gradient(135deg, #64748B 0%, #475569 100%)',
+              background: '#FFFFFF',
               borderRadius: '16px',
-              padding: '18px 10px',
+              padding: '16px 10px',
               textAlign: 'center',
-              boxShadow: '0 8px 16px rgba(100, 116, 139, 0.3)',
-              border: 'none',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+              border: '1px solid #E2E8F0',
               position: 'relative',
               overflow: 'hidden',
               transform: 'translateY(0)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              height: '100%'
             }}
             className="stat-card">
-              {/* Effet de brillance */}
-              <div style={{
-                position: 'absolute',
-                top: '-50%',
-                right: '-50%',
-                width: '100%',
-                height: '100%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
-                pointerEvents: 'none'
-              }} />
               
-              <div style={{ 
-                fontSize: '36px', 
-                marginBottom: '8px',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-              }}>⏳</div>
               <div style={{
-                color: 'rgba(255,255,255,0.9)',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: '#F8FAFC', // Gris pâle
+                color: '#475569', // Gris foncé
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                margin: '0 auto 12px'
+              }}>
+                ⏳
+              </div>
+              <div style={{
+                color: '#9CA3AF',
                 fontSize: '11px',
-                marginBottom: '6px',
+                marginBottom: '4px',
                 fontWeight: '600',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px'
               }}>
                 En attente
               </div>
               <div style={{
-                color: '#FFFFFF',
+                color: '#1F2937',
                 fontSize: '20px',
                 fontWeight: 'bold',
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)'
               }}>
                 {Number(totalPending || 0).toFixed(1)} DT
               </div>
@@ -1055,7 +1059,7 @@ const MesDeals = () => {
         
         .stat-card:hover {
           transform: translateY(-5px) !important;
-          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3) !important;
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
         }
         
         @keyframes fadeIn {

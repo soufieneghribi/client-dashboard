@@ -110,23 +110,7 @@ const Commandes = () => {
             )}
           </div>
 
-          {/* Info rapide utilisateur */}
-          {Userprofile && (
-            <div className="flex flex-wrap gap-4 text-sm">
-              {Userprofile.tel && (
-                <div className="flex items-center gap-2 text-gray-600">
-                  <FaPhone className="text-blue-500" />
-                  <span>{Userprofile.tel}</span>
-                </div>
-              )}
-              {(Userprofile.ID_client || Userprofile.id) && (
-                <div className="flex items-center gap-2 text-gray-600">
-                  <FaUser className="text-green-500" />
-                  <span>ID: {Userprofile.ID_client || Userprofile.id}</span>
-                </div>
-              )}
-            </div>
-          )}
+        
         </div>
       </div>
 

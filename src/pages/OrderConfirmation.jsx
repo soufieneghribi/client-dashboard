@@ -8,6 +8,7 @@ import axios from 'axios';
 import { fetchUserProfile } from "../store/slices/user";
 import { selectToken, logout, refreshAuth } from "../store/slices/authSlice";
 import store from "../store";
+import apiConfig, { GOOGLE_MAPS_API_KEY } from "../services/api";
 
 /**
  * OrderConfirmation Component
@@ -21,8 +22,7 @@ import store from "../store";
  */
 
 // ==================== CONSTANTS ====================
-const API_BASE_URL = 'https://tn360-back-office-122923924979.europe-west1.run.app/api/v1';
-const GOOGLE_MAPS_API_KEY = "AIzaSyAFwGAsC3VUZYdxkEwB43DEf5tpSx4hAZg";
+const API_BASE_URL = apiConfig.API_BASE_URL;
 const DEFAULT_LOCATION = { lat: 36.8065, lng: 10.1815 }; // Tunis center
 const DEFAULT_DELIVERY_FEE = 5;
 

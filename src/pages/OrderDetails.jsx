@@ -5,6 +5,7 @@ import {
   FaDownload
 } from "react-icons/fa";
 import { toast } from "react-hot-toast";
+import { API_ENDPOINTS } from "../services/api";
 
 /**
  * OrderDetails - Affichage direct du PDF de la commande
@@ -14,8 +15,6 @@ const OrderDetails = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [pdfError, setPdfError] = useState(false);
-
-  const API_BASE_URL = "https://tn360-back-office-122923924979.europe-west1.run.app/api/v1";
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -36,8 +35,7 @@ const OrderDetails = () => {
 
   const handleDownload = () => {
     toast.success("Téléchargement du PDF...");
-    const token = localStorage.getItem("token");
-    const downloadUrl = `${API_BASE_URL}/orders/orderpdf/${orderId}`;
+    const downloadUrl = API_ENDPOINTS.ORDERS.PDF(orderId);
     
     // Ouvrir dans un nouvel onglet pour téléchargement
     window.open(downloadUrl, '_blank');
@@ -88,8 +86,7 @@ const OrderDetails = () => {
     );
   }
 
-  const token = localStorage.getItem("token");
-  const pdfUrl = `${API_BASE_URL}/orders/orderpdf/${orderId}`;
+  const pdfUrl = API_ENDPOINTS.ORDERS.PDF(orderId);
 
   return (
     <div className="fixed inset-0 flex flex-col bg-gray-100">

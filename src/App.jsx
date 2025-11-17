@@ -7,6 +7,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./styles/styles.css";
+import Modal from "react-modal";
 
 /**
  * Main App Component
@@ -19,9 +20,10 @@ function App() {
   /**
    * Load categories on application startup
    */
-  useEffect(() => {
-    dispatch(fetchCategories());
-  }, [dispatch]);
+useEffect(() => {
+  Modal.setAppElement('#root'); // ← AJOUTEZ CETTE LIGNE
+  dispatch(fetchCategories());
+}, [dispatch]);
 
   return (
     <div>

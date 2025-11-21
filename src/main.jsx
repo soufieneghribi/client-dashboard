@@ -6,6 +6,7 @@ import App from "./App";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import EmailVerification from "./pages/EmailVerification"; // ⭐ NOUVEAU - Vérification Email
 import NotFound from "./pages/NotFound";
 import MesDeals from "./pages/MesDeals";
 import Categories from "./pages/Categories";
@@ -13,8 +14,8 @@ import Products from "./pages/ProductsBySubCategory";
 import ProductDetails from "./pages/ProductDetails";
 import SubCategory from "./components/SubCategory";
 import Catalogue from "./pages/Catalogue";
-import Promotions from "./pages/Promotions"; // ✅ NOUVEAU - Page Promotions
-import Cadeaux from "./pages/Cadeaux"; // ✅ NOUVEAU - Page Cadeaux
+import Promotions from "./pages/Promotions";
+import Cadeaux from "./pages/Cadeaux";
 import CartShopping from "./pages/CartShopping";
 import Favoris from "./pages/Favoris";
 import Profile from "./pages/Profile";
@@ -69,9 +70,10 @@ const router = createBrowserRouter(
       <Route path="/" element={<Home />} />
       <Route path='/inscrire' element={<Register/>} />
       <Route path="/login" element={<Login />} />
+      <Route path="/verify-email" element={<EmailVerification />} /> {/* ⭐ NOUVEAU */}
       <Route path="/catalogue" element={<Catalogue />} />
-      <Route path="/promotions" element={<Promotions />} /> {/* ✅ NOUVEAU */}
-      <Route path="/cadeaux" element={<Cadeaux />} /> {/* ✅ NOUVEAU */}
+      <Route path="/promotions" element={<Promotions />} />
+      <Route path="/cadeaux" element={<Cadeaux />} />
       <Route path="/categories" element={<Categories />} />
       <Route path="/subcategory/:id" element={<SubCategory />} />
       <Route path="/products" element={<Products />} />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUserProfile, updateUserProfile, changePassword } from "../store/slices/user";
+import { fetchUserProfile, updateUserProfile, changePassword, updateUserLocal } from "../store/slices/user";
 import { toast } from "react-hot-toast";
 import { Container, Row, Col, Card, Form, Button, Spinner, InputGroup } from 'react-bootstrap';
 import { 
@@ -51,7 +51,7 @@ const Profile = () => {
       overflow: 'hidden'
     },
     headerCardBody: { 
-      background: 'linear-gradient(135deg, #8d94bbff )',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       padding: '2rem',
       color: 'white'
     },
@@ -216,7 +216,9 @@ const Profile = () => {
     purple: '#a890fe'
   };
 
-  useEffect(() => { dispatch(fetchUserProfile()); }, [dispatch]);
+  useEffect(() => { 
+    dispatch(fetchUserProfile()); 
+  }, [dispatch]);
 
   useEffect(() => {
     if (Userprofile) {
@@ -249,11 +251,19 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Mettre à jour localement IMMÉDIATEMENT avant la requête API
+      dispatch(updateUserLocal(formData));
+      
+      // Puis envoyer la requête API
       await dispatch(updateUserProfile(formData)).unwrap();
+      
       setIsEditing(false);
-      dispatch(fetchUserProfile());
+      toast.success("Profil mis à jour avec succès");
+      
     } catch (error) {
       console.error("Update failed:", error);
+      // En cas d'erreur, recharger les données originales
+      dispatch(fetchUserProfile());
     }
   };
 
@@ -325,8 +335,8 @@ const Profile = () => {
     return (
       <div style={styles.loadingContainer}>
         <div style={{ textAlign: 'center' }}>
-          <Spinner animation="border" variant="light" style={{ width: '3rem', height: '3rem' }} className="mb-3" />
-          <p style={{ color: 'white', fontSize: '1.1rem', fontWeight: '500' }}>Chargement du profil...</p>
+          <Spinner animation="border" variant="primary" style={{ width: '3rem', height: '3rem' }} className="mb-3" />
+          <p style={{ color: '#495057', fontSize: '1.1rem', fontWeight: '500' }}>Chargement du profil...</p>
         </div>
       </div>
     );

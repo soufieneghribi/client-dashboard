@@ -1,97 +1,162 @@
-import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { loginSuccess } from "../store/slices/authSlice";
-import { forgetPassword } from "../store/slices/user";
-import { Link, useNavigate } from "react-router-dom";
-import { Container, Row, Col, Form, Button, Card, Alert, Spinner, Modal, InputGroup } from 'react-bootstrap';
-
-// ==================== API CONFIGURATION ====================
-// ✅ Import depuis api.js
-import { API_ENDPOINTS } from "../services/api";
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { loginSuccess } from '../store/slices/authSlice';
+import axios from 'axios';
+import { API_ENDPOINTS } from '../services/api';
+import toast from 'react-hot-toast';
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [searchMail, setSearchMail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [loadingModal, setLoadingModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { token, isLoggedIn } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  
+  const [credentials, setCredentials] = useState({
+    email: '',
+    password: ''
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  const setUnifiedAuth = (token, user) => {
-    dispatch(loginSuccess({ user, token }));
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
-    document.cookie = `auth_token=${token}; path=/; max-age=86400; Secure; SameSite=Strict`;
-    sessionStorage.setItem('user_id', user.ID_client || user.id);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCredentials(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
-  useEffect(() => {
-    if (isLoggedIn || token) navigate("/");
-  }, [isLoggedIn, token, navigate]);
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMessage(null);
-    try {
-      // ✅ Utilise API_ENDPOINTS.AUTH.LOGIN au lieu de construire l'URL manuellement
-      const response = await fetch(
-        API_ENDPOINTS.AUTH.LOGIN,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        }
-      );
-      const data = await response.json();
-      if (!data.client || !data.token) {
-        setErrorMessage("Identifiants de connexion invalides.");
-        setLoading(false);
-        return;
-      }
-      setUnifiedAuth(data.token, data.client);
-      setTimeout(() => navigate("/"), 100);
-    } catch (err) {
-      setLoading(false);
-      setErrorMessage("Erreur de connexion. Veuillez réessayer.");
+  const validate = () => {
+    const newErrors = {};
+    
+    if (!credentials.email) {
+      newErrors.email = 'Email requis';
+    } else if (!/\S+@\S+\.\S+/.test(credentials.email)) {
+      newErrors.email = 'Email invalide';
     }
+    
+    if (!credentials.password) {
+      newErrors.password = 'Mot de passe requis';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoadingModal(true);
-    setError("");
-    setMessage("");
-    if (!searchMail) {
-      setError("Veuillez entrer une adresse e-mail valide.");
-      setLoadingModal(false);
-      return;
-    }
+    
+    if (!validate()) return;
+    
+    setIsLoading(true);
+
     try {
-      await dispatch(forgetPassword({ email: searchMail })).unwrap();
-      setMessage("Un lien de réinitialisation a été envoyé à votre e-mail.");
-      setTimeout(() => {
-        setSearchMail("");
-        setIsModalOpen(false);
-      }, 2000);
-    } catch {
-      setError("Erreur lors de l'envoi du lien de réinitialisation.");
-    } finally {
-      setLoadingModal(false);
+      const response = await axios.post(
+        API_ENDPOINTS.AUTH.LOGIN,
+        {
+          email: credentials.email,
+          password: credentials.password
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+
+      const { client, token, is_email_verified } = response.data;
+
+      // ⭐ VÉRIFICATION STRICTE : Email non vérifié
+      if (
+        is_email_verified === false || 
+        is_email_verified === 0 || 
+        is_email_verified === "0" || 
+        is_email_verified === "false"
+      ) {
+        toast.error('⚠️ Veuillez vérifier votre email avant de vous connecter', {
+          duration: 4000,
+          icon: '📧',
+        });
+        
+        setIsLoading(false);
+        
+        setTimeout(() => {
+          navigate('/verify-email', { 
+            state: { email: credentials.email }
+          });
+        }, 2000);
+        
+        return;
+      }
+
+      // ✅ Email vérifié : Connexion réussie
+      if (token && client) {
+        dispatch(loginSuccess({
+          user: client,
+          token: token
+        }));
+        
+        toast.success('✅ Connexion réussie!', {
+          icon: '🎉',
+        });
+        
+        setTimeout(() => {
+          navigate('/');
+        }, 1000);
+      } else {
+        toast.error('Erreur: Données de connexion incomplètes');
+        setIsLoading(false);
+      }
+      
+    } catch (error) {
+      console.error('Erreur de connexion:', error.response?.data);
+      
+      if (error.response?.data?.message?.toLowerCase().includes('verify') || 
+          error.response?.data?.message?.toLowerCase().includes('vérif')) {
+        toast.error('⚠️ Veuillez vérifier votre email avant de vous connecter', {
+          duration: 4000,
+        });
+        
+        setTimeout(() => {
+          navigate('/verify-email', { 
+            state: { email: credentials.email }
+          });
+        }, 2000);
+        
+        setIsLoading(false);
+        return;
+      }
+      
+      if (error.response?.status === 401) {
+        toast.error('❌ Email ou mot de passe incorrect');
+      } else if (error.response?.status === 403) {
+        toast.error('⚠️ Accès refusé. Vérifiez votre email.');
+        setTimeout(() => {
+          navigate('/verify-email', { 
+            state: { email: credentials.email }
+          });
+        }, 2000);
+      } else if (error.response?.status === 422) {
+        const errors = error.response?.data?.errors;
+        if (errors) {
+          const firstError = Object.values(errors)[0];
+          toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+        } else {
+          toast.error('Erreur de validation');
+        }
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Erreur lors de la connexion');
+      }
+      
+      setIsLoading(false);
     }
   };
 
   const handleGuest = () => {
-    navigate("/");
+    navigate('/');
   };
 
   return (
@@ -146,7 +211,7 @@ const Login = () => {
           font-size: 0.9rem;
         }
         
-        .form-control, .form-select {
+        .form-control {
           border: 2px solid #e2e8f0;
           border-radius: 10px;
           padding: 12px 15px;
@@ -157,26 +222,50 @@ const Login = () => {
         .form-control:focus {
           border-color: #667eea;
           box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+          outline: none;
         }
         
-        .input-group-text {
-          background: #f7fafc;
-          border: 2px solid #e2e8f0;
-          border-right: none;
+        .form-control.is-invalid {
+          border-color: #dc3545;
+        }
+        
+        .form-control.is-invalid:focus {
+          border-color: #dc3545;
+          box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        /* Fix pour le champ mot de passe avec input-group */
+        .password-input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        
+        .password-input-wrapper .form-control {
+          padding-right: 45px;
+        }
+        
+        .password-toggle-btn {
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: transparent;
+          border: none;
           color: #718096;
+          cursor: pointer;
+          padding: 5px 8px;
+          transition: all 0.2s ease;
+          z-index: 10;
         }
         
-        .input-group .form-control {
-          border-left: none;
+        .password-toggle-btn:hover:not(:disabled) {
+          color: #4a5568;
         }
         
-        .input-group .form-control:focus {
-          border-left: none;
-        }
-        
-        .input-group:focus-within .input-group-text {
-          border-color: #667eea;
-          background: #f0f4ff;
+        .password-toggle-btn:disabled {
+          cursor: not-allowed;
+          opacity: 0.5;
         }
         
         .btn-primary {
@@ -200,13 +289,15 @@ const Login = () => {
           padding: 13px 25px;
           font-weight: 600;
           color: #4a5568;
+          background: white;
           transition: all 0.3s ease;
         }
         
-        .btn-outline-secondary:hover {
+        .btn-outline-secondary:hover:not(:disabled) {
           background: #f7fafc;
           border-color: #cbd5e0;
           color: #2d3748;
+          transform: translateY(-1px);
         }
         
         .btn-link {
@@ -214,38 +305,27 @@ const Login = () => {
           font-weight: 500;
           text-decoration: none;
           transition: color 0.2s;
+          background: none;
+          border: none;
+          padding: 0;
         }
         
         .btn-link:hover {
           color: #764ba2;
         }
         
-        .form-check-input:checked {
-          background-color: #667eea;
-          border-color: #667eea;
-        }
-        
-        .alert {
-          border: none;
-          border-radius: 10px;
-          padding: 12px 15px;
-        }
-        
-        .alert-danger {
-          background: #fee;
-          color: #c53030;
-        }
-        
-        .alert-success {
-          background: #f0fdf4;
-          color: #15803d;
+        .invalid-feedback {
+          display: block;
+          color: #dc3545;
+          font-size: 0.875rem;
+          margin-top: 0.25rem;
         }
         
         .divider {
           display: flex;
           align-items: center;
           text-align: center;
-          margin: 20px 0;
+          margin: 25px 0;
         }
         
         .divider::before,
@@ -257,8 +337,8 @@ const Login = () => {
         
         .divider span {
           padding: 0 15px;
-          color: #718096;
-          font-size: 0.85rem;
+          color: #a0aec0;
+          font-size: 0.875rem;
           font-weight: 500;
         }
         
@@ -271,48 +351,6 @@ const Login = () => {
         
         .signup-link:hover {
           color: #764ba2;
-        }
-        
-        .modal-content {
-          border: none;
-          border-radius: 15px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-        
-        .modal-header {
-          border-bottom: 1px solid #e2e8f0;
-          padding: 20px 25px;
-        }
-        
-        .modal-title {
-          font-weight: 700;
-          color: #2d3748;
-        }
-        
-        .modal-body {
-          padding: 25px;
-        }
-        
-        .modal-footer {
-          border-top: 1px solid #e2e8f0;
-          padding: 15px 25px;
-        }
-        
-        .password-toggle {
-          border: 2px solid #e2e8f0;
-          border-left: none;
-          background: white;
-          color: #718096;
-          transition: all 0.3s ease;
-        }
-        
-        .password-toggle:hover {
-          background: #f7fafc;
-          color: #4a5568;
-        }
-        
-        .input-group:focus-within .password-toggle {
-          border-color: #667eea;
         }
         
         @media (max-width: 576px) {
@@ -331,10 +369,10 @@ const Login = () => {
       `}</style>
 
       <div className="login-wrapper">
-        <Container>
-          <Row className="justify-content-center">
-            <Col xs={12} sm={11} md={9} lg={7} xl={5}>
-              <Card className="login-card">
+        <div className="container">
+          <div className="row justify-content-center">
+            <div className="col-12 col-sm-11 col-md-9 col-lg-7 col-xl-5">
+              <div className="login-card">
                 <div className="login-header">
                   <i className="bi bi-shield-lock fs-1 mb-3"></i>
                   <h1>Bienvenue !</h1>
@@ -342,78 +380,81 @@ const Login = () => {
                 </div>
 
                 <div className="login-body">
-                  {errorMessage && (
-                    <Alert variant="danger" className="mb-4">
-                      <i className="bi bi-exclamation-circle me-2"></i>
-                      {errorMessage}
-                    </Alert>
-                  )}
-
-                  <Form onSubmit={handleLogin}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Adresse e-mail</Form.Label>
-                      <InputGroup>
-                        <InputGroup.Text>
-                          <i className="bi bi-envelope"></i>
-                        </InputGroup.Text>
-                        <Form.Control
-                          type="email"
-                          placeholder="votre@email.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                        />
-                      </InputGroup>
-                    </Form.Group>
-
-                    <Form.Group className="mb-3">
-                      <Form.Label>Mot de passe</Form.Label>
-                      <InputGroup>
-                        <InputGroup.Text>
-                          <i className="bi bi-lock"></i>
-                        </InputGroup.Text>
-                        <Form.Control
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                        />
-                        <Button
-                          variant="outline-secondary"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="password-toggle"
-                        >
-                          <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
-                        </Button>
-                      </InputGroup>
-                    </Form.Group>
-
-                    <div className="d-flex justify-content-between align-items-center mb-4">
-                      <Form.Check
-                        type="checkbox"
-                        label="Se souvenir de moi"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
+                  <form onSubmit={handleSubmit}>
+                    {/* Email */}
+                    <div className="mb-3">
+                      <label htmlFor="email" className="form-label">
+                        <i className="bi bi-envelope me-2"></i>
+                        Adresse e-mail
+                      </label>
+                      <input
+                        type="email"
+                        className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                        id="email"
+                        name="email"
+                        value={credentials.email}
+                        onChange={handleChange}
+                        placeholder="votre@email.com"
+                        disabled={isLoading}
                       />
-                      <Button
-                        variant="link"
-                        className="p-0"
-                        onClick={() => setIsModalOpen(true)}
-                      >
-                        Mot de passe oublié ?
-                      </Button>
+                      {errors.email && (
+                        <div className="invalid-feedback">
+                          <i className="bi bi-exclamation-circle me-1"></i>
+                          {errors.email}
+                        </div>
+                      )}
                     </div>
 
-                    <Button
-                      variant="primary"
-                      type="submit"
-                      className="w-100 mb-3"
-                      disabled={loading}
+                    {/* Mot de passe */}
+                    <div className="mb-3">
+                      <label htmlFor="password" className="form-label">
+                        <i className="bi bi-lock me-2"></i>
+                        Mot de passe
+                      </label>
+                      <div className="password-input-wrapper">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          className={`form-control ${errors.password ? 'is-invalid' : ''}`}
+                          id="password"
+                          name="password"
+                          value={credentials.password}
+                          onChange={handleChange}
+                          placeholder="••••••••"
+                          disabled={isLoading}
+                        />
+                        <button
+                          type="button"
+                          className="password-toggle-btn"
+                          onClick={() => setShowPassword(!showPassword)}
+                          disabled={isLoading}
+                        >
+                          <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'} fs-5`}></i>
+                        </button>
+                      </div>
+                      {errors.password && (
+                        <div className="invalid-feedback">
+                          <i className="bi bi-exclamation-circle me-1"></i>
+                          {errors.password}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Mot de passe oublié */}
+                    <div className="mb-4 text-end">
+                      <Link to="/forgot-password" className="btn-link">
+                        Mot de passe oublié ?
+                      </Link>
+                    </div>
+
+                    {/* Bouton de connexion */}
+                    <button 
+                      type="submit" 
+                      className="btn btn-primary w-100 mb-3"
+                      disabled={isLoading}
                     >
-                      {loading ? (
+                      {isLoading ? (
                         <>
-                          <Spinner animation="border" size="sm" className="me-2" />
+                          <span className="spinner-border spinner-border-sm me-2" />
                           Connexion en cours...
                         </>
                       ) : (
@@ -422,103 +463,36 @@ const Login = () => {
                           Se connecter
                         </>
                       )}
-                    </Button>
+                    </button>
 
                     <div className="divider">
                       <span>OU</span>
                     </div>
 
-                    <Button
-                      variant="outline-secondary"
-                      className="w-100 mb-4"
+                    {/* Bouton Explorer en tant qu'invité */}
+                    <button 
+                      type="button"
+                      className="btn btn-outline-secondary w-100 mb-4"
                       onClick={handleGuest}
+                      disabled={isLoading}
                     >
                       <i className="bi bi-eye me-2"></i>
                       Explorer en tant qu'invité
-                    </Button>
+                    </button>
 
+                    {/* Lien inscription */}
                     <div className="text-center">
                       <span className="text-muted">Vous n'avez pas de compte ? </span>
                       <Link to="/inscrire" className="signup-link">
                         Créer un compte
                       </Link>
                     </div>
-                  </Form>
+                  </form>
                 </div>
-              </Card>
-            </Col>
-          </Row>
-        </Container>
-
-        {/* Modal mot de passe oublié */}
-        <Modal show={isModalOpen} onHide={() => setIsModalOpen(false)} centered>
-          <Modal.Header closeButton>
-            <Modal.Title>
-              <i className="bi bi-key me-2"></i>
-              Réinitialiser le mot de passe
-            </Modal.Title>
-          </Modal.Header>
-          <Form onSubmit={handleSubmit}>
-            <Modal.Body>
-              <p className="text-muted mb-4">
-                Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.
-              </p>
-              <Form.Group>
-                <Form.Label>Adresse e-mail</Form.Label>
-                <InputGroup>
-                  <InputGroup.Text>
-                    <i className="bi bi-envelope"></i>
-                  </InputGroup.Text>
-                  <Form.Control
-                    type="email"
-                    placeholder="votre@email.com"
-                    value={searchMail}
-                    onChange={(e) => setSearchMail(e.target.value)}
-                    required
-                  />
-                </InputGroup>
-              </Form.Group>
-
-              {error && (
-                <Alert variant="danger" className="mt-3 mb-0">
-                  <i className="bi bi-exclamation-circle me-2"></i>
-                  {error}
-                </Alert>
-              )}
-              {message && (
-                <Alert variant="success" className="mt-3 mb-0">
-                  <i className="bi bi-check-circle me-2"></i>
-                  {message}
-                </Alert>
-              )}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button 
-                variant="outline-secondary" 
-                onClick={() => setIsModalOpen(false)}
-              >
-                Annuler
-              </Button>
-              <Button 
-                variant="primary" 
-                type="submit" 
-                disabled={loadingModal}
-              >
-                {loadingModal ? (
-                  <>
-                    <Spinner animation="border" size="sm" className="me-2" />
-                    Envoi...
-                  </>
-                ) : (
-                  <>
-                    <i className="bi bi-send me-2"></i>
-                    Envoyer le lien
-                  </>
-                )}
-              </Button>
-            </Modal.Footer>
-          </Form>
-        </Modal>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );

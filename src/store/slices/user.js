@@ -108,6 +108,11 @@ export const forgetPassword = createAsyncThunk(
   }
 );
 
+/**
+ * Sign Up - User Registration
+ * ⭐ MODIFIÉ : Ne navigue plus automatiquement
+ * La navigation est gérée dans Register.jsx
+ */
 export const signUp = createAsyncThunk(
   "user/signup",
   async ({ user, navigate }) => {
@@ -118,7 +123,7 @@ export const signUp = createAsyncThunk(
         API_ENDPOINTS.AUTH.REGISTER,
         user
       );
-      navigate("/login");
+      
       toast.success("Compte créé. Veuillez vérifier votre e-mail pour activer votre compte.");
       return data;
     } catch (error) {
@@ -229,7 +234,7 @@ export const fetchUserProfileForce = createAsyncThunk(
  */
 export const updateUserProfile = createAsyncThunk(
   "user/updateUserProfile",
-  async (profileData, { rejectWithValue, dispatch }) => {
+  async (profileData, { rejectWithValue, dispatch, getState }) => {
     try {
       await waitForRateLimit();
       
@@ -248,9 +253,17 @@ export const updateUserProfile = createAsyncThunk(
         }
       );
 
+      // Mettre à jour immédiatement le state local avec les données du formulaire
+      const state = getState();
+      const currentProfile = state.user.Userprofile;
+      
       dispatch(updateAuthUser(data));
+      
+      // Retourner les données fusionnées pour une mise à jour immédiate
+      const updatedData = { ...currentProfile, ...profileData, ...data };
+      
       toast.success("Profil mis à jour avec succès");
-      return data;
+      return updatedData;
     } catch (error) {
       if (error.response?.status === 429) {
         toast.error("Trop de requêtes. Veuillez patienter un moment.");
@@ -269,18 +282,19 @@ export const updateUserProfile = createAsyncThunk(
           
           if (typeof validationErrors === 'object') {
             const firstKey = Object.keys(validationErrors)[0];
-            const firstError = validationErrors[firstKey][0] || validationErrors[firstKey] || "Erreur de validation";
+            const firstError = Array.isArray(validationErrors[firstKey]) 
+              ? validationErrors[firstKey][0] 
+              : validationErrors[firstKey];
             toast.error(firstError);
             return rejectWithValue(firstError);
           }
         }
         
-        const fallbackMessage = error.response.data.message || "Données invalides";
-        toast.error(fallbackMessage);
-        return rejectWithValue(fallbackMessage);
+        toast.error("Erreur de validation des données");
+        return rejectWithValue("Erreur de validation des données");
       }
 
-      const errorMessage = error.response?.data?.message || error.message || "Erreur lors de la mise à jour du profil";
+      const errorMessage = error.response?.data?.message || "Erreur lors de la mise à jour du profil";
       
       if (error.response?.status === 401 || error.response?.status === 403) {
         toast.error("Session expirée. Veuillez vous reconnecter.");
@@ -302,7 +316,7 @@ export const updateUserProfile = createAsyncThunk(
  */
 export const updateCagnotteInDB = createAsyncThunk(
   "user/updateCagnotteInDB",
-  async ({ amount }, { rejectWithValue, dispatch }) => {
+  async (amount, { rejectWithValue, dispatch }) => {
     try {
       await waitForRateLimit();
       
@@ -314,17 +328,14 @@ export const updateCagnotteInDB = createAsyncThunk(
 
       const { data } = await axios.post(
         API_ENDPOINTS.USER.UPDATE_CAGNOTTE,
-        { 
-          amount: parseFloat(amount),
-          operation: 'add'
-        },
+        { cagnotte: amount },
         {
           headers: getAuthHeaders(token),
           timeout: API_TIMEOUT
         }
       );
 
-      toast.success(`${amount} DT ajoutés à votre cagnotte`);
+      dispatch(updateAuthUser(data));
       return data;
     } catch (error) {
       if (error.response?.status === 429) {
@@ -337,6 +348,9 @@ export const updateCagnotteInDB = createAsyncThunk(
       if (error.response?.status === 401 || error.response?.status === 403) {
         toast.error("Session expirée. Veuillez vous reconnecter.");
         dispatch(logout());
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
       } else {
         toast.error(errorMessage);
       }
@@ -481,6 +495,7 @@ const UserSlice = createSlice({
       if (state.loggedInUser) {
         state.loggedInUser = { ...state.loggedInUser, ...action.payload };
       }
+      state.lastFetch = Date.now(); // Force le cache à être considéré comme frais
     },
     setLastFetch: (state, action) => {
       state.lastFetch = action.payload;

@@ -2,19 +2,45 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { signUp } from '../store/slices/user';
-import { FormUtils } from '../utils/Utils';
-import { FORM_CONFIG, FORM_OPTIONS, INITIAL_STATE, TERMS_CONDITIONS } from '../Constants/Constants';
 import toast from 'react-hot-toast';
-import axios from 'axios';
+
+// Liste des gouvernorats tunisiens
+const GOUVERNORATS = [
+  'Tunis', 'Ariana', 'Ben Arous', 'Manouba', 
+  'Nabeul', 'Zaghouan', 'Bizerte', 'Béja', 
+  'Jendouba', 'Le Kef', 'Siliana', 'Sousse', 
+  'Monastir', 'Mahdia', 'Sfax', 'Kairouan', 
+  'Kasserine', 'Sidi Bouzid', 'Gabès', 'Medenine', 
+  'Tataouine', 'Gafsa', 'Tozeur', 'Kebili'
+];
 
 const Register = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [user, setUser] = useState({
-    ...INITIAL_STATE.USER,
-    phoneCode: '+216'
+    nom_et_prenom: '',
+    email: '',
+    tel: '',
+    password: '',
+    civilite: '',
+    situation_familiale: '',
+    date_de_naissance: '',
+    profession: '',
+    ville: '', // ✅ Ajouté
+    gouvernorat: '', // ✅ Ajouté
+    address: '', // ✅ Ajouté
+    code_postal: '',
+    nom_enfant_1: '',
+    nom_enfant_2: '',
+    nom_enfant_3: '',
+    nom_enfant_4: '',
+    date_de_naissance1: '',
+    date_de_naissance2: '',
+    date_de_naissance3: '',
+    date_de_naissance4: '',
   });
+  
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState({});
   const [isAgreed, setIsAgreed] = useState(false);
@@ -23,24 +49,19 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [geoConsent, setGeoConsent] = useState(false);
   const [geoStatus, setGeoStatus] = useState(null);
-  const [recaptchaToken, setRecaptchaToken] = useState('');
+  const [recaptchaToken, setRecaptchaToken] = useState(''); // ⚠️ NE PAS stocker dans localStorage
   const [isRecaptchaLoaded, setIsRecaptchaLoaded] = useState(false);
-  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   const recaptchaRef = useRef(null);
-  const googleButtonRef = useRef(null);
 
   const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
     if (!RECAPTCHA_SITE_KEY) {
-      console.error('VITE_RECAPTCHA_SITE_KEY is not defined in environment variables');
-    }
-    if (!GOOGLE_CLIENT_ID) {
-      console.error('VITE_GOOGLE_CLIENT_ID is not defined in environment variables');
+      console.error('VITE_RECAPTCHA_SITE_KEY is not defined');
     }
   }, []);
 
+  // Chargement de reCAPTCHA
   useEffect(() => {
     const loadRecaptcha = () => {
       if (window.grecaptcha) {
@@ -59,9 +80,12 @@ const Register = () => {
       loadRecaptcha();
     }
     
-    return () => { if (window.onRecaptchaLoad) delete window.onRecaptchaLoad; };
+    return () => { 
+      if (window.onRecaptchaLoad) delete window.onRecaptchaLoad; 
+    };
   }, [RECAPTCHA_SITE_KEY]);
 
+  // Rendu de reCAPTCHA
   useEffect(() => {
     if (isRecaptchaLoaded && currentStep === 3 && recaptchaRef.current && window.grecaptcha && RECAPTCHA_SITE_KEY) {
       try {
@@ -69,16 +93,17 @@ const Register = () => {
         window.grecaptcha.render(recaptchaRef.current, {
           sitekey: RECAPTCHA_SITE_KEY,
           callback: (token) => {
+            // ⚠️ NE PAS stocker dans localStorage - juste dans state
             setRecaptchaToken(token);
             setErrors((prev) => ({ ...prev, recaptcha: undefined }));
           },
           'expired-callback': () => {
             setRecaptchaToken('');
-            setErrors((prev) => ({ ...prev, recaptcha: 'reCAPTCHA expiré, veuillez le refaire' }));
+            setErrors((prev) => ({ ...prev, recaptcha: 'reCAPTCHA expiré' }));
           },
           'error-callback': () => {
             setRecaptchaToken('');
-            setErrors((prev) => ({ ...prev, recaptcha: 'Erreur reCAPTCHA, veuillez réessayer' }));
+            setErrors((prev) => ({ ...prev, recaptcha: 'Erreur reCAPTCHA' }));
           }
         });
       } catch (error) {
@@ -87,105 +112,70 @@ const Register = () => {
     }
   }, [isRecaptchaLoaded, currentStep, RECAPTCHA_SITE_KEY]);
 
-  useEffect(() => {
-    const initializeGoogle = () => {
-      if (window.google && window.google.accounts && GOOGLE_CLIENT_ID) {
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: handleGoogleSignIn,
-          auto_select: false,
-          cancel_on_tap_outside: false,
-          context: 'signup'
-        });
-        setIsGoogleLoaded(true);
-      } else if (GOOGLE_CLIENT_ID) {
-        setTimeout(initializeGoogle, 100);
-      }
-    };
-
-    if (document.readyState === 'complete') {
-      initializeGoogle();
-    } else {
-      window.addEventListener('load', initializeGoogle);
-    }
-
-    return () => {
-      window.removeEventListener('load', initializeGoogle);
-    };
-  }, [GOOGLE_CLIENT_ID]);
-
-  useEffect(() => {
-    if (isGoogleLoaded && currentStep === 1 && googleButtonRef.current && window.google && GOOGLE_CLIENT_ID) {
-      try {
-        if (googleButtonRef.current.innerHTML) {
-          googleButtonRef.current.innerHTML = '';
-        }
-        
-        window.google.accounts.id.renderButton(
-          googleButtonRef.current,
+  // ✅ LOGIQUE DE GÉOLOCALISATION DE L'ANCIEN CODE
+  const handleGeoConsent = async (e) => {
+    const checked = e.target.checked;
+    setGeoConsent(checked);
+    
+    if (checked) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            toast.success('Géolocalisation activée avec succès');
+            
+            // Optionnel: Stocker les coordonnées dans l'état user
+            setUser(prev => ({
+              ...prev,
+              latitude: latitude.toString(),
+              longitude: longitude.toString()
+            }));
+          },
+          (error) => {
+            let errorMessage = 'Erreur de géolocalisation';
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = 'Permission de géolocalisation refusée';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Position indisponible';
+                break;
+              case error.TIMEOUT:
+                errorMessage = 'Timeout de la géolocalisation';
+                break;
+              default:
+                errorMessage = 'Erreur inconnue de géolocalisation';
+                break;
+            }
+            setGeoStatus(errorMessage);
+            toast.error(errorMessage);
+            setGeoConsent(false); // Décocher la case en cas d'erreur
+          },
           {
-            theme: 'outline',
-            size: 'large',
-            width: 300,
-            text: 'signup_with',
-            shape: 'pill',
-            logo_alignment: 'left'
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
           }
         );
-      } catch (error) {
-        console.error('Error rendering Google button:', error);
-      }
-    }
-  }, [isGoogleLoaded, currentStep, GOOGLE_CLIENT_ID]);
-
-  const handleGoogleSignIn = async (response) => {
-    if (response.credential) {
-      try {
-        await handleGoogleRegister(response.credential);
-      } catch (error) {
-        console.error('Google Sign-In error:', error);
-        toast.error('Erreur lors de l\'inscription avec Google');
-      }
-    }
-  };
-
-  const handleGoogleRegister = async (googleToken) => {
-    try {
-      const response = await axios.post('http://localhost:8000/api/v1/auth/google-register', {
-        token: googleToken
-      });
-
-      if (response.data.success) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.client));
-        
-        dispatch({ 
-          type: 'auth/loginSuccess', 
-          payload: { 
-            user: response.data.client,
-            token: response.data.token
-          } 
-        });
-        
-        toast.success('Inscription avec Google réussie!');
-        navigate('/');
-      }
-    } catch (error) {
-      if (error.response?.status === 409) {
-        toast.error('Cet email est déjà utilisé. Veuillez vous connecter.');
-        navigate('/login');
-      } else if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
       } else {
-        toast.error('Erreur lors de l\'inscription avec Google');
+        setGeoStatus('Géolocalisation non supportée par ce navigateur');
+        toast.error('Votre navigateur ne supporte pas la géolocalisation');
+        setGeoConsent(false);
       }
+    } else {
+      setGeoStatus(null);
+      // Optionnel: Supprimer les coordonnées de l'état user
+      setUser(prev => {
+        const { latitude, longitude, ...rest } = prev;
+        return rest;
+      });
     }
   };
 
   const changeHandler = (e) => {
     const { name, value } = e.target;
     
-    // Validation pour le téléphone
+    // Validation pour le téléphone (8 chiffres max)
     if (name === 'tel') {
       const cleaned = value.replace(/\D/g, '');
       if (cleaned.length <= 8) {
@@ -205,97 +195,175 @@ const Register = () => {
   
   const handleCheckboxChange = (e) => {
     setIsAgreed(e.target.checked);
-    setErrors((prev) => ({ ...prev, terms: undefined }));
   };
-  
-  const handleGeoConsent = async (e) => {
-    const checked = e.target.checked;
-    setGeoConsent(checked);
-    FormUtils.handleGeolocationConsent(checked, setGeoStatus);
-  };
-  
-  const validateStep1 = () => {
-    const newErrors = FormUtils.validateStep1(user, confirmPassword);
+
+  const validateStep = (step) => {
+    const newErrors = {};
+
+    if (step === 1) {
+      if (!user.nom_et_prenom?.trim()) newErrors.nom_et_prenom = 'Nom complet requis';
+      if (!user.email?.trim()) {
+        newErrors.email = 'Email requis';
+      } else if (!/\S+@\S+\.\S+/.test(user.email)) {
+        newErrors.email = 'Email invalide';
+      }
+      if (!user.tel?.trim()) {
+        newErrors.tel = 'Téléphone requis';
+      } else if (user.tel.length !== 8) {
+        newErrors.tel = 'Le numéro doit contenir 8 chiffres';
+      }
+      if (!user.password) {
+        newErrors.password = 'Mot de passe requis';
+      } else if (user.password.length < 6) {
+        newErrors.password = 'Minimum 6 caractères';
+      }
+      if (user.password !== confirmPassword) {
+        newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
+      }
+    }
+
+    if (step === 2) {
+      if (!user.civilite) newErrors.civilite = 'Civilité requise';
+      if (!user.situation_familiale) newErrors.situation_familiale = 'Situation familiale requise';
+      if (!user.date_de_naissance) newErrors.date_de_naissance = 'Date de naissance requise';
+      
+      // ✅ Validation des nouveaux champs
+      if (!user.ville?.trim()) newErrors.ville = 'Ville requise';
+      if (!user.gouvernorat) newErrors.gouvernorat = 'Gouvernorat requis';
+      if (!user.address?.trim()) newErrors.address = 'Adresse requise';
+    }
+
+    if (step === 3) {
+      if (!isAgreed) newErrors.terms = 'Vous devez accepter les conditions';
+      if (!recaptchaToken) newErrors.recaptcha = 'Veuillez compléter le reCAPTCHA';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
-  const validateBeforeSubmit = () => {
-    const step1Valid = validateStep1();
-    let hasErrors = false;
-    const newErrors = { ...errors };
-    
-    if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
-      newErrors.recaptcha = 'Veuillez compléter le reCAPTCHA';
-      hasErrors = true;
-    }
-    
-    setErrors(newErrors);
-    return step1Valid && !hasErrors;
-  };
-  
+
   const handleNextStep = () => {
-    if (currentStep === 1 && !validateStep1()) return;
-    if (currentStep < FORM_CONFIG.STEPS.TOTAL) setCurrentStep(currentStep + 1);
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => prev + 1);
+      window.scrollTo(0, 0);
+    } else {
+      toast.error('Veuillez corriger les erreurs');
+    }
   };
-  
+
   const handlePreviousStep = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1);
+    setCurrentStep(prev => prev - 1);
+    window.scrollTo(0, 0);
   };
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateBeforeSubmit()) return;
-    if (!isAgreed) {
-      setErrors((prev) => ({ ...prev, terms: 'Vous devez accepter les conditions' }));
-      return;
-    }
-    
-    const fullPhoneNumber = `${user.phoneCode}${user.tel}`;
-    const payload = { 
-      ...user, 
-      tel: fullPhoneNumber,
-      ...(RECAPTCHA_SITE_KEY && recaptchaToken && { recaptcha_token: recaptchaToken })
-    };
-    
-    try {
-      await dispatch(signUp({ user: payload, navigate })).unwrap();
-      
-      setCurrentStep(1);
-      setUser({ ...INITIAL_STATE.USER, phoneCode: '+216' });
-      setConfirmPassword('');
-      setRecaptchaToken('');
-      setIsAgreed(false);
-    } catch (error) {
-      console.error('Registration error:', error);
-    }
-  };
-  
+
   const handleShowModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  const renderPasswordStrength = () => {
-    const { score, label } = FormUtils.getPasswordStrength(user.password);
-    const colors = ['bg-danger', 'bg-danger', 'bg-warning', 'bg-info', 'bg-success'];
-    const widths = ['25%', '40%', '60%', '80%', '100%'];
-    
-    return user.password && (
-      <div className="mt-2">
-        <div className="progress" style={{ height: '6px' }}>
-          <div 
-            className={`progress-bar ${colors[score]}`}
-            style={{ width: widths[score] }}
-          ></div>
-        </div>
-        <small className="text-muted d-block mt-1">
-          Force: <strong>{label}</strong>
-        </small>
-        <small className="text-muted d-block">
-          <i className="bi bi-info-circle me-1"></i>
-          8+ caractères, 1 majuscule, 1 chiffre, 1 symbole
-        </small>
-      </div>
-    );
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateStep(3)) {
+      toast.error('Veuillez corriger les erreurs');
+      return;
+    }
+
+    try {
+      // Payload complet avec tous les champs
+      const payload = {
+        nom_et_prenom: user.nom_et_prenom,
+        email: user.email,
+        tel: user.tel,
+        password: user.password,
+        civilite: user.civilite,
+        situation_familiale: user.situation_familiale,
+        date_de_naissance: user.date_de_naissance,
+        profession: user.profession || '',
+        ville: user.ville,
+        gouvernorat: user.gouvernorat,
+        address: user.address,
+        code_postal: user.code_postal || '',
+        nom_enfant_1: user.nom_enfant_1 || '',
+        nom_enfant_2: user.nom_enfant_2 || '',
+        nom_enfant_3: user.nom_enfant_3 || '',
+        nom_enfant_4: user.nom_enfant_4 || '',
+        date_de_naissance1: user.date_de_naissance1 || '',
+        date_de_naissance2: user.date_de_naissance2 || '',
+        date_de_naissance3: user.date_de_naissance3 || '',
+        date_de_naissance4: user.date_de_naissance4 || '',
+        // ✅ Inclure les coordonnées GPS si disponibles
+        ...(geoConsent && user.latitude && user.longitude && {
+          latitude: user.latitude,
+          longitude: user.longitude
+        }),
+        // ⚠️ Token reCAPTCHA envoyé mais JAMAIS stocké
+        recaptcha_token: recaptchaToken
+      };
+
+      // Appel Redux
+      const result = await dispatch(signUp({ user: payload })).unwrap();
+
+      // ✅ L'API retourne is_email_verified = false après inscription
+      if (result.email && result.is_email_verified === false) {
+        toast.success('📧 Inscription réussie ! Un code a été envoyé à votre email.');
+        
+        // Redirection vers la page de vérification
+        setTimeout(() => {
+          navigate('/verify-email', { 
+            state: { email: user.email }
+          });
+        }, 1500);
+      } else if (result.token) {
+        // Si email déjà vérifié (rare)
+        toast.success('✅ Inscription réussie !');
+        setTimeout(() => {
+          navigate('/');
+        }, 1000);
+      }
+
+    } catch (error) {
+      console.error('Erreur inscription:', error);
+      
+      // Gestion des erreurs API
+      if (error.response?.data?.errors) {
+        const apiErrors = {};
+        
+        if (Array.isArray(error.response.data.errors)) {
+          error.response.data.errors.forEach(err => {
+            if (err.code && err.message) {
+              apiErrors[err.code] = err.message;
+            }
+          });
+        } else if (typeof error.response.data.errors === 'object') {
+          // Format Laravel validation
+          Object.keys(error.response.data.errors).forEach(key => {
+            const messages = error.response.data.errors[key];
+            apiErrors[key] = Array.isArray(messages) ? messages[0] : messages;
+          });
+        }
+        
+        setErrors(apiErrors);
+        
+        // Afficher le premier message d'erreur
+        const firstError = Object.values(apiErrors)[0];
+        if (firstError) {
+          toast.error(firstError);
+        }
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.message || 'Erreur lors de l\'inscription');
+      }
+      
+      // Réinitialiser reCAPTCHA en cas d'erreur
+      if (window.grecaptcha && recaptchaRef.current) {
+        try {
+          window.grecaptcha.reset();
+          setRecaptchaToken('');
+        } catch (e) {
+          console.error('Erreur reset reCAPTCHA:', e);
+        }
+      }
+    }
   };
 
   return (
@@ -307,13 +375,13 @@ const Register = () => {
         .register-wrapper {
           min-height: 100vh;
           background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-          padding: 40px 15px;
+          padding: 40px 0;
         }
         
         .register-card {
-          background: white;
+          border: none;
           border-radius: 20px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+          box-shadow: 0 10px 40px rgba(0,0,0,0.15);
           overflow: hidden;
         }
         
@@ -324,61 +392,9 @@ const Register = () => {
           text-align: center;
         }
         
-        .register-header h2 {
-          font-size: 1.8rem;
-          font-weight: 700;
-          margin: 0;
-        }
-        
         .register-body {
-          padding: 35px;
-        }
-        
-        .step-indicator {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          margin-bottom: 35px;
-          gap: 15px;
-        }
-        
-        .step-circle {
-          width: 45px;
-          height: 45px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 1.1rem;
-          transition: all 0.3s ease;
-        }
-        
-        .step-circle.active {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        .step-circle.completed {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-        }
-        
-        .step-circle.inactive {
-          background: #e9ecef;
-          color: #6c757d;
-        }
-        
-        .step-line {
-          width: 60px;
-          height: 3px;
-          background: #e9ecef;
-          transition: all 0.3s ease;
-        }
-        
-        .step-line.completed {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          padding: 40px 35px;
+          background: white;
         }
         
         .form-label {
@@ -392,7 +408,6 @@ const Register = () => {
           border: 2px solid #e2e8f0;
           border-radius: 10px;
           padding: 12px 15px;
-          font-size: 0.95rem;
           transition: all 0.3s ease;
         }
         
@@ -401,511 +416,422 @@ const Register = () => {
           box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
         }
         
-        .form-control.is-valid {
-          border-color: #28a745;
-          background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
-          background-repeat: no-repeat;
-          background-position: right calc(0.375em + 0.1875rem) center;
-          background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-          padding-right: calc(1.5em + 0.75rem);
-        }
-        
-        .form-control.is-invalid {
-          border-color: #dc3545;
-        }
-        
-        .input-group-text {
-          background: #f7fafc;
-          border: 2px solid #e2e8f0;
-          border-right: none;
-          color: #718096;
-          font-weight: 500;
-        }
-        
-        .input-group .form-control {
-          border-left: none;
-        }
-        
-        .input-group:focus-within .input-group-text {
-          border-color: #667eea;
-          background: #f0f4ff;
-        }
-        
         .btn-primary {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           border: none;
           border-radius: 10px;
-          padding: 12px 30px;
+          padding: 13px 25px;
           font-weight: 600;
           transition: all 0.3s ease;
         }
         
-        .btn-primary:hover:not(:disabled) {
+        .btn-primary:hover {
           transform: translateY(-2px);
           box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
         }
         
-        .btn-outline-secondary {
-          border: 2px solid #e2e8f0;
-          border-radius: 10px;
-          padding: 12px 30px;
-          font-weight: 600;
-          color: #4a5568;
-          background: white;
-        }
-        
-        .btn-outline-secondary:hover {
-          background: #f7fafc;
-          border-color: #cbd5e0;
-          color: #2d3748;
-        }
-        
-        .password-toggle {
-          border: 2px solid #e2e8f0;
-          border-left: none;
-          background: white;
-          color: #718096;
-          transition: all 0.3s ease;
-        }
-        
-        .password-toggle:hover {
-          background: #f7fafc;
-        }
-        
-        .input-group:focus-within .password-toggle {
-          border-color: #667eea;
-        }
-        
-        .info-card {
-          background: #f0f4ff;
-          border: 2px solid #e0e7ff;
-          border-radius: 12px;
-          padding: 20px;
-        }
-        
-        .form-check-input:checked {
-          background-color: #667eea;
-          border-color: #667eea;
-        }
-        
-        .divider {
+        .step-indicator {
           display: flex;
-          align-items: center;
-          text-align: center;
-          margin: 25px 0;
+          justify-content: center;
+          margin-bottom: 30px;
+          gap: 10px;
         }
         
-        .divider::before,
-        .divider::after {
-          content: '';
-          flex: 1;
-          border-bottom: 1px solid #e2e8f0;
+        .step-dot {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #e2e8f0;
+          transition: all 0.3s;
         }
         
-        .divider span {
-          padding: 0 15px;
-          color: #a0aec0;
-          font-size: 0.875rem;
-          font-weight: 500;
+        .step-dot.active {
+          background: #667eea;
+          width: 30px;
+          border-radius: 6px;
         }
         
-        .modal-content {
+        .password-toggle-btn {
+          position: absolute;
+          right: 15px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: transparent;
           border: none;
-          border-radius: 15px;
+          color: #718096;
+          cursor: pointer;
         }
         
-        .modal-header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          border-bottom: none;
-          border-radius: 15px 15px 0 0;
+        .invalid-feedback {
+          display: block;
+          color: #dc3545;
+          font-size: 0.875rem;
+          margin-top: 0.25rem;
         }
-        
-        .modal-header .btn-close {
-          filter: brightness(0) invert(1);
+
+        .geo-status {
+          font-size: 0.8rem;
+          margin-top: 5px;
         }
-        
-        @media (max-width: 768px) {
-          .register-body {
-            padding: 25px 20px;
-          }
-          
-          .step-line {
-            width: 40px;
-          }
-          
-          .step-circle {
-            width: 40px;
-            height: 40px;
-            font-size: 1rem;
-          }
+
+        .geo-success {
+          color: #28a745;
+        }
+
+        .geo-error {
+          color: #dc3545;
         }
       `}</style>
 
       <div className="register-wrapper">
         <div className="container">
           <div className="row justify-content-center">
-            <div className="col-12 col-lg-10 col-xl-9">
+            <div className="col-12 col-sm-11 col-md-9 col-lg-7 col-xl-6">
               <div className="register-card">
                 <div className="register-header">
-                  <i className="bi bi-person-plus-fill fs-1 mb-2"></i>
-                  <h2>Créez votre compte</h2>
-                  <p className="mb-0">Rejoignez-nous en quelques étapes simples</p>
+                  <i className="bi bi-person-plus fs-1 mb-3"></i>
+                  <h1 className="h2 fw-bold mb-2">Créer un compte</h1>
+                  <p className="mb-0 opacity-90">Rejoignez TN360 dès aujourd'hui</p>
                 </div>
 
                 <div className="register-body">
                   {/* Step Indicator */}
                   <div className="step-indicator">
-                    <div className={`step-circle ${currentStep >= 1 ? (currentStep > 1 ? 'completed' : 'active') : 'inactive'}`}>
-                      {currentStep > 1 ? <i className="bi bi-check-lg"></i> : '1'}
-                    </div>
-                    <div className={`step-line ${currentStep > 1 ? 'completed' : ''}`}></div>
-                    <div className={`step-circle ${currentStep >= 2 ? (currentStep > 2 ? 'completed' : 'active') : 'inactive'}`}>
-                      {currentStep > 2 ? <i className="bi bi-check-lg"></i> : '2'}
-                    </div>
-                    <div className={`step-line ${currentStep > 2 ? 'completed' : ''}`}></div>
-                    <div className={`step-circle ${currentStep >= 3 ? 'active' : 'inactive'}`}>
-                      3
-                    </div>
+                    {[1, 2, 3].map((step) => (
+                      <div 
+                        key={step}
+                        className={`step-dot ${currentStep === step ? 'active' : ''}`}
+                      />
+                    ))}
                   </div>
 
                   <form onSubmit={handleSubmit}>
-                    {/* STEP 1 */}
+                    {/* ÉTAPE 1 - Informations de base */}
                     {currentStep === 1 && (
                       <div>
-                        <h4 className="text-center mb-4 fw-bold">Informations personnelles</h4>
-                        
-                        {/* Google Sign-In */}
-                        {GOOGLE_CLIENT_ID && (
-                          <>
-                            <div className="d-flex justify-content-center mb-3">
-                              {!isGoogleLoaded && (
-                                <div className="text-center py-3">
-                                  <div className="spinner-border spinner-border-sm text-primary me-2"></div>
-                                  <span className="text-muted">Chargement...</span>
-                                </div>
-                              )}
-                              <div ref={googleButtonRef}></div>
-                            </div>
-                            
-                            <div className="divider">
-                              <span>OU</span>
-                            </div>
-                          </>
-                        )}
+                        <h4 className="text-center mb-4 fw-bold">Informations de base</h4>
 
-                        <div className="row g-3">
-                          {/* Nom et Prénom */}
-                          <div className="col-md-6">
-                            <label className="form-label">
-                              Nom et Prénom <span className="text-danger">*</span>
-                            </label>
-                            <div className="input-group">
-                              <span className="input-group-text">
-                                <i className="bi bi-person"></i>
-                              </span>
-                              <input
-                                type="text"
-                                name="nom_et_prenom"
-                                className={`form-control ${user.nom_et_prenom?.trim() && !errors.nom_et_prenom ? 'is-valid' : errors.nom_et_prenom ? 'is-invalid' : ''}`}
-                                placeholder="Ex: Ahmed Ben Ali"
-                                value={user.nom_et_prenom}
-                                onChange={changeHandler}
-                                required
-                              />
-                            </div>
-                            {errors.nom_et_prenom && (
-                              <div className="invalid-feedback d-block">{errors.nom_et_prenom}</div>
-                            )}
-                          </div>
+                        {/* Nom complet */}
+                        <div className="mb-3">
+                          <label className="form-label">
+                            <i className="bi bi-person me-2"></i>
+                            Nom complet <span className="text-danger">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="nom_et_prenom"
+                            className={`form-control ${errors.nom_et_prenom ? 'is-invalid' : ''}`}
+                            placeholder="Votre nom complet"
+                            value={user.nom_et_prenom}
+                            onChange={changeHandler}
+                          />
+                          {errors.nom_et_prenom && (
+                            <div className="invalid-feedback">{errors.nom_et_prenom}</div>
+                          )}
+                        </div>
 
-                          {/* Email */}
-                          <div className="col-md-6">
-                            <label className="form-label">
-                              Email <span className="text-danger">*</span>
-                            </label>
-                            <div className="input-group">
-                              <span className="input-group-text">
-                                <i className="bi bi-envelope"></i>
-                              </span>
-                              <input
-                                type="email"
-                                name="email"
-                                className={`form-control ${FormUtils.isValidEmail(user.email) && !errors.email ? 'is-valid' : errors.email ? 'is-invalid' : ''}`}
-                                placeholder="exemple@email.com"
-                                value={user.email}
-                                onChange={changeHandler}
-                                required
-                              />
-                            </div>
-                            <small className="text-muted">
-                              <i className="bi bi-info-circle me-1"></i>
-                              Doit contenir @ et un domaine valide
-                            </small>
-                            {errors.email && (
-                              <div className="invalid-feedback d-block">{errors.email}</div>
-                            )}
-                          </div>
+                        {/* Email */}
+                        <div className="mb-3">
+                          <label className="form-label">
+                            <i className="bi bi-envelope me-2"></i>
+                            Email <span className="text-danger">*</span>
+                          </label>
+                          <input
+                            type="email"
+                            name="email"
+                            className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                            placeholder="votre@email.com"
+                            value={user.email}
+                            onChange={changeHandler}
+                          />
+                          {errors.email && (
+                            <div className="invalid-feedback">{errors.email}</div>
+                          )}
+                        </div>
 
-                          {/* Téléphone */}
-                          <div className="col-md-6">
-                            <label className="form-label">
-                              Téléphone <span className="text-danger">*</span>
-                            </label>
-                            <div className="input-group">
-                              <span className="input-group-text">+216</span>
-                              <input
-                                type="tel"
-                                name="tel"
-                                className={`form-control ${user.tel?.length === 8 && !errors.tel ? 'is-valid' : errors.tel ? 'is-invalid' : ''}`}
-                                placeholder="12 345 678"
-                                value={user.tel}
-                                onChange={changeHandler}
-                                maxLength="8"
-                                pattern="[0-9]{8}"
-                                required
-                              />
-                            </div>
-                            <small className="text-muted">
-                              <i className="bi bi-info-circle me-1"></i>
-                              Exactement 8 chiffres
-                            </small>
-                            {errors.tel && (
-                              <div className="invalid-feedback d-block">{errors.tel}</div>
-                            )}
-                          </div>
-
-                          {/* Civilité */}
-                          <div className="col-md-6">
-                            <label className="form-label">
-                              Civilité <span className="text-danger">*</span>
-                            </label>
-                            <select
-                              name="civilite"
-                              className={`form-select ${user.civilite && !errors.civilite ? 'is-valid' : ''}`}
-                              value={user.civilite}
+                        {/* Téléphone */}
+                        <div className="mb-3">
+                          <label className="form-label">
+                            <i className="bi bi-telephone me-2"></i>
+                            Téléphone <span className="text-danger">*</span>
+                          </label>
+                          <div className="input-group">
+                            <span className="input-group-text">+216</span>
+                            <input
+                              type="tel"
+                              name="tel"
+                              className={`form-control ${errors.tel ? 'is-invalid' : ''}`}
+                              placeholder="12345678"
+                              maxLength="8"
+                              value={user.tel}
                               onChange={changeHandler}
-                              required
-                            >
-                              <option value="">Sélectionnez</option>
-                              {FORM_OPTIONS.CIVILITY.map((option) => (
-                                <option key={option.value} value={option.value}>{option.label}</option>
-                              ))}
-                            </select>
+                            />
                           </div>
+                          {errors.tel && (
+                            <div className="invalid-feedback">{errors.tel}</div>
+                          )}
+                        </div>
 
-                          {/* Mot de passe */}
-                          <div className="col-md-6">
-                            <label className="form-label">
-                              Mot de passe <span className="text-danger">*</span>
-                            </label>
-                            <div className="input-group">
-                              <span className="input-group-text">
-                                <i className="bi bi-lock"></i>
-                              </span>
-                              <input
-                                type={showPassword ? "text" : "password"}
-                                name="password"
-                                className={`form-control ${user.password && !errors.password ? 'is-valid' : errors.password ? 'is-invalid' : ''}`}
-                                placeholder="••••••••"
-                                value={user.password}
-                                onChange={changeHandler}
-                                required
-                              />
-                              <button
-                                type="button"
-                                className="btn password-toggle"
-                                onClick={() => setShowPassword(!showPassword)}
-                              >
-                                <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
-                              </button>
-                            </div>
-                            {renderPasswordStrength()}
-                          </div>
+                        {/* Mot de passe */}
+                        <div className="mb-3 position-relative">
+                          <label className="form-label">
+                            <i className="bi bi-lock me-2"></i>
+                            Mot de passe <span className="text-danger">*</span>
+                          </label>
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            name="password"
+                            className={`form-control ${errors.password ? 'is-invalid' : ''}`}
+                            placeholder="••••••••"
+                            value={user.password}
+                            onChange={changeHandler}
+                          />
+                          <button
+                            type="button"
+                            className="password-toggle-btn"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                          </button>
+                          {errors.password && (
+                            <div className="invalid-feedback">{errors.password}</div>
+                          )}
+                        </div>
 
-                          {/* Confirmer mot de passe */}
-                          <div className="col-md-6">
-                            <label className="form-label">
-                              Confirmer le mot de passe <span className="text-danger">*</span>
-                            </label>
-                            <div className="input-group">
-                              <span className="input-group-text">
-                                <i className="bi bi-lock-fill"></i>
-                              </span>
-                              <input
-                                type={showConfirmPassword ? "text" : "password"}
-                                name="confirmPassword"
-                                className={`form-control ${confirmPassword && user.password === confirmPassword && !errors.confirmPassword ? 'is-valid' : errors.confirmPassword ? 'is-invalid' : ''}`}
-                                placeholder="••••••••"
-                                value={confirmPassword}
-                                onChange={onConfirmPasswordChange}
-                                required
-                              />
-                              <button
-                                type="button"
-                                className="btn password-toggle"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              >
-                                <i className={`bi ${showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
-                              </button>
-                            </div>
-                            {errors.confirmPassword && (
-                              <div className="invalid-feedback d-block">{errors.confirmPassword}</div>
-                            )}
-                          </div>
-
-                          {/* Date de naissance */}
-                          <div className="col-12">
-                            <label className="form-label">
-                              Date de naissance <span className="text-danger">*</span>
-                            </label>
-                            <div className="input-group">
-                              <span className="input-group-text">
-                                <i className="bi bi-calendar"></i>
-                              </span>
-                              <input
-                                type="date"
-                                name="dateN"
-                                className="form-control"
-                                value={user.dateN}
-                                onChange={changeHandler}
-                                max={FormUtils.getTodayDate()}
-                                required
-                              />
-                            </div>
-                          </div>
+                        {/* Confirmation mot de passe */}
+                        <div className="mb-3 position-relative">
+                          <label className="form-label">
+                            <i className="bi bi-lock-fill me-2"></i>
+                            Confirmer le mot de passe <span className="text-danger">*</span>
+                          </label>
+                          <input
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            className={`form-control ${errors.confirmPassword ? 'is-invalid' : ''}`}
+                            placeholder="••••••••"
+                            value={confirmPassword}
+                            onChange={onConfirmPasswordChange}
+                          />
+                          <button
+                            type="button"
+                            className="password-toggle-btn"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          >
+                            <i className={`bi ${showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                          </button>
+                          {errors.confirmPassword && (
+                            <div className="invalid-feedback">{errors.confirmPassword}</div>
+                          )}
                         </div>
                       </div>
                     )}
 
-                    {/* STEP 2 */}
+                    {/* ÉTAPE 2 - Informations personnelles */}
                     {currentStep === 2 && (
                       <div>
-                        <h4 className="text-center mb-4 fw-bold">Informations complémentaires</h4>
-                        
-                        <div className="row g-3">
-                          {/* Adresse */}
-                          <div className="col-md-6">
-                            <label className="form-label">
-                              Gouvernorat <span className="text-danger">*</span>
-                            </label>
-                            <select
-                              name="adresse"
-                              className={`form-select ${user.adresse && !errors.adresse ? 'is-valid' : ''}`}
-                              value={user.adresse}
-                              onChange={changeHandler}
-                              required
-                            >
-                              <option value="">Sélectionnez votre gouvernorat</option>
-                              {FORM_OPTIONS.GOVERNORATES.map((option) => (
-                                <option key={option.value} value={option.value}>{option.label}</option>
-                              ))}
-                            </select>
-                          </div>
+                        <h4 className="text-center mb-4 fw-bold">Informations personnelles</h4>
 
-                          {/* Profession */}
-                          <div className="col-md-6">
-                            <label className="form-label">
-                              Profession <span className="text-danger">*</span>
-                            </label>
-                            <select
-                              name="profession"
-                              className={`form-select ${user.profession && !errors.profession ? 'is-valid' : ''}`}
-                              value={user.profession}
-                              onChange={changeHandler}
-                              required
-                            >
-                              <option value="">Sélectionnez votre profession</option>
-                              {FORM_OPTIONS.PROFESSIONS.map((option) => (
-                                <option key={option.value} value={option.value}>{option.label}</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Situation familiale */}
-                          <div className="col-md-6">
-                            <label className="form-label">
-                              Situation familiale <span className="text-danger">*</span>
-                            </label>
-                            <select
-                              name="situation_familiale"
-                              className={`form-select ${user.situation_familiale && !errors.situation_familiale ? 'is-valid' : ''}`}
-                              value={user.situation_familiale}
-                              onChange={changeHandler}
-                              required
-                            >
-                              <option value="">Sélectionnez</option>
-                              {FORM_OPTIONS.FAMILY_STATUS.map((option) => (
-                                <option key={option.value} value={option.value}>{option.label}</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Nombre d'enfants */}
-                          {user.situation_familiale && user.situation_familiale !== "Célibataire" && (
-                            <div className="col-md-6">
-                              <label className="form-label">
-                                Nombre d'enfants <span className="text-danger">*</span>
-                              </label>
-                              <select
-                                name="enfants"
-                                className={`form-select ${user.enfants && !errors.enfants ? 'is-valid' : ''}`}
-                                value={user.enfants}
-                                onChange={changeHandler}
-                                required
-                              >
-                                <option value="">Sélectionnez</option>
-                                {FORM_OPTIONS.CHILDREN_COUNT.map((option) => (
-                                  <option key={option.value} value={option.value}>{option.label}</option>
-                                ))}
-                              </select>
-                            </div>
-                          )}
-
-                          {/* Noms des enfants - Affiché après sélection du nombre */}
-                          {user.situation_familiale !== "Célibataire" && user.enfants && parseInt(user.enfants) > 0 && (
-                            <div className="col-12">
-                              <div className="info-card mt-2">
-                                <h5 className="fw-bold mb-3">
-                                  <i className="bi bi-people-fill me-2"></i>
-                                  Noms des enfants
-                                </h5>
-                                <div className="row g-3">
-                                  {Array.from({ length: parseInt(user.enfants) }, (_, index) => (
-                                    <div key={index} className="col-md-6">
-                                      <label className="form-label">
-                                        Enfant {index + 1} <span className="text-danger">*</span>
-                                      </label>
-                                      <input
-                                        type="text"
-                                        name={`nom_enfant_${index + 1}`}
-                                        className="form-control"
-                                        placeholder={`Prénom de l'enfant ${index + 1}`}
-                                        onChange={changeHandler}
-                                        required
-                                      />
-                                      {errors[`nom_enfant_${index + 1}`] && (
-                                        <div className="invalid-feedback d-block">
-                                          {errors[`nom_enfant_${index + 1}`]}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
+                        {/* Civilité */}
+                        <div className="mb-3">
+                          <label className="form-label">
+                            Civilité <span className="text-danger">*</span>
+                          </label>
+                          <select
+                            name="civilite"
+                            className={`form-select ${errors.civilite ? 'is-invalid' : ''}`}
+                            value={user.civilite}
+                            onChange={changeHandler}
+                          >
+                            <option value="">Sélectionner</option>
+                            <option value="Monsieur">Monsieur</option>
+                            <option value="Madame">Madame</option>
+                            <option value="Mademoiselle">Mademoiselle</option>
+                          </select>
+                          {errors.civilite && (
+                            <div className="invalid-feedback">{errors.civilite}</div>
                           )}
                         </div>
+
+                        {/* Date de naissance */}
+                        <div className="mb-3">
+                          <label className="form-label">
+                            Date de naissance <span className="text-danger">*</span>
+                          </label>
+                          <input
+                            type="date"
+                            name="date_de_naissance"
+                            className={`form-control ${errors.date_de_naissance ? 'is-invalid' : ''}`}
+                            value={user.date_de_naissance}
+                            onChange={changeHandler}
+                          />
+                          {errors.date_de_naissance && (
+                            <div className="invalid-feedback">{errors.date_de_naissance}</div>
+                          )}
+                        </div>
+
+                        {/* Situation familiale */}
+                        <div className="mb-3">
+                          <label className="form-label">
+                            Situation familiale <span className="text-danger">*</span>
+                          </label>
+                          <select
+                            name="situation_familiale"
+                            className={`form-select ${errors.situation_familiale ? 'is-invalid' : ''}`}
+                            value={user.situation_familiale}
+                            onChange={changeHandler}
+                          >
+                            <option value="">Sélectionner</option>
+                            <option value="Célibataire">Célibataire</option>
+                            <option value="Marié(e)">Marié(e)</option>
+                            <option value="Divorcé(e)">Divorcé(e)</option>
+                            <option value="Veuf(ve)">Veuf(ve)</option>
+                          </select>
+                          {errors.situation_familiale && (
+                            <div className="invalid-feedback">{errors.situation_familiale}</div>
+                          )}
+                        </div>
+
+                        {/* Profession */}
+                        <div className="mb-3">
+                          <label className="form-label">Profession</label>
+                          <input
+                            type="text"
+                            name="profession"
+                            className="form-control"
+                            placeholder="Votre profession"
+                            value={user.profession}
+                            onChange={changeHandler}
+                          />
+                        </div>
+
+                        {/* ✅ GOUVERNORAT */}
+                        <div className="mb-3">
+                          <label className="form-label">
+                            <i className="bi bi-geo-alt me-2"></i>
+                            Gouvernorat <span className="text-danger">*</span>
+                          </label>
+                          <select
+                            name="gouvernorat"
+                            className={`form-select ${errors.gouvernorat ? 'is-invalid' : ''}`}
+                            value={user.gouvernorat}
+                            onChange={changeHandler}
+                          >
+                            <option value="">Sélectionner un gouvernorat</option>
+                            {GOUVERNORATS.map((gov) => (
+                              <option key={gov} value={gov}>
+                                {gov}
+                              </option>
+                            ))}
+                          </select>
+                          {errors.gouvernorat && (
+                            <div className="invalid-feedback">{errors.gouvernorat}</div>
+                          )}
+                        </div>
+
+                        {/* ✅ VILLE */}
+                        <div className="mb-3">
+                          <label className="form-label">
+                            <i className="bi bi-building me-2"></i>
+                            Ville <span className="text-danger">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="ville"
+                            className={`form-control ${errors.ville ? 'is-invalid' : ''}`}
+                            placeholder="Votre ville"
+                            value={user.ville}
+                            onChange={changeHandler}
+                          />
+                          {errors.ville && (
+                            <div className="invalid-feedback">{errors.ville}</div>
+                          )}
+                        </div>
+
+                        {/* ✅ ADRESSE */}
+                        <div className="mb-3">
+                          <label className="form-label">
+                            <i className="bi bi-house me-2"></i>
+                            Adresse <span className="text-danger">*</span>
+                          </label>
+                          <textarea
+                            name="address"
+                            className={`form-control ${errors.address ? 'is-invalid' : ''}`}
+                            placeholder="Votre adresse complète"
+                            rows="2"
+                            value={user.address}
+                            onChange={changeHandler}
+                          ></textarea>
+                          {errors.address && (
+                            <div className="invalid-feedback">{errors.address}</div>
+                          )}
+                        </div>
+
+                        {/* Code postal */}
+                        <div className="mb-3">
+                          <label className="form-label">
+                            <i className="bi bi-mailbox me-2"></i>
+                            Code postal
+                          </label>
+                          <input
+                            type="text"
+                            name="code_postal"
+                            className="form-control"
+                            placeholder="Code postal"
+                            value={user.code_postal}
+                            onChange={changeHandler}
+                          />
+                        </div>
+
+                        {/* ENFANTS */}
+                        {user.situation_familiale === 'Marié(e)' && (
+                          <div className="mt-4">
+                            <h5 className="fw-bold mb-3">
+                              <i className="bi bi-people me-2"></i>
+                              Informations sur les enfants
+                            </h5>
+                            
+                            {[1, 2, 3, 4].map((index) => (
+                              <div key={index} className="mb-3">
+                                <div className="row g-2">
+                                  <div className="col-md-6">
+                                    <label className="form-label">
+                                      Prénom enfant {index}
+                                    </label>
+                                    <input
+                                      type="text"
+                                      name={`nom_enfant_${index}`}
+                                      className="form-control"
+                                      placeholder={`Prénom de l'enfant ${index}`}
+                                      value={user[`nom_enfant_${index}`]}
+                                      onChange={changeHandler}
+                                    />
+                                  </div>
+                                  <div className="col-md-6">
+                                    <label className="form-label">
+                                      Date de naissance enfant {index}
+                                    </label>
+                                    <input
+                                      type="date"
+                                      name={`date_de_naissance${index}`}
+                                      className="form-control"
+                                      value={user[`date_de_naissance${index}`]}
+                                      onChange={changeHandler}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
-                    {/* STEP 3 */}
+                    {/* ÉTAPE 3 - Confirmation */}
                     {currentStep === 3 && (
                       <div>
                         <h4 className="text-center mb-4 fw-bold">Confirmation</h4>
 
                         {/* Conditions générales */}
-                        <div className="info-card mb-3">
+                        <div className="mb-4">
                           <div className="form-check">
                             <input
                               type="checkbox"
@@ -934,8 +860,8 @@ const Register = () => {
                           )}
                         </div>
 
-                        {/* Géolocalisation */}
-                        <div className="info-card mb-3">
+                        {/* ✅ GÉOLOCALISATION - LOGIQUE DE L'ANCIEN CODE */}
+                        <div className="mb-4">
                           <div className="form-check">
                             <input
                               type="checkbox"
@@ -947,19 +873,19 @@ const Register = () => {
                             <label className="form-check-label" htmlFor="geoCheck">
                               <i className="bi bi-geo-alt me-2"></i>
                               Autoriser la géolocalisation
-                              {geoConsent && geoStatus && (
-                                <small className="d-block text-muted mt-1">
-                                  <i className="bi bi-check-circle me-1"></i>
-                                  {geoStatus}
-                                </small>
-                              )}
                             </label>
                           </div>
+                          {geoStatus && (
+                            <div className={`geo-status ${geoStatus.includes('Position') ? 'geo-success' : 'geo-error'}`}>
+                              <i className={`bi ${geoStatus.includes('Position') ? 'bi-check-circle' : 'bi-exclamation-circle'} me-1`}></i>
+                              {geoStatus}
+                            </div>
+                          )}
                         </div>
 
                         {/* reCAPTCHA */}
                         {RECAPTCHA_SITE_KEY && (
-                          <div className="info-card mb-3">
+                          <div className="mb-4">
                             <h5 className="fw-bold text-center mb-3">
                               <i className="bi bi-shield-check me-2"></i>
                               Vérification de sécurité
@@ -984,7 +910,7 @@ const Register = () => {
                       </div>
                     )}
 
-                    {/* Navigation Buttons */}
+                    {/* Navigation */}
                     <div className="d-flex justify-content-between mt-4 pt-3 border-top">
                       {currentStep > 1 && (
                         <button
@@ -997,7 +923,7 @@ const Register = () => {
                         </button>
                       )}
                       
-                      {currentStep < FORM_CONFIG.STEPS.TOTAL ? (
+                      {currentStep < 3 ? (
                         <button
                           type="button"
                           className="btn btn-primary ms-auto"
@@ -1021,7 +947,7 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Already have account */}
+              {/* Lien connexion */}
               <div className="text-center mt-4">
                 <p className="text-muted">
                   Vous avez déjà un compte ?{' '}
@@ -1034,16 +960,13 @@ const Register = () => {
           </div>
         </div>
 
-        {/* Modal Terms & Conditions */}
+        {/* Modal Conditions */}
         {isModalOpen && (
           <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div className="modal-dialog modal-dialog-centered modal-lg">
               <div className="modal-content">
                 <div className="modal-header">
-                  <h5 className="modal-title">
-                    <i className="bi bi-file-text me-2"></i>
-                    {TERMS_CONDITIONS.TITLE}
-                  </h5>
+                  <h5 className="modal-title">Conditions Générales</h5>
                   <button
                     type="button"
                     className="btn-close"
@@ -1051,14 +974,7 @@ const Register = () => {
                   ></button>
                 </div>
                 <div className="modal-body">
-                  <p className="text-muted">{TERMS_CONDITIONS.INTRODUCTION}</p>
-                  
-                  {TERMS_CONDITIONS.CONTENT.map((section, index) => (
-                    <div key={index} className="mb-4">
-                      <h6 className="fw-bold text-dark">{section.title}</h6>
-                      <p className="text-muted">{section.text}</p>
-                    </div>
-                  ))}
+                  <p>En créant un compte sur TN360, vous acceptez nos conditions d'utilisation...</p>
                 </div>
                 <div className="modal-footer">
                   <button
@@ -1066,8 +982,7 @@ const Register = () => {
                     className="btn btn-primary"
                     onClick={handleCloseModal}
                   >
-                    <i className="bi bi-check-lg me-2"></i>
-                    {TERMS_CONDITIONS.CLOSE_BUTTON_TEXT}
+                    J'ai compris
                   </button>
                 </div>
               </div>

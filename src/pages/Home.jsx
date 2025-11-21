@@ -11,7 +11,7 @@ import Popular from "../components/Popular";
 import { Row, Col } from 'react-bootstrap';
 import mydealsImg from '../assets/mydealsImg.png';
 import recommnededImg from '../assets/recommnededImg.png';
-import recettesImg from '../assets/images/recettes.jpg';
+import recettesImg from '../assets/images/recettes.png';
 
 const Home = () => {
   const { categories = [], loading: categoriesLoading, error: categoriesError } = useSelector(

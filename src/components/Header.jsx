@@ -79,6 +79,8 @@ const Header = () => {
     { path: "/categories", label: "Product", icon: "fa-th-large" },
     { path: "/MesDeals", label: "deals", icon: "fa-tag" },
     { path: "/Catalogue", label: "Catalogue", icon: "fa-book" },
+    { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" },
+
     { path: "/contact", label: "Contact", icon: "fa-envelope" }
   ];
 

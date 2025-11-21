@@ -14,6 +14,7 @@ import orderReducer from "./slices/order.js"
 import searchReducer from "./slices/search.js"
 import recipesReducer from "./slices/recipes"; // Ajoutez cette ligne
 import dealsReducer from "./slices/deals"; // au lieu de deal.js
+import promotionsReducer from "./slices/promotions"; // ✅ Nouveau slice pour les promotions
 
 
 // Import du middleware d'authentification
@@ -33,8 +34,9 @@ const store = configureStore({
         anniversaire: anniversaireReducer,
         order: orderReducer,
         search: searchReducer,
-            recipes: recipesReducer,
-    deals: dealsReducer
+        recipes: recipesReducer,
+        deals: dealsReducer,
+        promotions: promotionsReducer, // ✅ Nouveau reducer pour les promotions
 
     },
     middleware: (getDefaultMiddleware) =>

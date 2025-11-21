@@ -1,11 +1,13 @@
 // ==================== CONFIGURATION ====================
 
-// URL de base de l'API (production uniquement)
 const BASE_URL = 'https://tn360-back-office-122923924979.europe-west1.run.app';
 const API_BASE_URL = `${BASE_URL}/api/v1`;
 
 // Configuration du timeout
 const API_TIMEOUT = 15000;
+
+// Google Maps API Key
+export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 // ==================== API ENDPOINTS ====================
 
@@ -22,6 +24,10 @@ export const API_ENDPOINTS = {
     PROFILE_UPDATE: `${API_BASE_URL}/auth/profile/update`,
     LOGOUT: `${API_BASE_URL}/auth/logout`,
     REFRESH_TOKEN: `${API_BASE_URL}/auth/refresh`,
+    // ⭐ EMAIL VERIFICATION
+    VERIFY_EMAIL: `${API_BASE_URL}/auth/verify-email`,
+    RESEND_OTP: `${API_BASE_URL}/auth/resend-otp`,
+    CHECK_VERIFICATION_STATUS: `${API_BASE_URL}/auth/check-verification-status`,
   },
 
   // ==================== USER MANAGEMENT ====================
@@ -49,28 +55,21 @@ export const API_ENDPOINTS = {
 
   // ==================== DEALS ====================
   DEALS: {
-    // Depense Deals
     DEPENSE: {
       ALL: `${API_BASE_URL}/dealDepense`,
       BY_CLIENT: (clientId) => `${API_BASE_URL}/dealDepense/clientId/${clientId}`,
       TRANSFER: (dealId) => `${API_BASE_URL}/dealDepense/${dealId}/transfer-cagnotte`,
     },
-    
-    // Marque Deals
     MARQUE: {
       ALL: `${API_BASE_URL}/dealMarque`,
       BY_CLIENT: (clientId) => `${API_BASE_URL}/dealMarque/clientId/${clientId}`,
       TRANSFER: (dealId) => `${API_BASE_URL}/dealMarque/${dealId}/transfer-cagnotte`,
     },
-    
-    // Frequence Deals
     FREQUENCE: {
       ALL: `${API_BASE_URL}/dealFrequence`,
       BY_CLIENT: (clientId) => `${API_BASE_URL}/dealFrequence/clientId/${clientId}`,
       TRANSFER: (dealId) => `${API_BASE_URL}/dealFrequence/${dealId}/transfer-cagnotte`,
     },
-    
-    // Anniversaire Deals
     ANNIVERSAIRE: {
       ALL: `${API_BASE_URL}/dealAnniversaire`,
       BY_CLIENT: (clientId) => `${API_BASE_URL}/dealAnniversaire/clientId/${clientId}`,
@@ -82,6 +81,11 @@ export const API_ENDPOINTS = {
   OFFERS: {
     ALL: `${API_BASE_URL}/offre`,
     BY_ID: (id) => `${API_BASE_URL}/offre/${id}`,
+  },
+
+  // ==================== PROMOTIONS ====================
+  PROMOTIONS: {
+    BY_CLIENT: (clientId) => `${API_BASE_URL}/promotions/client/${clientId}`,
   },
 
   // ==================== BANNERS ====================
@@ -104,6 +108,7 @@ export const API_ENDPOINTS = {
     BY_ID: (orderId) => `${API_BASE_URL}/orders/${orderId}`,
     UPDATE: (orderId) => `${API_BASE_URL}/orders/${orderId}`,
     CANCEL: (orderId) => `${API_BASE_URL}/orders/${orderId}/cancel`,
+    PDF: (orderId) => `${API_BASE_URL}/orders/orderpdf/${orderId}`,
   },
 
   // ==================== PAYMENTS ====================
@@ -126,15 +131,24 @@ export const API_ENDPOINTS = {
     AVATAR: `${API_BASE_URL}/upload/avatar`,
     DOCUMENT: `${API_BASE_URL}/upload/document`,
   },
+
+  // ==================== CADEAUX ====================
+  CADEAUX: {
+    ALL: `${API_BASE_URL}/cadeaux`,
+    BY_ID: (id) => `${API_BASE_URL}/cadeaux/${id}`,
+    BY_CLIENT: (clientId) => `${API_BASE_URL}/cadeaux/client/${clientId}`,
+    ALL_BY_CLIENT: (clientId) => `${API_BASE_URL}/cadeaux/client/${clientId}/all`,
+    BY_TYPE: (type) => `${API_BASE_URL}/cadeaux/type/${type}`,
+    ACTIVE_COUNT: `${API_BASE_URL}/cadeaux/active-count`,
+    CREATE: `${API_BASE_URL}/cadeaux`,
+    UPDATE: (id) => `${API_BASE_URL}/cadeaux/${id}`,
+    DELETE: (id) => `${API_BASE_URL}/cadeaux/${id}`,
+    TOGGLE_STATUS: (id) => `${API_BASE_URL}/cadeaux/${id}/toggle-status`,
+  },
 };
 
 // ==================== HELPER FUNCTIONS ====================
 
-/**
- * Get authentication headers
- * @param {string} token - Authentication token
- * @returns {Object} Headers object
- */
 export const getAuthHeaders = (token = null) => {
   const authToken = token || localStorage.getItem('token');
   
@@ -145,11 +159,6 @@ export const getAuthHeaders = (token = null) => {
   };
 };
 
-/**
- * Get authentication headers for file uploads
- * @param {string} token - Authentication token
- * @returns {Object} Headers object
- */
 export const getAuthHeadersMultipart = (token = null) => {
   const authToken = token || localStorage.getItem('token');
   
@@ -159,11 +168,6 @@ export const getAuthHeadersMultipart = (token = null) => {
   };
 };
 
-/**
- * Generic API error handler
- * @param {Error} error - Axios error object
- * @returns {string} User-friendly error message
- */
 export const handleApiError = (error) => {
   console.error('API Error:', error);
 
@@ -184,7 +188,6 @@ export const handleApiError = (error) => {
   }
 
   if (error.response?.status === 422) {
-    // Validation errors
     const validationErrors = error.response.data.errors;
     if (Array.isArray(validationErrors)) {
       return validationErrors[0]?.message || validationErrors[0] || 'Erreur de validation.';
@@ -206,11 +209,6 @@ export const handleApiError = (error) => {
   return error.response?.data?.message || error.message || 'Une erreur est survenue.';
 };
 
-/**
- * Check if token is valid
- * @param {string} token - Authentication token
- * @returns {Promise<boolean>} Token validity
- */
 export const validateToken = async (token) => {
   try {
     const response = await fetch(API_ENDPOINTS.USER.PROFILE, {
@@ -224,12 +222,11 @@ export const validateToken = async (token) => {
   }
 };
 
-// ==================== EXPORTS ====================
-
 export default {
   BASE_URL,
   API_BASE_URL,
   API_TIMEOUT,
+  GOOGLE_MAPS_API_KEY,
   ENDPOINTS: API_ENDPOINTS,
   getAuthHeaders,
   getAuthHeadersMultipart,

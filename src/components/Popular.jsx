@@ -1,138 +1,374 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { fetchPopular } from '../store/slices/Popular';
+// Popular.jsx — UI Premium (Bleu + Orange + Carousel Automatique)
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchPopularWithPromotions,
+  selectPopularProducts,
+  selectPopularLoading,
+  selectHasPromotions,
+} from "../store/slices/Popular";
+import { useNavigate } from "react-router-dom";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  Badge,
+  Spinner,
+} from "react-bootstrap";
+import { FaTag, FaStar, FaShoppingCart } from "react-icons/fa";
+import toast from "react-hot-toast";
+import Cookies from "js-cookie";
 
 const Popular = () => {
-  const { popular = [], loading, error } = useSelector(state => state.popular);
-  const products = popular.products || [];
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
+
+  const products = useSelector(selectPopularProducts);
+  const loading = useSelector(selectPopularLoading);
+  const hasPromotions = useSelector(selectHasPromotions);
+
+  const userProfile = useSelector((state) => state.auth?.user);
+  const clientId =
+    userProfile?.ID_client ||
+    userProfile?.id ||
+    localStorage.getItem("client_id");
+
+  const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide());
 
   useEffect(() => {
-    dispatch(fetchPopular());
-  }, [dispatch]);
+    dispatch(fetchPopularWithPromotions(clientId));
+  }, [dispatch, clientId]);
 
-  const productHandler = (id, type_id) => {
-    navigate(`/product/${id}`, { state: { subId: type_id } });
+  useEffect(() => {
+    const handleResize = () => setItemsPerSlide(getItemsPerSlide());
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Auto slide
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) =>
+        products && products.length
+          ? (prev + 1) % Math.ceil(products.length / itemsPerSlide)
+          : 0
+      );
+    }, 4000); // Change slide every 4 seconds
+    return () => clearInterval(interval);
+  }, [products, itemsPerSlide]);
+
+  function getItemsPerSlide() {
+    if (window.innerWidth < 640) return 2;
+    if (window.innerWidth < 1024) return 3;
+    return 6;
+  }
+
+  const getImageUrl = (product) => {
+    const imageUrl = product.img || product.picture;
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+      return imageUrl;
+    }
+    return `${IMAGE_BASE_URL}/${imageUrl}`;
   };
 
-  // Calculate total pages
-  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const handleImageError = (e) => {
+    e.target.style.display = "none";
+  };
 
-  // Slice products for the current page
-  const currentProducts = products.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const handleProductClick = (product) => {
+    navigate(`/product/${product.id}`, {
+      state: {
+        isPromotion: product.isPromotion,
+        pivot: product.pivot,
+        promo_name: product.promo_name,
+      },
+    });
+  };
 
-  // Handle pagination
-  const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+  const formatPrice = (price) => parseFloat(price).toFixed(3);
+
+  const addToCartHandler = (product) => {
+    const quantity = 1;
+    let price, finalPrice;
+
+    if (product.isPromotion && product.pivot) {
+      price = parseFloat(product.pivot.original_price) || 0;
+      finalPrice = parseFloat(product.pivot.promo_price) || 0;
+    } else {
+      price = parseFloat(product.price) || 0;
+      finalPrice = price;
+    }
+
+    const total = (finalPrice * quantity).toFixed(3);
+    const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
+
+    const newItem = {
+      id: product.id,
+      name: product.name,
+      Initialprice: price.toFixed(3),
+      price: finalPrice.toFixed(3),
+      total,
+      quantity,
+      isPromotion: product.isPromotion,
+      promo_name: product.isPromotion ? product.promo_name : null,
+    };
+
+    const existingItemIndex = cart.findIndex((el) => el.id === newItem.id);
+    if (existingItemIndex !== -1) {
+      cart[existingItemIndex].quantity += newItem.quantity;
+      cart[existingItemIndex].total = (
+        parseFloat(cart[existingItemIndex].total) + parseFloat(newItem.total)
+      ).toFixed(3);
+    } else {
+      cart.push(newItem);
+    }
+
+    Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
+
+    if (product.isPromotion && product.pivot) {
+      toast.success(
+        `Produit en promotion ajouté ! Économisez ${formatPrice(
+          price - finalPrice
+        )} DT`
+      );
+    } else {
+      toast.success("Produit ajouté au panier !");
     }
   };
 
-  const nextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
+  const slides = products.reduce((acc, product, i) => {
+    const slideIndex = Math.floor(i / itemsPerSlide);
+    if (!acc[slideIndex]) acc[slideIndex] = [];
+    acc[slideIndex].push(product);
+    return acc;
+  }, []);
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
 
-  const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
 
-  if (loading) return <p className="text-center text-gray-500">Loading popular products...</p>;
-  if (error) return <p className="text-center text-red-500">Failed to load popular products. Please try again.</p>;
+  if (loading) {
+    return (
+      <Container className="d-flex justify-content-center align-items-center py-5">
+        <Spinner animation="border" variant="primary" />
+      </Container>
+    );
+  }
+
+  if (!products || products.length === 0) {
+    return (
+      <Container className="py-5">
+        <div className="text-center py-5 bg-light rounded">
+          <p className="text-muted">Aucun produit disponible pour le moment</p>
+        </div>
+      </Container>
+    );
+  }
 
   return (
-    <div className="w-full mx-auto px-2 py-1 ">
-      <h1 className="text-center font-bold text-blue-360 mb-8 sm:text-lg md:text-xl lg:text-2xl">Populaire</h1>
-
-      {/* Products Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-4 mb-8">
-        {currentProducts?.map((product) => {
-          const discountedPrice = (product.price * 0.9).toFixed(2); // Calculate discounted price
-
-          return (
-            <div key={product.id} className="transform hover:scale-105 transition duration-300 ease-in-out">
-              <div className=" border rounded-xl p-1 shadow-xl hover:shadow-xl transition-all bg-white bg-opacity-60 hover:bg-opacity-100 ">
-                {/* Image with fade-in effect */}
-                <img
-                  src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${product.img}`}
-                  alt={product.name}
-                  className="w-auto mx-auto h-20 sm:h-20 md:h-20 object-contain rounded-t-xl mb-2 duration-500  "
-                />
-                <div className="text-center">
-                  <h2 className="text-lg sm:text-base font-semibold text-gray-800">{product.name.length > 12 ?product.name.slice(0, 12) + "..." : product.name}</h2>
-                  <p className="text-sm text-gray-500">Avec remise</p>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2  mt-2">
-                  <div className="flex flex-col justify-center items-center text-orange-360">
-                    <i className="fa-regular fa-money-bill-1 px-1"></i>
-                    <del className="font-normal sm:text-xs lg:text-base">{product.price}dt</del>
-                  </div>
-
-                  <div className="relative flex items-center justify-center top-0 left-0 bg-red-500 text-white text-xs rounded-full ">
-                    -10%
-                  </div>
-
-                  <div className="flex flex-col justify-center items-center text-green-500 font-normal sm:text-xs lg:text-base">
-                    <i className="fa-regular fa-money-bill-1 px-1"></i>
-                    {discountedPrice}dt
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <button
-                    className="w-full bg-blue-360 text-white py-2 rounded-lg hover:bg-blue-500 transition duration-200 transform hover:scale-105 shadow-md focus:outline-none sm:text-sm"
-                    onClick={() => productHandler(product.id, product.type_id)}
-                  >
-                    Voir détails
-                  </button>
-                </div>
+    <Container fluid className="py-4">
+      {/* Header avec icône */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="d-flex align-items-center gap-3">
+          {hasPromotions ? (
+            <>
+              
+            </>
+          ) : (
+            <>
+              <FaStar className="fs-2" style={{ color: "#FF9500" }} />
+              <div>
+                <h3 className="fw-bold mb-0" style={{ color: "#0A1E3C" }}>
+                  Produits Populaires
+                </h3>
+                <p className="text-muted small mb-0">
+                  Tendances & meilleures ventes
+                </p>
               </div>
-            </div>
-          );
-        })}
+            </>
+          )}
+        </div>
+
+        {/* Bouton Voir Plus */}
+      <Button
+  onClick={() => navigate("/promotions")}
+  className="py-2 px-4 rounded-xl font-semibold text-white shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+  style={{
+    background: "linear-gradient(90deg, #4F46E5, #6366F1)", // Indigo dégradé
+    border: "none",
+    fontSize: "0.9rem",
+  }}
+>
+  Voir Plus
+</Button>
+
       </div>
 
-      {/* Pagination Controls */}
-      <div className="flex justify-center space-x-4 mb-2">
-        <button
-          onClick={prevPage}
-          className="px-3 py-2 sm:p-1 bg-blue-360 text-white text-xs sm:text-xs md:text-base  rounded-full hover:bg-blue-500 transition duration-300"
-          disabled={currentPage === 1}
-        >
-          <i className="fa-solid fa-chevron-left"></i> Previous
-        </button>
-
-        {/* Page Numbers */}
-        <div className="flex space-x-2">
-          {Array.from({ length: totalPages }, (_, index) => (
-            <button
+      {/* Carousel Produits */}
+      <div className="position-relative">
+        <div className="overflow-hidden">
+          {slides.map((slide, index) => (
+            <Row
               key={index}
-              onClick={() => goToPage(index + 1)}
-              className={`px-2 sm:px-3 sm:py-2  md:px-4 md:py-2  text-xs sm:text-xs md:text-base rounded-lg font-medium ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              className={`g-2 g-md-3 transition-all duration-500 ${
+                index === currentIndex ? "d-flex" : "d-none"
+              }`}
             >
-              {index + 1}
-            </button>
+              {slide.map((product) => {
+                const imageUrl = getImageUrl(product);
+                return (
+                  <Col key={product.id} xs={6} sm={4} md={3} lg={2}>
+                    <Card className="h-100 shadow-sm border-0 product-card">
+                      <div className="position-relative">
+                        {imageUrl && (
+                          <Card.Img
+                            variant="top"
+                            src={imageUrl}
+                            alt={product.name}
+                            style={{
+                              height: "150px",
+                              objectFit: "contain",
+                              padding: "10px",
+                            }}
+                            onError={handleImageError}
+                          />
+                        )}
+
+                        {/* Panier */}
+                        <Button
+                          variant=""
+                          size="sm"
+                          className="position-absolute top-0 end-0 m-1 rounded-circle d-flex align-items-center justify-content-center"
+                          onClick={() => addToCartHandler(product)}
+                          title="Ajouter au panier"
+                          style={{
+                            width: "28px",
+                            height: "28px",
+                            background: "#1E90FF",
+                            color: "white",
+                            border: "none",
+                          }}
+                        >
+                          <FaShoppingCart size={14} />
+                        </Button>
+
+                        {/* Badge promo */}
+                        {product.isPromotion && product.pivot ? (
+    <Badge className="position-absolute top-0 start-0 m-1 badge-red">
+  -{parseFloat(product.pivot.discount_percent).toFixed(0)}%
+</Badge>
+
+
+                        ) : (
+                          <Badge
+                            className="position-absolute top-0 start-0 m-1"
+                            style={{
+                              background: "#FF9500",
+                              fontSize: "0.7rem",
+                              padding: "3px 6px",
+                            }}
+                          >
+                            <FaStar className="me-1" size={10} />
+                            Top
+                          </Badge>
+                        )}
+                      </div>
+
+                      <Card.Body className="d-flex flex-column">
+                        <Card.Title
+                          className="text-truncate mb-1"
+                          title={product.name}
+                          style={{ minHeight: "35px", fontSize: "0.875rem" }}
+                        >
+                          {product.name}
+                        </Card.Title>
+
+                        {/* Prix */}
+                        <div className="mt-auto text-center" style={{ fontSize: "0.875rem" }}>
+                          {product.isPromotion && product.pivot ? (
+                            <>
+                              <div className="text-muted text-decoration-line-through small">
+                                {formatPrice(product.pivot.original_price)} DT
+                              </div>
+                              <div className="fw-bold" style={{ color: "#FF3B30" }}>
+                                {formatPrice(product.pivot.promo_price)} DT
+                              </div>
+                            </>
+                          ) : (
+                            <div className="fw-bold" style={{ color: "#FF9500" }}>
+                              {formatPrice(product.price)} DT
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Bouton Voir Détails */}
+                        <Button
+                          onClick={() => handleProductClick(product)}
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-1 rounded-lg font-medium transition-colors mt-1"
+                          style={{ border: "none", fontSize: "0.875rem" }}
+                        >
+                          Voir détails
+                        </Button>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                );
+              })}
+            </Row>
           ))}
         </div>
 
-        <button
-          onClick={nextPage}
-          className="px-3 py-2 bg-blue-360 text-white text-xs sm:text-xs md:text-base  rounded-full hover:bg-blue-500 transition duration-300"
-          disabled={currentPage === totalPages}
-        >
-          Next <i className="fa-solid fa-chevron-right"></i>
-        </button>
+        {/* Flèches carousel */}
+        {slides.length > 1 && (
+          <>
+            <Button
+              onClick={prevSlide}
+              className="position-absolute top-50 start-0 translate-middle-y rounded-circle p-1 d-flex align-items-center justify-content-center"
+              style={{ background: "transparent", border: "none", color: "#000" }}
+            >
+              &#10094;
+            </Button>
+            <Button
+              onClick={nextSlide}
+              className="position-absolute top-50 end-0 translate-middle-y rounded-circle p-1 d-flex align-items-center justify-content-center"
+              style={{ background: "transparent", border: "none", color: "#000" }}
+            >
+              &#10095;
+            </Button>
+          </>
+        )}
       </div>
-    </div>
+
+      {/* Styles */}
+      <style jsx>{`
+        .product-card {
+          border-radius: 12px;
+          transition: 0.25s ease;
+        }
+        .product-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        .badge-red {
+  background-color: #FF3B30 !important;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 3px 6px;
+}
+
+      `}</style>
+    </Container>
   );
 };
 

@@ -23,8 +23,6 @@ const MesDeals = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showCongrats, setShowCongrats] = useState(false);
   const [congratsData, setCongratsData] = useState(null);
-  
-  // État local pour les deals transférés
   const [localTransferredDeals, setLocalTransferredDeals] = useState([]);
 
   const images = [
@@ -40,7 +38,6 @@ const MesDeals = () => {
     ...anniversaire.map((d) => ({ ...d, type: "anniversaire" })),
   ];
 
-  // Mettre à jour les deals transférés localement
   useEffect(() => {
     setLocalTransferredDeals(transferredDeals);
   }, [transferredDeals]);
@@ -64,21 +61,19 @@ const MesDeals = () => {
     return () => clearInterval(timer);
   }, [images.length]);
 
-  // Helper pour obtenir la couleur de la marque
   const getBrandColor = (brandName) => {
     if (!brandName) return '#7C3AED';
-    
     const brand = brandName.toUpperCase();
     switch (brand) {
       case 'CARREFOUR': return '#0066CC';
       case 'MONOPRIX': return '#E31837';
       case 'AZIZA': return '#FF6B35';
       case 'MG': return '#00A651';
+      case 'DELICE': return '#E31837';
       default: return '#7C3AED';
     }
   };
 
-  // Helper pour obtenir les initiales de la marque
   const getBrandInitials = (brandName) => {
     if (!brandName) return '?';
     const words = brandName.split(' ');
@@ -90,92 +85,85 @@ const MesDeals = () => {
       : brandName[0].toUpperCase();
   };
 
-  // Fonction pour obtenir le gain maximum
   const getHighestGain = (deal) => {
     if (deal.type === "frequence") {
       return parseFloat(deal.gain) || 0;
     }
-    
     let highestGain = 0;
-    if ((deal.gain_objectif_5 ?? 0) > 0) {
-      highestGain = deal.gain_objectif_5;
-    } else if ((deal.gain_objectif_4 ?? 0) > 0) {
-      highestGain = deal.gain_objectif_4;
-    } else if ((deal.gain_objectif_3 ?? 0) > 0) {
-      highestGain = deal.gain_objectif_3;
-    } else if ((deal.gain_objectif_2 ?? 0) > 0) {
-      highestGain = deal.gain_objectif_2;
-    } else if ((deal.gain_objectif_1 ?? 0) > 0) {
-      highestGain = deal.gain_objectif_1;
-    }
+    if ((deal.gain_objectif_5 ?? 0) > 0) highestGain = deal.gain_objectif_5;
+    else if ((deal.gain_objectif_4 ?? 0) > 0) highestGain = deal.gain_objectif_4;
+    else if ((deal.gain_objectif_3 ?? 0) > 0) highestGain = deal.gain_objectif_3;
+    else if ((deal.gain_objectif_2 ?? 0) > 0) highestGain = deal.gain_objectif_2;
+    else if ((deal.gain_objectif_1 ?? 0) > 0) highestGain = deal.gain_objectif_1;
     return highestGain;
   };
 
-  // Vérifier si un deal a déjà été transféré (version locale)
+  // ✅ NOUVELLE FONCTION: Obtenir le compteur d'achats pour un deal
+  const getDealProgress = (deal) => {
+    if (deal.type === "frequence") {
+      return {
+        current: Math.floor(parseFloat(deal.compteur_frequence) || 0),
+        isFrequence: true
+      };
+    }
+    // Pour marque, depense, anniversaire - utiliser compteur_objectif
+    // ✅ Aussi vérifier montant_achats ou total_achats comme fallback
+    const compteur = parseFloat(deal.compteur_objectif) || 
+                     parseFloat(deal.montant_achats) || 
+                     parseFloat(deal.total_achats) ||
+                     parseFloat(deal.current_amount) || 0;
+    return {
+      current: compteur,
+      isFrequence: false
+    };
+  };
+
   const isDealTransferred = (deal) => {
     const dealKey = `${deal.type}_${deal.ID}`;
     return localTransferredDeals.includes(dealKey);
   };
 
-  // Fonction pour gérer le transfert MANUEL - SEULEMENT SI COMPLÈTEMENT TERMINÉ
   const handleManualTransfer = async (deal) => {
     if (!isDealFullyCompleted(deal)) {
       toast.error("Le deal n'est pas encore complètement terminé!");
       return;
     }
-
     if (isDealTransferred(deal)) {
       toast.error("Ce deal a déjà été transféré!");
       return;
     }
-
     const highestGain = getHighestGain(deal);
-    
     if (highestGain <= 0) {
       toast.error("Aucun montant à transférer!");
       return;
     }
-
     try {
-      // Marquer comme transféré localement
       setLocalTransferredDeals(prev => [...prev, `${deal.type}_${deal.ID}`]);
-
-      // Effectuer le transfert - le rechargement se fait automatiquement dans deals.js
       await dispatch(transferDealToCagnotte({
         dealType: deal.type,
         dealId: deal.ID,
         amount: highestGain
       })).unwrap();
-
-      // Afficher la modal de félicitations
       setCongratsData({ amount: highestGain, type: deal.type });
       setShowCongrats(true);
-
-      // Note: Le profil et les deals sont déjà rechargés dans transferDealToCagnotte
-      // La cagnotte se mettra à jour automatiquement via Redux
-
     } catch (error) {
       console.error("Transfer failed:", error);
-      // Annuler le marquage local en cas d'erreur
       setLocalTransferredDeals(prev => prev.filter(id => id !== `${deal.type}_${deal.ID}`));
       toast.error("Échec du transfert. Veuillez réessayer.");
     }
   };
 
-  // Victory Card Component - SEULEMENT POUR LES DEALS COMPLÈTEMENT TERMINÉS
+  // Victory Card Component
   const VictoryCard = ({ deal }) => {
     const [isTransferring, setIsTransferring] = useState(false);
     const isTransferred = isDealTransferred(deal);
     const isFullyCompleted = isDealFullyCompleted(deal);
     const highestGain = getHighestGain(deal);
 
-    if (!isFullyCompleted) {
-      return null;
-    }
+    if (!isFullyCompleted) return null;
 
     const handleTransfer = async () => {
       if (isTransferred || isTransferring || !isFullyCompleted) return;
-      
       setIsTransferring(true);
       await handleManualTransfer(deal);
       setIsTransferring(false);
@@ -195,86 +183,32 @@ const MesDeals = () => {
           display: 'flex',
           flexDirection: 'column'
         }}>
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.1,
-            background: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Ccircle cx=\'10\' cy=\'10\' r=\'5\' fill=\'%23FFD700\'/%3E%3Ccircle cx=\'50\' cy=\'30\' r=\'3\' fill=\'%23FF6B6B\'/%3E%3Ccircle cx=\'80\' cy=\'20\' r=\'4\' fill=\'%234ECDC4\'/%3E%3C/svg%3E")',
-            pointerEvents: 'none'
-          }} />
-
-          <div style={{
-            fontSize: '48px',
-            textAlign: 'center',
-            marginBottom: '12px',
-            animation: 'bounce 2s infinite'
-          }}>
-            🏆
-          </div>
-
-          <div style={{
-            textAlign: 'center',
-            color: 'white',
-            marginBottom: '16px'
-          }}>
-            <h2 style={{
-              fontSize: '20px',
-              fontWeight: 'bold',
-              margin: '0 0 6px 0',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
-            }}>
+          <div style={{ fontSize: '48px', textAlign: 'center', marginBottom: '12px' }}>🏆</div>
+          <div style={{ textAlign: 'center', color: 'white', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 6px 0' }}>
               FÉLICITATIONS ! 🎉
             </h2>
-            <p style={{
-              fontSize: '13px',
-              margin: 0,
-              opacity: 0.9
-            }}>
+            <p style={{ fontSize: '13px', margin: 0, opacity: 0.9 }}>
               Vous avez complété tous les objectifs !
             </p>
           </div>
-
           <div style={{
             backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            backdropFilter: 'blur(10px)',
             borderRadius: '12px',
             padding: '16px',
             textAlign: 'center',
-            marginBottom: '16px',
-            border: '2px solid rgba(255, 255, 255, 0.3)'
+            marginBottom: '16px'
           }}>
-            <div style={{
-              color: 'rgba(255, 255, 255, 0.8)',
-              fontSize: '12px',
-              marginBottom: '6px',
-              textTransform: 'uppercase',
-              letterSpacing: '1px'
-            }}>
+            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', marginBottom: '6px' }}>
               {isTransferred ? 'Montant transféré' : 'Gain total à transférer'}
             </div>
-            <div style={{
-              color: '#FFD700',
-              fontSize: '36px',
-              fontWeight: 'bold',
-              textShadow: '2px 2px 8px rgba(0,0,0,0.3)',
-              marginBottom: '4px'
-            }}>
+            <div style={{ color: '#FFD700', fontSize: '36px', fontWeight: 'bold' }}>
               {Number(highestGain).toFixed(1)} DT
             </div>
-            <div style={{
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontSize: '11px'
-            }}>
-              {isTransferred ? 'déjà dans votre cagnotte' : 'Tous les objectifs atteints!'}
-            </div>
           </div>
-
           {deal.type === 'marque' && deal.marque_name && (
             <div style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              backgroundColor: 'rgba(255,255,255,0.15)',
               borderRadius: '12px',
               padding: '12px',
               textAlign: 'center',
@@ -285,93 +219,43 @@ const MesDeals = () => {
               justifyContent: 'center',
               gap: '12px'
             }}>
-              {deal.marque_logo ? (
-                <img 
-                  src={deal.marque_logo} 
-                  alt={deal.marque_name}
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '8px',
-                    objectFit: 'cover'
-                  }}
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
-                />
-              ) : null}
               <div style={{
-                display: deal.marque_logo ? 'none' : 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
+                width: '36px', height: '36px', borderRadius: '8px',
                 backgroundColor: getBrandColor(deal.marque_name),
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 'bold'
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'white', fontSize: '14px', fontWeight: 'bold'
               }}>
                 {getBrandInitials(deal.marque_name)}
               </div>
               <div>
                 <div style={{ fontSize: '11px', opacity: 0.8 }}>Marque</div>
-                <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
-                  {deal.marque_name}
-                </div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold' }}>{deal.marque_name}</div>
               </div>
             </div>
           )}
-
           <button
             onClick={handleTransfer}
-            disabled={isTransferred || isTransferring || transferLoading || !isFullyCompleted}
-            className="w-100"
+            disabled={isTransferred || isTransferring || transferLoading}
             style={{
-              backgroundColor: isTransferred ? '#4CAF50' : 
-                             isTransferring ? '#FFA000' : '#FFD700',
+              backgroundColor: isTransferred ? '#4CAF50' : isTransferring ? '#FFA000' : '#FFD700',
               color: isTransferred ? 'white' : '#1A202C',
               border: 'none',
               borderRadius: '10px',
               padding: '12px',
               fontSize: '15px',
               fontWeight: 'bold',
-              cursor: (isTransferred || isTransferring || !isFullyCompleted) ? 'not-allowed' : 'pointer',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-              opacity: (isTransferred || isTransferring || !isFullyCompleted) ? 0.7 : 1,
+              cursor: (isTransferred || isTransferring) ? 'not-allowed' : 'pointer',
               marginTop: 'auto'
             }}
           >
-            {isTransferring ? (
-              <span>🔄 Transfert en cours...</span>
-            ) : isTransferred ? (
-              <span>✅ Déjà transféré</span>
-            ) : !isFullyCompleted ? (
-              <span>⏳ Objectifs en cours...</span>
-            ) : (
-              <span>💰 Transférer {Number(highestGain).toFixed(1)} DT</span>
-            )}
+            {isTransferring ? '🔄 Transfert...' : isTransferred ? '✅ Déjà transféré' : `💰 Transférer ${Number(highestGain).toFixed(1)} DT`}
           </button>
-
-          {isTransferred && (
-            <div style={{
-              marginTop: '10px',
-              textAlign: 'center',
-              color: 'white',
-              fontSize: '12px',
-              opacity: 0.9
-            }}>
-              🎊 Le montant a été ajouté à votre cagnotte !
-            </div>
-          )}
         </div>
       </div>
     );
   };
 
-  // Regular Deal Card Component
+  // Regular Deal Card Component - ✅ MODIFIÉ pour afficher les achats même si objectif non atteint
   const DealCard = ({ deal }) => {
     const [imageError, setImageError] = useState(false);
 
@@ -394,7 +278,9 @@ const MesDeals = () => {
         { value: parseFloat(deal.objectif_5) || 0, gain: parseFloat(deal.gain_objectif_5) || 0, level: 5 },
       ].filter(obj => obj.value > 0);
       
-      const current = parseFloat(deal.compteur_objectif) || 0;
+      // ✅ Utiliser getDealProgress pour avoir le bon compteur
+      const progressData = getDealProgress(deal);
+      const current = progressData.current;
       const activeObjective = objectives.find((o) => current < o.value) || objectives[objectives.length - 1];
       
       return {
@@ -411,18 +297,19 @@ const MesDeals = () => {
     const isFullyCompleted = isDealFullyCompleted(deal);
 
     const getBadgeName = () => {
-      if (deal.type === "marque") return "Marque";
+      if (deal.type === "marque") return deal.marque_name || "Marque";
       if (deal.type === "depense") return "Dépense";
       if (deal.type === "frequence") return "Fréquence";
       if (deal.type === "anniversaire") return "Anniversaire";
       return deal.type;
     };
 
-    if (isFullyCompleted) {
-      return null;
-    }
+    if (isFullyCompleted) return null;
 
     const brandColor = deal.type === 'marque' ? getBrandColor(deal.marque_name) : '#7C3AED';
+    
+    // ✅ Obtenir le montant des achats pour l'affichage
+    const progressData = getDealProgress(deal);
 
     return (
       <div className="col-12 col-md-6 col-lg-4 mb-3">
@@ -463,7 +350,6 @@ const MesDeals = () => {
                 backgroundColor: 'white',
                 borderRadius: '12px',
                 border: `2px solid ${brandColor}`,
-                boxShadow: `0 4px 12px ${brandColor}30`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -473,34 +359,22 @@ const MesDeals = () => {
                   <img 
                     src={deal.marque_logo} 
                     alt={deal.marque_name}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={() => setImageError(true)}
                   />
                 ) : (
-                  <div 
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '100%',
-                      height: '100%',
-                      background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)`,
-                      color: 'white',
-                      padding: '8px'
-                    }}
-                  >
-                    <div style={{
-                      fontSize: '18px',
-                      fontWeight: 'bold',
-                      marginBottom: '2px'
-                    }}>
-                      {getBrandInitials(deal.marque_name)}
-                    </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                    background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)`,
+                    color: 'white',
+                    fontSize: '18px',
+                    fontWeight: 'bold'
+                  }}>
+                    {getBrandInitials(deal.marque_name)}
                   </div>
                 )}
               </div>
@@ -523,22 +397,17 @@ const MesDeals = () => {
             <div style={{ color: '#718096', fontSize: '11px', marginBottom: '4px' }}>
               Gagnez jusqu'à
             </div>
-            <div style={{ 
-              color: brandColor, 
-              fontSize: '22px', 
-              fontWeight: 'bold'
-            }}>
+            <div style={{ color: brandColor, fontSize: '22px', fontWeight: 'bold' }}>
               {Number(objective.maxReward).toFixed(1)} DT
             </div>
             <div style={{ color: '#718096', fontSize: '10px' }}>
-              {deal.type === 'marque' && deal.marque_name ? (
-                `avec ${deal.marque_name}`
-              ) : (
-                "si vous atteignez l'objectif"
-              )}
+              {deal.type === 'marque' && deal.marque_name 
+                ? `avec ${deal.marque_name}`
+                : "si vous atteignez l'objectif"}
             </div>
           </div>
 
+          {/* Objectifs multiples */}
           {objective.objectives && objective.objectives.length > 0 && (
             <div style={{
               display: 'flex',
@@ -571,48 +440,31 @@ const MesDeals = () => {
                         zIndex: 0
                       }} />
                     )}
-                    
                     <div style={{
                       width: '32px',
                       height: '32px',
                       borderRadius: '50%',
-                      backgroundColor: isCompleted ? brandColor : 
-                                     isActive ? `${brandColor}40` : '#F7FAFC',
+                      backgroundColor: isCompleted ? brandColor : isActive ? `${brandColor}40` : '#F7FAFC',
                       border: `2px solid ${isCompleted || isActive ? brandColor : '#E2E8F0'}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       marginBottom: '6px',
                       position: 'relative',
-                      zIndex: 1,
-                      transition: 'all 0.3s ease'
+                      zIndex: 1
                     }}>
                       {isCompleted ? (
                         <span style={{ color: 'white', fontSize: '14px' }}>✓</span>
                       ) : (
-                        <span style={{
-                          color: isActive ? brandColor : '#CBD5E0',
-                          fontSize: '10px',
-                          fontWeight: 'bold'
-                        }}>
+                        <span style={{ color: isActive ? brandColor : '#CBD5E0', fontSize: '10px', fontWeight: 'bold' }}>
                           {obj.level}
                         </span>
                       )}
                     </div>
-                    
-                    <div style={{
-                      fontSize: '9px',
-                      color: isCompleted || isActive ? brandColor : '#A0AEC0',
-                      fontWeight: isCompleted || isActive ? 'bold' : 'normal',
-                      textAlign: 'center'
-                    }}>
+                    <div style={{ fontSize: '9px', color: isCompleted || isActive ? brandColor : '#A0AEC0', fontWeight: isCompleted || isActive ? 'bold' : 'normal', textAlign: 'center' }}>
                       {obj.value} DT
                     </div>
-                    <div style={{
-                      fontSize: '8px',
-                      color: '#718096',
-                      textAlign: 'center'
-                    }}>
+                    <div style={{ fontSize: '8px', color: '#718096', textAlign: 'center' }}>
                       +{obj.gain} DT
                     </div>
                   </div>
@@ -621,6 +473,7 @@ const MesDeals = () => {
             </div>
           )}
 
+          {/* Barre de progression */}
           <div style={{ marginBottom: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
               <span style={{ fontSize: '11px', color: '#718096' }}>
@@ -653,6 +506,7 @@ const MesDeals = () => {
             </div>
           </div>
 
+          {/* ✅ SECTION MODIFIÉE: Afficher les achats même si < objectif */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -664,30 +518,34 @@ const MesDeals = () => {
           }}>
             <span style={{ fontSize: '16px' }}>🎁</span>
             <span style={{ color: '#718096', fontWeight: '600' }}>
-              {deal.type === "frequence" 
-                ? `Mes visites : ${Math.floor(objective.current)}`
-                : `Mes achats : ${Number(deal.compteur_objectif || 0).toFixed(1)} DT`
+              {progressData.isFrequence 
+                ? `Mes visites : ${progressData.current}`
+                : `Mes achats : ${Number(progressData.current).toFixed(1)} DT`
               }
+              {deal.type === 'marque' && deal.marque_name && (
+                <span style={{ color: brandColor, marginLeft: '4px' }}>
+                  ({deal.marque_name})
+                </span>
+              )}
             </span>
           </div>
 
-          {!isFullyCompleted && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px',
-              backgroundColor: '#E6FFFA',
-              borderRadius: '8px',
-              marginTop: '8px',
-              border: '1px solid #81E6D9'
-            }}>
-              <span style={{ fontSize: '16px', color: '#319795' }}>⏳</span>
-              <span style={{ color: '#319795', fontSize: '11px', fontWeight: '600' }}>
-                Objectif en cours: {Math.round(progress)}% complété
-              </span>
-            </div>
-          )}
+          {/* Objectif en cours */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px',
+            backgroundColor: '#E6FFFA',
+            borderRadius: '8px',
+            marginTop: '8px',
+            border: '1px solid #81E6D9'
+          }}>
+            <span style={{ fontSize: '16px', color: '#319795' }}>⏳</span>
+            <span style={{ color: '#319795', fontSize: '11px', fontWeight: '600' }}>
+              Objectif en cours: {Math.round(progress)}% complété
+            </span>
+          </div>
         </div>
       </div>
     );
@@ -696,10 +554,7 @@ const MesDeals = () => {
   const CongratsModal = ({ data }) => (
     <div style={{
       position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
+      top: 0, left: 0, right: 0, bottom: 0,
       backgroundColor: 'rgba(0,0,0,0.5)',
       display: 'flex',
       alignItems: 'center',
@@ -716,34 +571,16 @@ const MesDeals = () => {
         width: '100%'
       }}>
         <div style={{ fontSize: '50px', marginBottom: '16px' }}>🎉</div>
-        <h2 style={{
-          color: '#2D3748',
-          fontSize: '24px',
-          fontWeight: 'bold',
-          marginBottom: '8px'
-        }}>
+        <h2 style={{ color: '#2D3748', fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>
           Félicitations!
         </h2>
-        <p style={{
-          color: '#718096',
-          fontSize: '14px',
-          marginBottom: '16px'
-        }}>
+        <p style={{ color: '#718096', fontSize: '14px', marginBottom: '16px' }}>
           Vous avez transféré
         </p>
-        <div style={{
-          color: '#10B981',
-          fontSize: '40px',
-          fontWeight: 'bold',
-          marginBottom: '20px'
-        }}>
+        <div style={{ color: '#10B981', fontSize: '40px', fontWeight: 'bold', marginBottom: '20px' }}>
           {data?.amount} DT
         </div>
-        <p style={{
-          color: '#718096',
-          fontSize: '13px',
-          marginBottom: '20px'
-        }}>
+        <p style={{ color: '#718096', fontSize: '13px', marginBottom: '20px' }}>
           vers votre cagnotte
         </p>
         <button
@@ -771,228 +608,187 @@ const MesDeals = () => {
       <div className="container-fluid vh-100 d-flex align-items-center justify-content-center" style={{ backgroundColor: '#F7FAFC' }}>
         <div className="text-center">
           <div style={{ fontSize: '60px', marginBottom: '16px' }}>🎁</div>
-          <h2 style={{ color: '#1A202C', fontSize: '20px', marginBottom: '8px' }}>
-            Connectez-vous
-          </h2>
-          <p style={{ color: '#718096', fontSize: '14px' }}>
-            pour voir vos offres fidélité
-          </p>
+          <h2 style={{ color: '#1A202C', fontSize: '20px', marginBottom: '8px' }}>Connectez-vous</h2>
+          <p style={{ color: '#718096', fontSize: '14px' }}>pour voir vos offres fidélité</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#F7FAFC',
-      paddingBottom: '80px'
-    }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#F7FAFC', paddingBottom: '80px' }}>
+      {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        backgroundColor: '#4F46E5',
         padding: '32px 20px 40px',
         color: 'white',
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Effet de vagues en arrière-plan */}
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '100px',
-          background: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1440 320\'%3E%3Cpath fill=\'%23ffffff\' fill-opacity=\'0.1\' d=\'M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z\'%3E%3C/path%3E%3C/svg%3E")',
-          backgroundSize: 'cover',
-          opacity: 0.3
-        }} />
-        
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px',
-            marginBottom: '8px'
-          }}>
-            <div style={{
-              fontSize: '32px',
-              filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))'
-            }}>
-              🎁
-            </div>
-            <h1 style={{
-              fontSize: '26px',
-              fontWeight: '800',
-              margin: 0,
-              textShadow: '0 2px 4px rgba(0,0,0,0.2)'
-            }}>
-              Mes Offres Fidélité
-            </h1>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '8px' }}>
+            <div style={{ fontSize: '32px' }}>🎁</div>
+            <h1 style={{ fontSize: '26px', fontWeight: '800', margin: 0 }}>Mes Offres Fidélité</h1>
           </div>
-          <p style={{
-            margin: 0,
-            fontSize: '14px',
-            textAlign: 'center',
-            opacity: 0.95,
-            fontWeight: '500',
-            letterSpacing: '0.5px'
-          }}>
+          <p style={{ margin: 0, fontSize: '14px', textAlign: 'center', color: '#E0E7FF', fontWeight: '500' }}>
             {allDeals.length} {allDeals.length > 1 ? 'offres actives' : 'offre active'}
           </p>
         </div>
       </div>
 
+      {/*
+      *
+      * NOUVELLES CARTES DE STATS
+      *
+      */}
       <div className="container-fluid px-3 py-3">
         <div className="row g-2">
+          
+          {/* CARTE CAGNOTTE */}
           <div className="col-4">
             <div style={{
-              background: 'linear-gradient(135deg, #9e6af9ff 0%, #9898deff 100%)',
-
+              background: '#FFFFFF', // Fond blanc
               borderRadius: '16px',
-              padding: '18px 10px',
+              padding: '16px 10px',
               textAlign: 'center',
-              boxShadow: '0 8px 16px rgba(139, 92, 246, 0.3)',
-              border: 'none',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)', // Ombre subtile
+              border: '1px solid #E2E8F0', // Bordure grise
               position: 'relative',
               overflow: 'hidden',
               transform: 'translateY(0)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              height: '100%'
             }}
             className="stat-card">
-              {/* Effet de brillance */}
-              <div style={{
-                position: 'absolute',
-                top: '-50%',
-                right: '-50%',
-                width: '100%',
-                height: '100%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
-                pointerEvents: 'none'
-              }} />
               
-              <div style={{ 
-                fontSize: '36px', 
-                marginBottom: '8px',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-              }}>💰</div>
+              {/* Icone dans un cercle coloré */}
               <div style={{
-                color: 'rgba(255,255,255,0.9)',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: '#FEF9C3', // Jaune pâle
+                color: '#B45309', // Jaune foncé
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                margin: '0 auto 12px'
+              }}>
+                💰
+              </div>
+              <div style={{
+                color: '#9CA3AF', // Gris pour le label
                 fontSize: '11px',
-                marginBottom: '6px',
+                marginBottom: '4px',
                 fontWeight: '600',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px'
               }}>
                 Cagnotte
               </div>
               <div style={{
-                color: '#FFFFFF',
+                color: '#1F2937', // Texte noir/gris foncé
                 fontSize: '20px',
                 fontWeight: 'bold',
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)'
               }}>
                 {Number(Userprofile?.cagnotte_balance || 0).toFixed(1)} DT
               </div>
             </div>
           </div>
 
+          {/* CARTE GAGNÉ */}
           <div className="col-4">
             <div style={{
-              background: 'linear-gradient(135deg, #3bcc9cff 0%, #0ca373ff 100%)',
+              background: '#FFFFFF',
               borderRadius: '16px',
-              padding: '18px 10px',
+              padding: '16px 10px',
               textAlign: 'center',
-              boxShadow: '0 8px 16px rgba(16, 185, 129, 0.3)',
-              border: 'none',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+              border: '1px solid #E2E8F0',
               position: 'relative',
               overflow: 'hidden',
               transform: 'translateY(0)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              height: '100%'
             }}
             className="stat-card">
-              {/* Effet de brillance */}
-              <div style={{
-                position: 'absolute',
-                top: '-50%',
-                right: '-50%',
-                width: '100%',
-                height: '100%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
-                pointerEvents: 'none'
-              }} />
               
-              <div style={{ 
-                fontSize: '36px', 
-                marginBottom: '8px',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-              }}>✅</div>
               <div style={{
-                color: 'rgba(255,255,255,0.9)',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: '#F0FDF4', // Vert pâle
+                color: '#15803D', // Vert foncé
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                margin: '0 auto 12px'
+              }}>
+                ✅
+              </div>
+              <div style={{
+                color: '#9CA3AF',
                 fontSize: '11px',
-                marginBottom: '6px',
+                marginBottom: '4px',
                 fontWeight: '600',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px'
               }}>
                 Gagné
               </div>
               <div style={{
-                color: '#FFFFFF',
+                color: '#1F2937',
                 fontSize: '20px',
                 fontWeight: 'bold',
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)'
               }}>
                 {Number(totalEarned || 0).toFixed(1)} DT
               </div>
             </div>
           </div>
 
+          {/* CARTE EN ATTENTE */}
           <div className="col-4">
             <div style={{
-              background: 'linear-gradient(135deg, #64748B 0%, #475569 100%)',
+              background: '#FFFFFF',
               borderRadius: '16px',
-              padding: '18px 10px',
+              padding: '16px 10px',
               textAlign: 'center',
-              boxShadow: '0 8px 16px rgba(100, 116, 139, 0.3)',
-              border: 'none',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+              border: '1px solid #E2E8F0',
               position: 'relative',
               overflow: 'hidden',
               transform: 'translateY(0)',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              height: '100%'
             }}
             className="stat-card">
-              {/* Effet de brillance */}
-              <div style={{
-                position: 'absolute',
-                top: '-50%',
-                right: '-50%',
-                width: '100%',
-                height: '100%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)',
-                pointerEvents: 'none'
-              }} />
               
-              <div style={{ 
-                fontSize: '36px', 
-                marginBottom: '8px',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-              }}>⏳</div>
               <div style={{
-                color: 'rgba(255,255,255,0.9)',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: '#F8FAFC', // Gris pâle
+                color: '#475569', // Gris foncé
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                margin: '0 auto 12px'
+              }}>
+                ⏳
+              </div>
+              <div style={{
+                color: '#9CA3AF',
                 fontSize: '11px',
-                marginBottom: '6px',
+                marginBottom: '4px',
                 fontWeight: '600',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px'
               }}>
                 En attente
               </div>
               <div style={{
-                color: '#FFFFFF',
+                color: '#1F2937',
                 fontSize: '20px',
                 fontWeight: 'bold',
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)'
               }}>
                 {Number(totalPending || 0).toFixed(1)} DT
               </div>
@@ -1055,7 +851,7 @@ const MesDeals = () => {
         
         .stat-card:hover {
           transform: translateY(-5px) !important;
-          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3) !important;
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
         }
         
         @keyframes fadeIn {

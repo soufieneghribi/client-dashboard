@@ -7,7 +7,6 @@ import { API_ENDPOINTS } from "../../services/api";
 // CONFIGURATION
 // ===================================
 
-// Configuration du timeout
 const API_TIMEOUT = 15000;
 
 // ===================================
@@ -37,7 +36,19 @@ export const SearchProduct = createAsyncThunk(
         }
       );
       
-      return response.data;
+      // ✅ CORRECTION: Gérer la structure de réponse du backend
+      // Le backend retourne { status, total_size, products }
+      if (response.data && response.data.products) {
+        return response.data.products;
+      }
+      
+      // Si la réponse est directement un tableau
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      return [];
+      
     } catch (error) {
       console.error("Search error:", error);
       
@@ -51,8 +62,9 @@ export const SearchProduct = createAsyncThunk(
         toast.error("Trop de recherches. Veuillez patienter un moment.");
       } else if (error.response?.status === 500) {
         toast.error("Erreur serveur lors de la recherche.");
-      } else {
-        toast.error("Échec de la recherche des produits");
+      } else if (!error.response) {
+        // Erreur réseau
+        toast.error("Problème de connexion. Vérifiez votre réseau.");
       }
       
       return rejectWithValue(
@@ -90,10 +102,23 @@ export const SearchProductWithFilters = createAsyncThunk(
         }
       );
       
-      return response.data;
+      // ✅ CORRECTION: Gérer la structure de réponse du backend
+      if (response.data && response.data.products) {
+        return response.data.products;
+      }
+      
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      return [];
+      
     } catch (error) {
       console.error("Search with filters error:", error);
-      toast.error("Échec de la recherche avec filtres");
+      
+      if (error.response?.status !== 404) {
+        toast.error("Échec de la recherche avec filtres");
+      }
       
       return rejectWithValue(
         error.response?.data?.message || "Échec de la recherche"
@@ -114,6 +139,7 @@ const searchSlice = createSlice({
     error: null,
     lastQuery: "",
     filters: {},
+    hasSearched: false, // ✅ NOUVEAU: Suivre si une recherche a été effectuée
   },
   reducers: {
     /**
@@ -124,6 +150,7 @@ const searchSlice = createSlice({
       state.lastQuery = "";
       state.error = null;
       state.filters = {};
+      state.hasSearched = false;
     },
     
     /**
@@ -155,6 +182,7 @@ const searchSlice = createSlice({
       .addCase(SearchProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.hasSearched = true;
       })
       .addCase(SearchProduct.fulfilled, (state, action) => {
         state.loading = false;
@@ -174,6 +202,7 @@ const searchSlice = createSlice({
       .addCase(SearchProductWithFilters.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.hasSearched = true;
       })
       .addCase(SearchProductWithFilters.fulfilled, (state, action) => {
         state.loading = false;
@@ -207,5 +236,6 @@ export const selectSearchLoading = (state) => state.search.loading;
 export const selectSearchError = (state) => state.search.error;
 export const selectLastQuery = (state) => state.search.lastQuery;
 export const selectFilters = (state) => state.search.filters;
+export const selectHasSearched = (state) => state.search.hasSearched;
 
 export default searchSlice.reducer;

@@ -8,7 +8,10 @@ import axios from 'axios';
 import { fetchUserProfile } from "../store/slices/user";
 import { selectToken, logout, refreshAuth } from "../store/slices/authSlice";
 import store from "../store";
-import apiConfig, { GOOGLE_MAPS_API_KEY } from "../services/api";
+import apiConfig from "../services/api";
+
+// ⭐ TOKEN GOOGLE MAPS INTÉGRÉ DIRECTEMENT POUR ÉVITER LES PROBLÈMES EN PRODUCTION
+const GOOGLE_MAPS_API_KEY = "AIzaSyAFwGAsC3VUZYdxkEwB43DEf5tpSx4hAZg";
 
 /**
  * OrderConfirmation Component

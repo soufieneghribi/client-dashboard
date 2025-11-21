@@ -53,7 +53,8 @@ const Register = () => {
   const [isRecaptchaLoaded, setIsRecaptchaLoaded] = useState(false);
   const recaptchaRef = useRef(null);
 
-  const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+  // ⭐ TOKEN RECAPTCHA INTÉGRÉ DIRECTEMENT POUR ÉVITER LES PROBLÈMES EN PRODUCTION
+  const RECAPTCHA_SITE_KEY = "6LeVfM4rAAAAADvLqwTpxxUKnXJtZOJqguydl-KD";
 
   useEffect(() => {
     if (!RECAPTCHA_SITE_KEY) {

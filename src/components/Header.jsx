@@ -15,16 +15,85 @@ const Header = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [cartCount, setCartCount] = useState(0);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const searchRef = useRef(null);
 
   const auth = useSelector((state) => state.auth);
   const { searchResults, loading: searchLoading, error: searchError } = useSelector((state) => state.search);
 
+  // URL de base pour les images
+  const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
+
+  // Fonction pour obtenir l'URL de l'image
+  const getImageUrl = (product) => {
+    let imageUrl = product.img || product.image_url || product.image || product.thumbnail || product.photo;
+    
+    if (!imageUrl && product.images && product.images.length > 0) {
+      imageUrl = product.images[0];
+    }
+    
+    if (!imageUrl) return null;
+    
+    // Si l'URL est déjà complète, la retourner telle quelle
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    
+    // Sinon, ajouter le préfixe du serveur
+    return `${IMAGE_BASE_URL}/${imageUrl}`;
+  };
+
+  // Composant pour l'image du produit avec fallback
+  const ProductImage = ({ product }) => {
+    const [imageError, setImageError] = useState(false);
+    const imageUrl = getImageUrl(product);
+
+    if (!imageUrl || imageError) {
+      return (
+        <div 
+          className="d-flex align-items-center justify-content-center bg-light rounded me-3"
+          style={{ 
+            width: '50px', 
+            height: '50px', 
+            minWidth: '50px',
+            backgroundColor: '#f0f0f0'
+          }}
+        >
+          <i className="fas fa-box text-muted"></i>
+        </div>
+      );
+    }
+
+    return (
+      <img
+        src={imageUrl}
+        alt={product.name}
+        className="me-3 rounded"
+        style={{ 
+          width: '50px', 
+          height: '50px', 
+          minWidth: '50px',
+          objectFit: 'cover',
+          border: '1px solid #e0e0e0'
+        }}
+        onError={() => setImageError(true)}
+        loading="lazy"
+      />
+    );
+  };
+
+  // Fonction pour formater le prix
+  const formatPrice = (price) => {
+    if (!price) return null;
+    const numPrice = parseFloat(price);
+    return isNaN(numPrice) ? price : numPrice.toFixed(3);
+  };
+
   // Fonction de déconnexion avec redirection
   const handleLogout = () => {
     dispatch(logout());
     setShowMobileMenu(false);
-    navigate('/login'); // Redirection vers la page de connexion
+    navigate('/login');
   };
 
   // Update cart count from cookies
@@ -35,12 +104,8 @@ const Header = () => {
       setCartCount(totalItems);
     };
 
-    // Initial update
     updateCartCount();
-
-    // Update every second to catch cart changes
     const interval = setInterval(updateCartCount, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -48,6 +113,7 @@ const Header = () => {
     debounce((query) => {
       if (query.trim()) {
         dispatch(searchProduct(query));
+        setShowSearchResults(true);
       }
     }, 300),
     [dispatch]
@@ -59,6 +125,7 @@ const Header = () => {
     
     if (!value.trim()) {
       dispatch(clearSearch());
+      setShowSearchResults(false);
     } else {
       debouncedSearch(value);
     }
@@ -71,7 +138,15 @@ const Header = () => {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
       dispatch(clearSearch());
       setSearchQuery('');
+      setShowSearchResults(false);
     }
+  };
+
+  const handleProductClick = (productId, typeId) => {
+    navigate(`/product/${productId}`, { state: { subId: typeId } });
+    dispatch(clearSearch());
+    setSearchQuery('');
+    setShowSearchResults(false);
   };
 
   const navLinks = [
@@ -80,7 +155,6 @@ const Header = () => {
     { path: "/MesDeals", label: "deals", icon: "fa-tag" },
     { path: "/Catalogue", label: "Catalogue", icon: "fa-book" },
     { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" },
-
     { path: "/contact", label: "Contact", icon: "fa-envelope" }
   ];
 
@@ -100,14 +174,16 @@ const Header = () => {
     }
   }, [dispatch, auth.isLoggedIn]);
 
+  // Fermer les résultats quand on clique ailleurs
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSearchResults(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [dispatch]);
+  }, []);
 
   return (
     <>
@@ -140,6 +216,7 @@ const Header = () => {
                   placeholder="Rechercher un produit..."
                   value={searchQuery}
                   onChange={handleSearchChange}
+                  onFocus={() => searchQuery && searchResults.length > 0 && setShowSearchResults(true)}
                 />
                 <Button variant="outline-secondary" type="submit" disabled={searchLoading}>
                   {searchLoading ? <span className="spinner-border spinner-border-sm"></span> : <i className="fas fa-search"></i>}
@@ -147,30 +224,108 @@ const Header = () => {
               </InputGroup>
             </Form>
 
-            {searchQuery && Array.isArray(searchResults) && searchResults.length > 0 && (
-              <div className="position-absolute bg-white shadow-lg rounded mt-1 w-100" style={{ zIndex: 1000, maxHeight: '400px', overflowY: 'auto' }}>
-                {searchResults.map((product) => (
-                  <Link
+            {/* Dropdown des résultats de recherche */}
+            {showSearchResults && searchQuery && Array.isArray(searchResults) && searchResults.length > 0 && (
+              <div 
+                className="position-absolute bg-white shadow-lg rounded mt-1 w-100 border" 
+                style={{ zIndex: 1000, maxHeight: '450px', overflowY: 'auto' }}
+              >
+                {/* En-tête du dropdown */}
+                <div className="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-light">
+                  <span className="text-muted small">
+                    {searchResults.length} résultat{searchResults.length > 1 ? 's' : ''}
+                  </span>
+                  {searchResults.length > 5 && (
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      className="text-decoration-none p-0"
+                      onClick={handleSearchSubmit}
+                    >
+                      Voir tout
+                    </Button>
+                  )}
+                </div>
+
+                {/* Liste des produits */}
+                {searchResults.slice(0, 5).map((product) => (
+                  <div
                     key={product.id}
-                    to={`/product/${product.id}`}
-                    className="d-flex align-items-center p-3 text-decoration-none text-dark border-bottom"
-                    onClick={() => {
-                      dispatch(clearSearch());
-                      setSearchQuery('');
+                    className="d-flex align-items-center p-3 border-bottom cursor-pointer"
+                    onClick={() => handleProductClick(product.id, product.type_id)}
+                    style={{ 
+                      cursor: 'pointer',
+                      transition: 'background 0.2s' 
                     }}
-                    style={{ transition: 'background 0.2s' }}
                     onMouseEnter={(e) => e.currentTarget.style.background = '#f8f9fa'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
                   >
-                    {product.image && (
-                      <img src={product.image} alt={product.name} className="me-3 rounded" style={{ width: '50px', height: '50px', objectFit: 'cover' }} />
-                    )}
-                    <div>
-                      <p className="mb-0 fw-medium">{product.name}</p>
-                      {product.price && <p className="mb-0 text-success small">{product.price} DT</p>}
+                    {/* Image du produit */}
+                    <ProductImage product={product} />
+                    
+                    {/* Informations du produit */}
+                    <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                      <p className="mb-0 fw-medium text-dark text-truncate">
+                        {product.name}
+                      </p>
+                      {product.description && (
+                        <p className="mb-0 text-muted small text-truncate" style={{ maxWidth: '300px' }}>
+                          {product.description}
+                        </p>
+                      )}
+                      {/* Badges catégorie/marque */}
+                      {(product.category || product.brand) && (
+                        <div className="d-flex gap-1 mt-1">
+                          {product.category && (
+                            <Badge bg="secondary" className="text-white" style={{ fontSize: '0.7rem' }}>
+                              {product.category}
+                            </Badge>
+                          )}
+                          {product.brand && (
+                            <Badge bg="info" className="text-white" style={{ fontSize: '0.7rem' }}>
+                              {product.brand}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </Link>
+                    
+                    {/* Prix */}
+                    {product.price && (
+                      <div className="text-success fw-bold ms-2" style={{ whiteSpace: 'nowrap' }}>
+                        {formatPrice(product.price)} DT
+                      </div>
+                    )}
+                  </div>
                 ))}
+
+                {/* Afficher plus de résultats */}
+                {searchResults.length > 5 && (
+                  <div 
+                    className="text-center py-3 text-primary fw-medium cursor-pointer"
+                    onClick={handleSearchSubmit}
+                    style={{ 
+                      cursor: 'pointer',
+                      transition: 'background 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#f8f9fa'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                  >
+                    Voir les {searchResults.length - 5} autres résultats
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Message "Aucun résultat" */}
+            {showSearchResults && searchQuery && Array.isArray(searchResults) && searchResults.length === 0 && !searchLoading && (
+              <div 
+                className="position-absolute bg-white shadow-lg rounded mt-1 w-100 border text-center py-4" 
+                style={{ zIndex: 1000 }}
+              >
+                <i className="fas fa-search text-muted mb-2" style={{ fontSize: '2rem' }}></i>
+                <p className="text-muted mb-0">Aucun produit trouvé</p>
+                <p className="text-muted small">pour "{searchQuery}"</p>
               </div>
             )}
           </div>
@@ -191,7 +346,6 @@ const Header = () => {
                   <Dropdown.Item as={Link} to="/settings"><i className="fas fa-cog me-2"></i> Paramètres</Dropdown.Item>
                   <Dropdown.Item as={Link} to="/Mes-Commandes"><i className="fas fa-shopping-bag me-2"></i> Mes Commandes</Dropdown.Item>
                   <Dropdown.Divider />
-                  {/* Utiliser handleLogout au lieu de dispatch(logout()) directement */}
                   <Dropdown.Item onClick={handleLogout} className="text-danger">
                     <i className="fas fa-sign-out-alt me-2"></i> Déconnexion
                   </Dropdown.Item>
@@ -272,7 +426,6 @@ const Header = () => {
                 <Nav.Link as={Link} to="/Mes-Commandes" className="py-2 text-dark" onClick={() => setShowMobileMenu(false)}>
                   <i className="fas fa-shopping-bag me-3 text-primary" style={{ width: '20px' }}></i> Mes Commandes
                 </Nav.Link>
-                {/* Utiliser handleLogout au lieu de dispatch(logout()) directement */}
                 <Nav.Link onClick={handleLogout} className="py-2 text-danger">
                   <i className="fas fa-sign-out-alt me-3" style={{ width: '20px' }}></i> Déconnexion
                 </Nav.Link>

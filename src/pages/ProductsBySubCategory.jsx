@@ -101,7 +101,6 @@ const ProductsBySubCategory = () => {
 
     Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
     toast.success("Produit ajouté au panier !");
-    navigate("/categories");
   };
 
   if (loading) return (

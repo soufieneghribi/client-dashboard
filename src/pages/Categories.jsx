@@ -3,10 +3,39 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchCategories } from "../store/slices/categorie";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaCheckCircle, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { enrichProductListWithPromotions } from "../utils/promotionHelper";  // ⭐ AJOUTÉ
 
 /**
  * Categories Component - Carousel Automatique
  *  Défilement automatique
+ * 
+ * ⭐ MODIFICATIONS POUR LES PROMOTIONS:
+ * Ce composant affiche les catégories. Quand l'utilisateur clique sur une sous-catégorie,
+ * il est redirigé vers la page /products avec les produits de cette sous-catégorie.
+ * 
+ * IMPORTANT: Les promotions sont gérées dans la page Products.jsx (pas ici).
+ * Dans Products.jsx, vous devez utiliser enrichProductListWithPromotions()
+ * pour enrichir les produits avec leurs promotions actives.
+ * 
+ * Exemple d'intégration dans Products.jsx:
+ * 
+ * import { enrichProductListWithPromotions } from '../utils/promotionHelper';
+ * 
+ * useEffect(() => {
+ *   const loadProducts = async () => {
+ *     // 1. Récupérer les produits
+ *     const response = await axios.get(`/api/products/category/${subId}`);
+ *     const rawProducts = response.data.products;
+ *     
+ *     // 2. Enrichir avec les promotions
+ *     const clientId = userProfile?.ID_client || localStorage.getItem("client_id");
+ *     const enriched = await enrichProductListWithPromotions(rawProducts, clientId);
+ *     
+ *     // 3. Utiliser les produits enrichis
+ *     setProducts(enriched);
+ *   };
+ *   loadProducts();
+ * }, [subId, clientId]);
  */
 const Categories = () => {
   const { categories = [], loading } = useSelector((state) => state.categorie);

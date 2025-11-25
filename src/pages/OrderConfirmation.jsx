@@ -83,6 +83,33 @@ const testTokenValidity = async (token) => {
   }
 };
 
+/**
+ * Get address from coordinates using Google Geocoding API (Reverse Geocoding)
+ * @param {number} lat - Latitude
+ * @param {number} lng - Longitude
+ * @returns {Promise<string>} Formatted address
+ */
+const getAddressFromCoordinates = async (lat, lng) => {
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}&language=fr`
+    );
+    
+    const data = await response.json();
+    
+    if (data.status === 'OK' && data.results && data.results.length > 0) {
+      // Retourner l'adresse formatée (la plus détaillée)
+      return data.results[0].formatted_address;
+    } else {
+      console.error('Geocoding error:', data.status);
+      return '';
+    }
+  } catch (error) {
+    console.error('Error fetching address:', error);
+    return '';
+  }
+};
+
 // ==================== MAIN COMPONENT ====================
 
 const OrderConfirmation = () => {
@@ -130,6 +157,7 @@ const OrderConfirmation = () => {
   const [geolocationStatus, setGeolocationStatus] = useState('loading');
   const [manualLocation, setManualLocation] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [addressLoading, setAddressLoading] = useState(false);
 
   useEffect(() => {
     const checkAuthentication = async () => {
@@ -205,16 +233,27 @@ const OrderConfirmation = () => {
       };
 
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const { latitude, longitude } = position.coords;
+          
+          // Récupérer l'adresse automatiquement
+          setAddressLoading(true);
+          const address = await getAddressFromCoordinates(latitude, longitude);
+          setAddressLoading(false);
           
           setFormData(prev => ({
             ...prev,
             latitude: latitude.toString(),
             longitude: longitude.toString(),
+            address: address || prev.address, // Utiliser l'adresse récupérée ou garder l'ancienne
           }));
           setGeolocationStatus('success');
-          toast.success("Position détectée automatiquement");
+          
+          if (address) {
+            toast.success("📍 Position et adresse détectées automatiquement");
+          } else {
+            toast.success("Position détectée automatiquement");
+          }
         },
         (error) => {
           let errorMessage = "Géolocalisation échouée";
@@ -262,16 +301,27 @@ const OrderConfirmation = () => {
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  const handleMapClick = ({ lat, lng }) => {
+  const handleMapClick = async ({ lat, lng }) => {
+    // Récupérer l'adresse automatiquement
+    setAddressLoading(true);
+    const address = await getAddressFromCoordinates(lat, lng);
+    setAddressLoading(false);
+    
     setFormData((prev) => ({ 
       ...prev, 
       latitude: lat.toString(), 
-      longitude: lng.toString() 
+      longitude: lng.toString(),
+      address: address || prev.address, // Utiliser l'adresse récupérée ou garder l'ancienne
     }));
     setMapError(null);
     setManualLocation(true);
     setGeolocationStatus('success');
-    toast.success("Position sélectionnée manuellement");
+    
+    if (address) {
+      toast.success("📍 Position et adresse sélectionnées sur la carte");
+    } else {
+      toast.success("Position sélectionnée manuellement");
+    }
   };
 
   const retryGeolocation = () => {
@@ -285,15 +335,27 @@ const OrderConfirmation = () => {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
+        
+        // Récupérer l'adresse automatiquement
+        setAddressLoading(true);
+        const address = await getAddressFromCoordinates(latitude, longitude);
+        setAddressLoading(false);
+        
         setFormData(prev => ({
           ...prev,
           latitude: latitude.toString(),
           longitude: longitude.toString(),
+          address: address || prev.address,
         }));
         setGeolocationStatus('success');
-        toast.success("Position détectée avec succès!");
+        
+        if (address) {
+          toast.success("📍 Position et adresse détectées avec succès!");
+        } else {
+          toast.success("Position détectée avec succès!");
+        }
       },
       (error) => {
         toast.error("Échec de la géolocalisation. Utilisez la carte.");
@@ -506,16 +568,32 @@ const OrderConfirmation = () => {
             </div>
             
             <div>
-              <label className="block font-medium mb-2">Adresse complète *</label>
-              <input
-                type="text"
+              <label className="block font-medium mb-2">
+                Adresse complète *
+                {addressLoading && (
+                  <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded animate-pulse">
+                    ⏳ Récupération de l'adresse...
+                  </span>
+                )}
+                {!addressLoading && formData.address && (
+                  <span className="ml-2 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                    ✅ Adresse détectée automatiquement
+                  </span>
+                )}
+              </label>
+              <textarea
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
-                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Votre adresse de livraison complète"
+                rows="3"
+                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                placeholder="Votre adresse de livraison complète (sera remplie automatiquement depuis la carte)"
                 required
+                disabled={addressLoading}
               />
+              <p className="text-xs text-gray-500 mt-1">
+                💡 L'adresse se remplit automatiquement quand vous sélectionnez votre position sur la carte
+              </p>
             </div>
             
             <div>
@@ -625,9 +703,10 @@ const OrderConfirmation = () => {
           <div className="mt-3 text-sm text-gray-600">
             <p><strong>Instructions :</strong></p>
             <ul className="list-disc list-inside mt-1 space-y-1">
-              <li>Cliquez sur la carte pour sélectionner votre position exacte</li>
-              <li>Utilisez le bouton &quot;Réessayer&quot; si la détection automatique échoue</li>
-              <li>Zoomez pour une sélection plus précise</li>
+              <li>📍 Cliquez sur la carte pour sélectionner votre position exacte</li>
+              <li>🏠 L'adresse se remplit automatiquement depuis la carte</li>
+              <li>🔄 Utilisez le bouton &quot;Réessayer&quot; si la détection automatique échoue</li>
+              <li>🔍 Zoomez pour une sélection plus précise</li>
             </ul>
           </div>
         </div>

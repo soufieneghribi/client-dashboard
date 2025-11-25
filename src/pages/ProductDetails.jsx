@@ -12,6 +12,7 @@ import {
   FaRegHeart,
   FaArrowLeft
 } from "react-icons/fa";
+import { enrichProductWithPromotion } from "../utils/promotionHelper";
 
 const ProductDetails = () => {
   const location = useLocation();
@@ -19,12 +20,17 @@ const ProductDetails = () => {
   const dispatch = useDispatch();
   const { id } = useParams();
   
-  const { isPromotion, pivot, promo_name } = location.state || {};
-  
   const { product = {}, loading, error } = useSelector((state) => state.product);
+  const userProfile = useSelector((state) => state.auth?.user);
+  const clientId = userProfile?.ID_client || userProfile?.id || localStorage.getItem("client_id");
+  
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  
+  // État pour les données de promotion enrichies
+  const [enrichedProduct, setEnrichedProduct] = useState(null);
+  const [promotionLoading, setPromotionLoading] = useState(true);
 
   const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
 
@@ -46,14 +52,39 @@ const ProductDetails = () => {
     }
   }, [dispatch, id]);
 
-  const hasPromotion = isPromotion && pivot;
+  // ⭐ Nouveau: Enrichir automatiquement le produit avec les promotions
+  useEffect(() => {
+    const loadPromotionData = async () => {
+      if (!product || !product.id) {
+        setPromotionLoading(false);
+        return;
+      }
+
+      try {
+        setPromotionLoading(true);
+        const enriched = await enrichProductWithPromotion(product, clientId);
+        setEnrichedProduct(enriched);
+      } catch (error) {
+        console.error("Erreur lors du chargement des promotions:", error);
+        setEnrichedProduct(product);
+      } finally {
+        setPromotionLoading(false);
+      }
+    };
+
+    loadPromotionData();
+  }, [product, clientId]);
+
+  // Utiliser le produit enrichi ou le produit original
+  const displayProduct = enrichedProduct || product;
+  const hasPromotion = displayProduct.isPromotion && displayProduct.pivot;
   
   const basePrice = hasPromotion 
-    ? parseFloat(pivot.original_price) 
-    : parseFloat(product.price || 0);
+    ? parseFloat(displayProduct.pivot.original_price) 
+    : parseFloat(displayProduct.price || 0);
   
   const unitPrice = hasPromotion 
-    ? parseFloat(pivot.promo_price) 
+    ? parseFloat(displayProduct.pivot.promo_price) 
     : basePrice;
   
   const totalPrice = (unitPrice * quantity).toFixed(3);
@@ -62,8 +93,8 @@ const ProductDetails = () => {
     ? ((basePrice - unitPrice) * quantity).toFixed(3)
     : 0;
   
-  const discountPercent = hasPromotion && pivot.discount_percent
-    ? parseFloat(pivot.discount_percent).toFixed(0)
+  const discountPercent = hasPromotion && displayProduct.pivot.discount_percent
+    ? parseFloat(displayProduct.pivot.discount_percent).toFixed(0)
     : 0;
 
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
@@ -84,15 +115,16 @@ const ProductDetails = () => {
       const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
 
       const newItem = {
-        id: product?.id,
-        name: product?.name,
-        img: product?.img,
+        id: displayProduct?.id,
+        name: displayProduct?.name,
+        img: displayProduct?.img,
         Initialprice: basePrice.toFixed(3),
         price: unitPrice.toFixed(3),
         total: totalPrice,
         quantity,
         isPromotion: hasPromotion,
-        promo_name: hasPromotion ? promo_name : null
+        promo_name: hasPromotion ? displayProduct.promo_name : null,
+        promo_id: hasPromotion ? displayProduct.promo_id : null
       };
 
       const existingItemIndex = cart.findIndex((item) => item.id === newItem.id);
@@ -126,15 +158,20 @@ const ProductDetails = () => {
     toast.success(isFavorite ? "Retiré des favoris" : "Ajouté aux favoris");
   };
 
-  if (loading) {
+  if (loading || promotionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-500"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-500 mx-auto mb-3"></div>
+          <p className="text-gray-600">
+            {loading ? "Chargement du produit..." : "Vérification des promotions..."}
+          </p>
+        </div>
       </div>
     );
   }
 
-  if (error || !product || !product.id) {
+  if (error || !displayProduct || !displayProduct.id) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
@@ -189,10 +226,10 @@ const ProductDetails = () => {
             </button>
 
             <div className="bg-gray-50 rounded-lg aspect-square flex items-center justify-center">
-              {getImageUrl(product.img) ? (
+              {getImageUrl(displayProduct.img) ? (
                 <img
-                  src={getImageUrl(product.img)}
-                  alt={product.name}
+                  src={getImageUrl(displayProduct.img)}
+                  alt={displayProduct.name}
                   className="w-full h-full object-contain p-8"
                   onError={handleImageError}
                 />
@@ -206,21 +243,21 @@ const ProductDetails = () => {
           <div className="flex flex-col">
             {/* Nom */}
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {product.name}
+              {displayProduct.name}
             </h1>
 
             {/* Description */}
-            {product.description && (
+            {displayProduct.description && (
               <p className="text-gray-600 mb-6 leading-relaxed">
-                {product.description}
+                {displayProduct.description}
               </p>
             )}
 
             {/* Badge promo */}
-            {hasPromotion && promo_name && (
+            {hasPromotion && displayProduct.promo_name && (
               <div className="inline-flex items-center gap-2 bg-red-50 text-red-600 px-3 py-1 rounded-full text-sm font-medium mb-6 w-fit">
                 <span>🏷️</span>
-                <span>{promo_name}</span>
+                <span>{displayProduct.promo_name}</span>
               </div>
             )}
 

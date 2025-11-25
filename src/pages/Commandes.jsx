@@ -32,13 +32,26 @@ const Commandes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ORDERS_PER_PAGE = 5;
 
-  // Séparer les commandes
-  const currentOrders = order.filter((o) => 
-    ["pending", "confirmed", "processing", "out_for_delivery"].includes(o.order_status)
+  // Fonction de tri par date décroissante (les plus récentes en premier)
+  const sortOrdersByDate = (orders) => {
+    return [...orders].sort((a, b) => {
+      const dateA = new Date(a.created_at);
+      const dateB = new Date(b.created_at);
+      return dateB - dateA; // Ordre décroissant (plus récent en premier)
+    });
+  };
+
+  // Séparer les commandes et les trier
+  const currentOrders = sortOrdersByDate(
+    order.filter((o) => 
+      ["pending", "confirmed", "processing", "out_for_delivery"].includes(o.order_status)
+    )
   );
   
-  const historicalOrders = order.filter((o) => 
-    ["delivered", "canceled", "failed", "returned"].includes(o.order_status)
+  const historicalOrders = sortOrdersByDate(
+    order.filter((o) => 
+      ["delivered", "canceled", "failed", "returned"].includes(o.order_status)
+    )
   );
 
   const displayOrders = activeTab === "actuelle" ? currentOrders : historicalOrders;
@@ -211,22 +224,43 @@ const Commandes = () => {
 const OrderCard = ({ order, navigate }) => {
   const statusConfig = getStatusConfig(order.order_status);
   const orderDate = new Date(order.created_at);
+  
+  // Format de date avec heure pour les commandes récentes
   const formattedDate = orderDate.toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "short",
     year: "numeric"
   });
+  
+  const formattedTime = orderDate.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  // Vérifier si la commande a moins de 24h
+  const isNew = (Date.now() - orderDate.getTime()) < 24 * 60 * 60 * 1000;
 
   return (
     <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200">
       {/* En-tête de la commande */}
       <div className="px-6 py-4 border-b border-gray-100">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 mb-1">
-              Commande #{order.id}
-            </h3>
-            <p className="text-sm text-gray-500">{formattedDate}</p>
+          <div className="flex items-center gap-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-bold text-gray-800">
+                  Commande #{order.id}
+                </h3>
+                {isNew && (
+                  <span className="bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                    NOUVELLE
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-gray-500">
+                {formattedDate} à {formattedTime}
+              </p>
+            </div>
           </div>
           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusConfig.badgeClass}`}>
             {statusConfig.label}

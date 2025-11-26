@@ -7,6 +7,8 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import EmailVerification from "./pages/EmailVerification"; // ⭐ NOUVEAU - Vérification Email
+import ForgotPassword from "./pages/ForgotPassword"; // ⭐ NOUVEAU - Mot de passe oublié
+import ResetPassword from "./pages/ResetPassword"; // ⭐ NOUVEAU - Réinitialisation mot de passe
 import NotFound from "./pages/NotFound";
 import MesDeals from "./pages/MesDeals";
 import Categories from "./pages/Categories";
@@ -71,6 +73,8 @@ const router = createBrowserRouter(
       <Route path='/inscrire' element={<Register/>} />
       <Route path="/login" element={<Login />} />
       <Route path="/verify-email" element={<EmailVerification />} /> {/* ⭐ NOUVEAU */}
+      <Route path="/forgot-password" element={<ForgotPassword />} /> {/* ⭐ NOUVEAU - Mot de passe oublié */}
+      <Route path="/reset-password" element={<ResetPassword />} /> {/* ⭐ NOUVEAU - Réinitialisation */}
       <Route path="/catalogue" element={<Catalogue />} />
       <Route path="/promotions" element={<Promotions />} />
       <Route path="/cadeaux" element={<Cadeaux />} />

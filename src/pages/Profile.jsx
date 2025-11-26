@@ -222,19 +222,82 @@ const Profile = () => {
 
   useEffect(() => {
     if (Userprofile) {
-      setFormData({
+      // Fonction pour formater la date au format YYYY-MM-DD pour input type="date"
+      const formatDateForInput = (dateString) => {
+        if (!dateString) return "";
+        
+        try {
+          // Si la date est déjà au format YYYY-MM-DD, la retourner telle quelle
+          if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            return dateString;
+          }
+          
+          // Sinon, essayer de la parser et la formater
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) return ""; // Date invalide
+          
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          
+          return `${year}-${month}-${day}`;
+        } catch (error) {
+          console.error("Erreur de formatage de date:", error);
+          return "";
+        }
+      };
+
+      // Fonction pour normaliser la situation familiale
+      const normalizeSituationFamiliale = (situation) => {
+        if (!situation) return "";
+        
+        const normalized = situation.toLowerCase().trim();
+        
+        // Mapper les différentes variations possibles
+        const mappings = {
+          'celibataire': 'célibataire',
+          'célibataire': 'célibataire',
+          'marie': 'marié(e)',
+          'marié': 'marié(e)',
+          'mariee': 'marié(e)',
+          'mariée': 'marié(e)',
+          'marié(e)': 'marié(e)',
+          'divorce': 'divorcé(e)',
+          'divorcé': 'divorcé(e)',
+          'divorcee': 'divorcé(e)',
+          'divorcée': 'divorcé(e)',
+          'divorcé(e)': 'divorcé(e)',
+          'veuf': 'veuf(ve)',
+          'veuve': 'veuf(ve)',
+          'veuf(ve)': 'veuf(ve)'
+        };
+
+        return mappings[normalized] || situation;
+      };
+
+      const formattedData = {
         nom_et_prenom: Userprofile.nom_et_prenom || "",
         email: Userprofile.email || "",
         tel: Userprofile.tel || "",
-        date_de_naissance: Userprofile.date_de_naissance || "",
+        date_de_naissance: formatDateForInput(Userprofile.date_de_naissance),
         profession: Userprofile.profession || "",
-        situation_familiale: Userprofile.situation_familiale || "",
+        situation_familiale: normalizeSituationFamiliale(Userprofile.situation_familiale),
         address: Userprofile.address || "",
         civilite: Userprofile.civilite || "",
         ville: Userprofile.ville || "",
         gouvernorat: Userprofile.gouvernorat || "",
         code_postal: Userprofile.code_postal || ""
+      };
+
+      // Debug: Afficher les données formatées dans la console
+      console.log("📋 Données du profil chargées:", {
+        date_original: Userprofile.date_de_naissance,
+        date_formatee: formattedData.date_de_naissance,
+        situation_originale: Userprofile.situation_familiale,
+        situation_normalisee: formattedData.situation_familiale
       });
+
+      setFormData(formattedData);
     }
   }, [Userprofile]);
 
@@ -299,13 +362,52 @@ const Profile = () => {
 
   const cancelEdit = () => {
     if (Userprofile) {
+      // Réutiliser la même logique de formatage que dans useEffect
+      const formatDateForInput = (dateString) => {
+        if (!dateString) return "";
+        try {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return dateString;
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) return "";
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        } catch (error) {
+          return "";
+        }
+      };
+
+      const normalizeSituationFamiliale = (situation) => {
+        if (!situation) return "";
+        const normalized = situation.toLowerCase().trim();
+        const mappings = {
+          'celibataire': 'célibataire',
+          'célibataire': 'célibataire',
+          'marie': 'marié(e)',
+          'marié': 'marié(e)',
+          'mariee': 'marié(e)',
+          'mariée': 'marié(e)',
+          'marié(e)': 'marié(e)',
+          'divorce': 'divorcé(e)',
+          'divorcé': 'divorcé(e)',
+          'divorcee': 'divorcé(e)',
+          'divorcée': 'divorcé(e)',
+          'divorcé(e)': 'divorcé(e)',
+          'veuf': 'veuf(ve)',
+          'veuve': 'veuf(ve)',
+          'veuf(ve)': 'veuf(ve)'
+        };
+        return mappings[normalized] || situation;
+      };
+
       setFormData({
         nom_et_prenom: Userprofile.nom_et_prenom || "",
         email: Userprofile.email || "",
         tel: Userprofile.tel || "",
-        date_de_naissance: Userprofile.date_de_naissance || "",
+        date_de_naissance: formatDateForInput(Userprofile.date_de_naissance),
         profession: Userprofile.profession || "",
-        situation_familiale: Userprofile.situation_familiale || "",
+        situation_familiale: normalizeSituationFamiliale(Userprofile.situation_familiale),
         address: Userprofile.address || "",
         civilite: Userprofile.civilite || "",
         ville: Userprofile.ville || "",
@@ -735,7 +837,16 @@ const Profile = () => {
                           </div>
                           <div style={styles.profileInfoContent}>
                             <label style={styles.profileInfoLabel}>Date de naissance</label>
-                            <p style={styles.profileInfoValue}>{formData.date_de_naissance || "Non renseigné"}</p>
+                            <p style={styles.profileInfoValue}>
+                              {formData.date_de_naissance ? 
+                                new Date(formData.date_de_naissance).toLocaleDateString('fr-FR', { 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                }) 
+                                : "Non renseigné"
+                              }
+                            </p>
                           </div>
                         </div>
                       </Col>

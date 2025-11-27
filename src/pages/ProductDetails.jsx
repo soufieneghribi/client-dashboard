@@ -114,18 +114,18 @@ const ProductDetails = () => {
     try {
       const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
 
-      const newItem = {
-        id: displayProduct?.id,
-        name: displayProduct?.name,
-        img: displayProduct?.img,
-        Initialprice: basePrice.toFixed(3),
-        price: unitPrice.toFixed(3),
-        total: totalPrice,
-        quantity,
-        isPromotion: hasPromotion,
-        promo_name: hasPromotion ? displayProduct.promo_name : null,
-        promo_id: hasPromotion ? displayProduct.promo_id : null
-      };
+     const newItem = {
+  id: displayProduct?.id,
+  name: displayProduct?.name,
+  img: displayProduct?.img,
+  Initialprice: basePrice.toFixed(3),
+  price: unitPrice.toFixed(3),
+  total: totalPrice,
+  quantity,
+  isPromotion: hasPromotion,
+  promo_name: hasPromotion ? displayProduct.promo_name : null,
+  promo_id: hasPromotion ? displayProduct.promo_id : null  // ✅ S'assurer que c'est bien transmis
+};
 
       const existingItemIndex = cart.findIndex((item) => item.id === newItem.id);
 

@@ -101,12 +101,14 @@ const CartShopping = () => {
     // ✅ Passer les données à OrderConfirmation (la déduction se fera là-bas)
     const checkoutData = {
       orderDetails: cartItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: parseFloat(item.price === 0 ? item.Initialprice : item.price),
-        quantity: parseInt(item.quantity),
-        total: parseFloat(item.total)
-      })),
+  id: item.id,
+  name: item.name,
+  price: parseFloat(item.price === 0 ? item.Initialprice : item.price),
+  quantity: parseInt(item.quantity),
+  total: parseFloat(item.total),
+  isPromotion: item.isPromotion || false,  // ✅ AJOUTER
+  promo_id: item.promo_id || null           // ✅ AJOUTER
+})),
       subtotal: parseFloat(subtotal),
       deliveryFee: 5,
       totalTTC: parseFloat(totalTTC),

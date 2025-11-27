@@ -10,7 +10,8 @@ import {
   FaBox,
   FaCheckCircle,
   FaCalendarAlt,
-  FaTimes
+  FaTimes,
+  FaHistory
 } from "react-icons/fa";
 import { MdCardGiftcard, MdLocalOffer } from "react-icons/md";
 import { fetchUserProfile } from "../store/slices/user";
@@ -131,36 +132,37 @@ const Cadeaux = () => {
     if (!selectedCadeau) return;
 
     const token = localStorage.getItem("token");
-    const clientId = Userprofile?.ID_client;
     
-    if (!clientId) {
-      toast.error("Erreur: ID client non trouvé");
+    if (!token) {
+      toast.error("Veuillez vous connecter");
+      navigate("/login");
       return;
     }
 
     setExchangeLoading(true);
     try {
-      // ✅ Appel à l'endpoint cagnotte-deduct pour déduire le montant
-      const deductResponse = await fetch(
-        'https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/customer/cagnotte-deduct',
+      // ✅ Appel à l'endpoint d'acquisition du cadeau
+      const acquireResponse = await fetch(
+        API_ENDPOINTS.CADEAUX.ACQUIRE(selectedCadeau.id),
         {
           method: 'POST',
           headers: getAuthHeaders(token),
-          body: JSON.stringify({
-            client_id: clientId,
-            amount: parseFloat(selectedCadeau.prix_cagnotte),
-            description: `Échange cadeau: ${selectedCadeau.titre}`,
-            type: 'gift_exchange',
-            gift_id: selectedCadeau.id
-          })
+          body: JSON.stringify({})
         }
       );
 
-      const deductResult = await deductResponse.json();
+      const acquireResult = await acquireResponse.json();
 
-      if (deductResponse.ok && deductResult.success) {
-        // Succès de la déduction de cagnotte
-        toast.success(`🎁 Cadeau "${selectedCadeau.titre}" échangé avec succès !`);
+      if (acquireResponse.ok && acquireResult.success) {
+        // Succès de l'acquisition
+        const acquisitionData = acquireResult.data;
+        const codeAcquisition = acquisitionData?.acquisition?.code_acquisition;
+        
+        toast.success(
+          `🎁 Cadeau "${selectedCadeau.titre}" acquis avec succès !\n` +
+          `Code: ${codeAcquisition || 'Voir dans "Mes Cadeaux"'}`,
+          { duration: 5000 }
+        );
         
         // Fermer le modal
         closeModal();
@@ -176,14 +178,27 @@ const Cadeaux = () => {
         );
         setCadeaux(updatedCadeaux);
         
-        // Optionnel: Enregistrer l'échange dans l'historique
-        // await saveExchangeHistory(selectedCadeau.id, clientId, selectedCadeau.prix_cagnotte);
+        // Rediriger vers la page "Mes Cadeaux" après 2 secondes
+        setTimeout(() => {
+          navigate('/mes-cadeaux');
+        }, 2000);
         
       } else {
-        toast.error(deductResult.message || "Erreur lors de la déduction de la cagnotte");
+        // Gérer les différentes erreurs
+        const errorMessage = acquireResult.message || "Erreur lors de l'acquisition du cadeau";
+        
+        if (errorMessage.includes("insuffisante")) {
+          toast.error("❌ Cagnotte insuffisante pour ce cadeau");
+        } else if (errorMessage.includes("disponible")) {
+          toast.error("❌ Ce cadeau n'est plus disponible");
+        } else if (errorMessage.includes("expiré")) {
+          toast.error("❌ Ce cadeau est expiré");
+        } else {
+          toast.error(errorMessage);
+        }
       }
     } catch (error) {
-      console.error('Erreur échange cadeau:', error);
+      console.error('Erreur acquisition cadeau:', error);
       toast.error(handleApiError(error));
     } finally {
       setExchangeLoading(false);
@@ -261,9 +276,18 @@ const Cadeaux = () => {
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Cadeaux disponibles</p>
-                <p className="text-2xl font-bold text-purple-600">{cadeaux.length}</p>
+              <div className="flex flex-col gap-2">
+                <div className="text-right">
+                  <p className="text-sm text-gray-600">Cadeaux disponibles</p>
+                  <p className="text-2xl font-bold text-purple-600">{cadeaux.length}</p>
+                </div>
+                <button
+                  onClick={() => navigate('/mes-cadeaux')}
+                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-600 transition-all shadow-md"
+                >
+                  <FaHistory />
+                  Mes Cadeaux
+                </button>
               </div>
             </div>
           </div>

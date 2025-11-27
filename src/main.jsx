@@ -6,9 +6,9 @@ import App from "./App";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import EmailVerification from "./pages/EmailVerification"; // ⭐ NOUVEAU - Vérification Email
-import ForgotPassword from "./pages/ForgotPassword"; // ⭐ NOUVEAU - Mot de passe oublié
-import ResetPassword from "./pages/ResetPassword"; // ⭐ NOUVEAU - Réinitialisation mot de passe
+import EmailVerification from "./pages/EmailVerification";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import MesDeals from "./pages/MesDeals";
 import Categories from "./pages/Categories";
@@ -18,6 +18,7 @@ import SubCategory from "./components/SubCategory";
 import Catalogue from "./pages/Catalogue";
 import Promotions from "./pages/Promotions";
 import Cadeaux from "./pages/Cadeaux";
+import MesCadeaux from "./pages/MesCadeaux"; // ✅ NOUVEAU - Page des cadeaux acquis
 import CartShopping from "./pages/CartShopping";
 import Favoris from "./pages/Favoris";
 import Profile from "./pages/Profile";
@@ -72,9 +73,9 @@ const router = createBrowserRouter(
       <Route path="/" element={<Home />} />
       <Route path='/inscrire' element={<Register/>} />
       <Route path="/login" element={<Login />} />
-      <Route path="/verify-email" element={<EmailVerification />} /> {/* ⭐ NOUVEAU */}
-      <Route path="/forgot-password" element={<ForgotPassword />} /> {/* ⭐ NOUVEAU - Mot de passe oublié */}
-      <Route path="/reset-password" element={<ResetPassword />} /> {/* ⭐ NOUVEAU - Réinitialisation */}
+      <Route path="/verify-email" element={<EmailVerification />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/catalogue" element={<Catalogue />} />
       <Route path="/promotions" element={<Promotions />} />
       <Route path="/cadeaux" element={<Cadeaux />} />
@@ -117,6 +118,12 @@ const router = createBrowserRouter(
       <Route 
         path="/order/:orderId" 
         element={<ProtectedRoute><OrderDetails/></ProtectedRoute>} 
+      />
+
+      {/* ✅ NOUVEAU - Route pour consulter les cadeaux acquis */}
+      <Route 
+        path="/mes-cadeaux" 
+        element={<ProtectedRoute><MesCadeaux /></ProtectedRoute>}
       />
 
       {/* ==================== 404 FALLBACK ==================== */}

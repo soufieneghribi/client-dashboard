@@ -18,7 +18,7 @@ import SubCategory from "./components/SubCategory";
 import Catalogue from "./pages/Catalogue";
 import Promotions from "./pages/Promotions";
 import Cadeaux from "./pages/Cadeaux";
-import MesCadeaux from "./pages/MesCadeaux"; // ✅ NOUVEAU - Page des cadeaux acquis
+import MesCadeaux from "./pages/MesCadeaux"; 
 import CartShopping from "./pages/CartShopping";
 import Favoris from "./pages/Favoris";
 import Profile from "./pages/Profile";
@@ -120,7 +120,7 @@ const router = createBrowserRouter(
         element={<ProtectedRoute><OrderDetails/></ProtectedRoute>} 
       />
 
-      {/* ✅ NOUVEAU - Route pour consulter les cadeaux acquis */}
+      {/* ✅ Route pour consulter les cadeaux acquis */}
       <Route 
         path="/mes-cadeaux" 
         element={<ProtectedRoute><MesCadeaux /></ProtectedRoute>}

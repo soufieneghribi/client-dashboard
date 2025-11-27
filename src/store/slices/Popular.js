@@ -26,6 +26,7 @@ const getAuthToken = () => {
  * Fetch popular products with promotions
  * Cette fonction charge soit les produits en promotion du client, soit 6 produits aléatoires
  */
+// Dans Popular.js - Modifier fetchPopularWithPromotions
 export const fetchPopularWithPromotions = createAsyncThunk(
   "popular/fetchPopularWithPromotions",
   async (clientId = null, { rejectWithValue }) => {
@@ -34,7 +35,7 @@ export const fetchPopularWithPromotions = createAsyncThunk(
       let hasPromotions = false;
       let promotionsData = null;
 
-      // Si clientId est fourni, essayer de récupérer les promotions
+      // Si clientId est fourni, essayer de récupérer les promotions SPÉCIFIQUES
       if (clientId) {
         try {
           const token = getAuthToken();
@@ -47,8 +48,16 @@ export const fetchPopularWithPromotions = createAsyncThunk(
           );
 
           if (promoResponse.data && promoResponse.data.success && promoResponse.data.data) {
-            // Extraire tous les articles des promotions
-            articles = promoResponse.data.data.reduce((acc, promo) => {
+            // ✅ FILTRER LES PROMOTIONS ACTIVES ET VALIDES
+            const validPromotions = promoResponse.data.data.filter(promo => {
+              const isActive = new Date(promo.start_date) <= new Date() && 
+                             new Date(promo.end_date) >= new Date();
+              const hasValidArticles = promo.articles && Array.isArray(promo.articles) && promo.articles.length > 0;
+              return isActive && hasValidArticles;
+            });
+
+            // Extraire les articles des promotions VALIDES
+            articles = validPromotions.reduce((acc, promo) => {
               if (promo.articles && Array.isArray(promo.articles)) {
                 return [...acc, ...promo.articles.map(article => ({
                   ...article,
@@ -57,6 +66,7 @@ export const fetchPopularWithPromotions = createAsyncThunk(
                   promo_discount: promo.discount_value,
                   promo_start: promo.start_date,
                   promo_end: promo.end_date,
+                  promo_client_id: clientId, // ✅ IMPORTANT : Stocker l'ID client de la promotion
                   isPromotion: true
                 }))];
               }
@@ -65,16 +75,14 @@ export const fetchPopularWithPromotions = createAsyncThunk(
 
             hasPromotions = articles.length > 0;
             promotionsData = promoResponse.data;
-            
           }
         } catch (promoError) {
           // Continuer avec les produits aléatoires en cas d'erreur
         }
       }
 
-      // Si pas de promotions, charger 6 produits aléatoires depuis allproducts
+      // Si pas de promotions POUR CE CLIENT, charger 6 produits aléatoires
       if (!hasPromotions) {
-        
         const allProductsResponse = await axios.get(API_ENDPOINTS.PRODUCTS.ALL, {
           timeout: API_TIMEOUT,
           headers: {
@@ -90,9 +98,8 @@ export const fetchPopularWithPromotions = createAsyncThunk(
           const shuffled = [...allProducts].sort(() => 0.5 - Math.random());
           articles = shuffled.slice(0, 6).map(product => ({
             ...product,
-            isPromotion: false
+            isPromotion: false // ✅ FORCER à false car pas de promotion pour ce client
           }));
-          
         }
       }
 
@@ -104,6 +111,8 @@ export const fetchPopularWithPromotions = createAsyncThunk(
       };
 
     } catch (error) {
+      // Gestion des erreurs existante...
+    
 
       // Gestion des erreurs spécifiques
       if (error.code === 'ECONNABORTED') {

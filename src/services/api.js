@@ -24,7 +24,6 @@ export const API_ENDPOINTS = {
     PROFILE_UPDATE: `${API_BASE_URL}/auth/profile/update`,
     LOGOUT: `${API_BASE_URL}/auth/logout`,
     REFRESH_TOKEN: `${API_BASE_URL}/auth/refresh`,
-    // ⭐ EMAIL VERIFICATION
     VERIFY_EMAIL: `${API_BASE_URL}/auth/verify-email`,
     RESEND_OTP: `${API_BASE_URL}/auth/resend-otp`,
     CHECK_VERIFICATION_STATUS: `${API_BASE_URL}/auth/check-verification-status`,
@@ -144,6 +143,10 @@ export const API_ENDPOINTS = {
     UPDATE: (id) => `${API_BASE_URL}/cadeaux/${id}`,
     DELETE: (id) => `${API_BASE_URL}/cadeaux/${id}`,
     TOGGLE_STATUS: (id) => `${API_BASE_URL}/cadeaux/${id}/toggle-status`,
+    // ✅ Routes pour les acquisitions
+    ACQUIRE: (id) => `${API_BASE_URL}/cadeaux/${id}/acquire`,
+    MY_ACQUISITIONS: `${API_BASE_URL}/cadeaux/my-acquisitions/list`,
+    ACQUISITION_BY_CODE: (code) => `${API_BASE_URL}/cadeaux/acquisition/${code}`,
   },
 };
 

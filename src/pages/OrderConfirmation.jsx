@@ -369,6 +369,25 @@ const OrderConfirmation = () => {
   };
 
   const calculateOrderAmount = () => {
+    // ⭐ CORRECTION : Utiliser le total déjà calculé par le panier
+    // Le panier (CartShopping) a déjà calculé le bon montant avec les promotions
+    if (receivedTotal && !isNaN(receivedTotal) && receivedTotal > 0) {
+      // Recalculer uniquement si la cagnotte a changé
+      const deliveryFee = parseFloat(formData.delivery_fee) || DEFAULT_DELIVERY_FEE;
+      const cagnotteDeduction = parseFloat(formData.cagnotte_deduction) || 0;
+      const receivedCagnotteValue = parseFloat(receivedCagnotteDeduction) || 0;
+      
+      // Si la cagnotte n'a pas changé, utiliser le total reçu
+      if (cagnotteDeduction === receivedCagnotteValue) {
+        return receivedTotal;
+      }
+      
+      // Sinon, ajuster avec la nouvelle cagnotte
+      const adjustment = receivedCagnotteValue - cagnotteDeduction;
+      return receivedTotal + adjustment;
+    }
+    
+    // ⭐ FALLBACK : Si pas de receivedTotal, calculer manuellement
     if (!orderDetails || orderDetails.length === 0) {
       return 0;
     }
@@ -437,15 +456,27 @@ const OrderConfirmation = () => {
       order_amount: finalOrderAmount,
       cagnotte_deduction: parseFloat(formData.cagnotte_deduction || 0),
       delivery_fee: parseFloat(formData.delivery_fee || DEFAULT_DELIVERY_FEE),
+      contact_person_name: contact_person_name.trim(), // ⭐ AJOUTÉ
+      contact_person_number: contact_person_number.trim(), // ⭐ AJOUTÉ
       address: address.trim(),
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
       order_type: formData.order_type || "delivery",
       payment_method: formData.payment_method || "cash",
-      cart: formData.cart.map(item => ({
-        id: parseInt(item.id),
-        quantity: parseInt(item.quantity)
-      }))
+   cart: formData.cart.map(item => {
+  const cartItem = {
+    id: parseInt(item.id),
+    quantity: parseInt(item.quantity),
+    price: parseFloat(item.price || 0)
+  };
+  
+  // ✅ CORRECTION : Vérifier si promo_id existe ET si c'est une promotion valide
+  if (item.isPromotion === true && item.promo_id) {
+    cartItem.promo_id = parseInt(item.promo_id);
+  }
+  
+  return cartItem;
+})
     };
 
     if (!orderData.order_amount || isNaN(orderData.order_amount)) {
@@ -453,6 +484,34 @@ const OrderConfirmation = () => {
       setIsSubmitting(false);
       return;
     }
+
+    // ⭐ LOG DE DEBUGGING DÉTAILLÉ
+    console.log("📦 Données de commande envoyées:", {
+      order_amount: orderData.order_amount,
+      delivery_fee: orderData.delivery_fee,
+      cagnotte_deduction: orderData.cagnotte_deduction,
+      cart_items: orderData.cart,
+      has_promotions: orderData.cart.some(item => item.promo_id),
+    });
+    
+    console.log("🧮 Détail du calcul:", {
+      items: orderDetails.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        isPromotion: item.isPromotion || false,
+        promo_id: item.promo_id || null,
+        subtotal: (parseFloat(item.price) * parseInt(item.quantity)).toFixed(3)
+      })),
+      subtotal_calculated: orderDetails.reduce((total, item) => 
+        total + (parseFloat(item.price) * parseInt(item.quantity)), 0
+      ).toFixed(3),
+      delivery_fee: orderData.delivery_fee,
+      cagnotte_deduction: orderData.cagnotte_deduction,
+      total_calculated: calculateOrderAmount().toFixed(3),
+      total_sent: orderData.order_amount.toFixed(3),
+      match: calculateOrderAmount().toFixed(3) === orderData.order_amount.toFixed(3) ? "✅" : "❌"
+    });
 
     try {
       const response = await axios.post(
@@ -479,20 +538,34 @@ const OrderConfirmation = () => {
         toast.error(`Erreur : ${response.data.message || "Une erreur est survenue."}`);
       }
     } catch (error) {
+      console.error("❌ Erreur lors de la commande:", error);
+      console.error("Détails de la requête:", orderData);
+      
       if (error.response) {
         const status = error.response.status;
         const errorData = error.response.data;
         
+        // Log détaillé pour le debugging
+        console.error("Status:", status);
+        console.error("Error Data:", errorData);
+        
         if (status === 400) {
           const errorMsg = errorData.message || errorData.error || JSON.stringify(errorData);
           
-          if (errorMsg.includes("Amount should be") || errorMsg.includes("subtotal + delivery_fee - cagnotte_deduction")) {
+          // Afficher les détails de l'erreur de validation
+          if (errorData.errors && typeof errorData.errors === 'object') {
+            const errorDetails = Object.entries(errorData.errors)
+              .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs[0] : msgs}`)
+              .join(" | ");
+            toast.error(`Erreur de validation: ${errorDetails}`);
+          } else if (errorMsg.includes("Amount should be") || errorMsg.includes("subtotal + delivery_fee - cagnotte_deduction")) {
             toast.error("Erreur de calcul du montant. Veuillez réessayer ou contacter le support.");
           } else {
             toast.error(`Erreur 400: ${errorMsg}`);
           }
         } else if (status === 403 || status === 401) {
-          toast.error("Problème d'authentification avec le serveur. Vérifiez votre connexion.");
+          toast.error("Session expirée. Veuillez vous reconnecter.");
+          setTimeout(() => navigate("/login"), 2000);
         } else if (status === 422) {
           const errors = errorData.errors || {};
           const errorMessages = Object.entries(errors).map(([field, msgs]) => 
@@ -505,8 +578,10 @@ const OrderConfirmation = () => {
           toast.error(`Erreur ${status}: ${errorData.message || JSON.stringify(errorData)}`);
         }
       } else if (error.request) {
+        console.error("No response received:", error.request);
         toast.error("Erreur de connexion réseau. Vérifiez votre connexion.");
       } else {
+        console.error("Error message:", error.message);
         toast.error("Une erreur inattendue est survenue.");
       }
     } finally {
@@ -717,14 +792,30 @@ const OrderConfirmation = () => {
         <div className="space-y-2">
           {orderDetails.map((item, index) => (
             <div key={index} className="flex justify-between items-center border-b pb-2">
-              <span>{item.name} x {item.quantity}</span>
-              <span>{(item.price * item.quantity).toFixed(2)} DT</span>
+              <div className="flex items-center gap-2">
+                <span>{item.name} x {item.quantity}</span>
+                {item.isPromotion && (
+                  <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-semibold">
+                    🏷️ PROMO
+                  </span>
+                )}
+              </div>
+              <div className="text-right">
+                {item.isPromotion && item.Initialprice && parseFloat(item.Initialprice) > parseFloat(item.price) && (
+                  <div className="text-xs text-gray-400 line-through">
+                    {(item.Initialprice * item.quantity).toFixed(2)} DT
+                  </div>
+                )}
+                <span className={item.isPromotion ? "text-red-600 font-semibold" : ""}>
+                  {(item.price * item.quantity).toFixed(2)} DT
+                </span>
+              </div>
             </div>
           ))}
           
           <div className="flex justify-between items-center pt-2 text-gray-700">
             <span>Sous-total</span>
-            <span>{orderDetails.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2)} DT</span>
+            <span>{orderDetails.reduce((total, item) => total + (parseFloat(item.price) * parseInt(item.quantity)), 0).toFixed(2)} DT</span>
           </div>
           
           <div className="flex justify-between items-center text-gray-700">
@@ -743,6 +834,23 @@ const OrderConfirmation = () => {
             <span>Total à payer</span>
             <span className="text-blue-600">{calculateOrderAmount().toFixed(2)} DT</span>
           </div>
+          
+          {/* Afficher l'économie totale avec les promotions */}
+          {orderDetails.some(item => item.isPromotion && item.Initialprice) && (
+            <div className="mt-3 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+              <p className="text-sm text-red-700 font-medium">
+                🎉 Vous économisez <strong>
+                  {orderDetails.reduce((total, item) => {
+                    if (item.isPromotion && item.Initialprice) {
+                      const savings = (parseFloat(item.Initialprice) - parseFloat(item.price)) * parseInt(item.quantity);
+                      return total + savings;
+                    }
+                    return total;
+                  }, 0).toFixed(2)} DT
+                </strong> grâce aux promotions !
+              </p>
+            </div>
+          )}
           
           {formData.cagnotte_deduction > 0 && (
             <div className="mt-3 p-3 bg-green-50 border-l-4 border-green-500 rounded">

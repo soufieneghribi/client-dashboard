@@ -18,10 +18,11 @@ import SubCategory from "./components/SubCategory";
 import Catalogue from "./pages/Catalogue";
 import Promotions from "./pages/Promotions";
 import Cadeaux from "./pages/Cadeaux";
-import MesCadeaux from "./pages/MesCadeaux"; 
+import MesCadeaux from "./pages/MesCadeaux";
 import CartShopping from "./pages/CartShopping";
 import Favoris from "./pages/Favoris";
 import Profile from "./pages/Profile";
+import Loyality from "./pages/Loyality";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Orders from "./pages/Commandes";
 import SearchResult from "./components/SearchResult";
@@ -30,11 +31,22 @@ import Contact from "./components/Contact";
 import OrderDetails from "./pages/OrderDetails";
 import RecipeDetails from "./pages/RecipeDetails";
 import Recipes from "./pages/Recipies";
+
+// ⬅️ NOUVEAUX IMPORTS - Produits Gratuits
+import Gratuite from "./pages/Gratuite";
+import GratuiteDetails from "./pages/GratuiteDetails";
+import GratuiteSuccess from "./pages/GratuiteSuccess";
+import MesReservations from "./pages/MesReservations";
+
+// ⬅️ NOUVEAUX IMPORTS - Codes Promo
+import Codepromo from "./pages/Codepromo";
+import Codepromodetails from "./pages/Codepromodetails";
+import MescodePromo from "./pages/MescodePromo";
+
 import "./styles/index.css";
 
 /**
  * Suppress non-critical warnings from google-map-react library
- * These warnings don't affect functionality but clutter the console
  */
 const originalError = console.error;
 console.error = (...args) => {
@@ -63,8 +75,6 @@ console.warn = (...args) => {
 
 /**
  * Application Router Configuration
- * Note: StrictMode is disabled to avoid warnings from google-map-react
- * which is not fully compatible with React 18's StrictMode
  */
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -79,6 +89,11 @@ const router = createBrowserRouter(
       <Route path="/catalogue" element={<Catalogue />} />
       <Route path="/promotions" element={<Promotions />} />
       <Route path="/cadeaux" element={<Cadeaux />} />
+      
+      {/* ⬅️ NOUVELLES ROUTES - CODES PROMO (Publiques) */}
+      <Route path="/code-promo" element={<Codepromo />} />
+      <Route path="/code-promo/:id" element={<Codepromodetails />} />
+      
       <Route path="/categories" element={<Categories />} />
       <Route path="/subcategory/:id" element={<SubCategory />} />
       <Route path="/products" element={<Products />} />
@@ -93,6 +108,12 @@ const router = createBrowserRouter(
       <Route 
         path="/profile" 
         element={<ProtectedRoute><Profile/></ProtectedRoute>}
+      />
+      
+      {/* Carte de fidélité */}
+      <Route 
+        path="/loyalty-card" 
+        element={<ProtectedRoute><Loyality/></ProtectedRoute>}
       />
       
       <Route 
@@ -120,10 +141,41 @@ const router = createBrowserRouter(
         element={<ProtectedRoute><OrderDetails/></ProtectedRoute>} 
       />
 
-      {/* ✅ Route pour consulter les cadeaux acquis */}
       <Route 
         path="/mes-cadeaux" 
         element={<ProtectedRoute><MesCadeaux /></ProtectedRoute>}
+      />
+
+      {/* ⬅️ NOUVELLES ROUTES - CODES PROMO (Protégées) */}
+      <Route 
+        path="/mes-code-promo" 
+        element={<ProtectedRoute><MescodePromo /></ProtectedRoute>}
+      />
+
+      {/* ⬅️ NOUVELLES ROUTES - PRODUITS GRATUITS */}
+      
+      {/* Liste des produits gratuits - Accessible à tous */}
+      <Route 
+        path="/gratuite" 
+        element={<Gratuite />}
+      />
+      
+      {/* Détails d'un produit gratuit - Accessible à tous */}
+      <Route 
+        path="/gratuite/:id" 
+        element={<GratuiteDetails />}
+      />
+      
+      {/* Page de succès après réservation - Protégée */}
+      <Route 
+        path="/gratuite/success" 
+        element={<ProtectedRoute><GratuiteSuccess /></ProtectedRoute>}
+      />
+      
+      {/* Mes réservations de produits gratuits - Protégée */}
+      <Route 
+        path="/mes-reservations" 
+        element={<ProtectedRoute><MesReservations /></ProtectedRoute>}
       />
 
       {/* ==================== 404 FALLBACK ==================== */}
@@ -133,8 +185,7 @@ const router = createBrowserRouter(
 );
 
 /**
- * Root render without StrictMode
- * This eliminates warnings from google-map-react library
+ * Root render
  */
 createRoot(document.getElementById('root')).render(
   <Provider store={store}>

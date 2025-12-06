@@ -15,6 +15,8 @@ import searchReducer from "./slices/search.js"
 import recipesReducer from "./slices/recipes"; // Ajoutez cette ligne
 import dealsReducer from "./slices/deals"; // au lieu de deal.js
 import promotionsReducer from "./slices/promotions"; // ✅ Nouveau slice pour les promotions
+import loyaltyCardReducer from './slices/loyaltyCardSlice';  // ✅ NOUVEAU
+import CodePromoReducer from './slices/CodePromo';  // ✅ NOUVEAU - Codes promo partenaires
 
 
 // Import du middleware d'authentification
@@ -36,8 +38,9 @@ const store = configureStore({
         search: searchReducer,
         recipes: recipesReducer,
         deals: dealsReducer,
+        loyaltyCard: loyaltyCardReducer,  // ✅ NOUVEAU
         promotions: promotionsReducer, // ✅ Nouveau reducer pour les promotions
-
+        codePromo: CodePromoReducer,  // ✅ NOUVEAU - Codes promo partenaires
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

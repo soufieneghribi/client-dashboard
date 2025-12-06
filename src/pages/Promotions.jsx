@@ -10,9 +10,11 @@ import {
   FaCalendarAlt,
   FaTag,
   FaBoxOpen,
+  FaShoppingCart
 } from "react-icons/fa";
 import { MdLocalOffer } from "react-icons/md";
 import { fetchUserProfile } from "../store/slices/user";
+import Cookies from "js-cookie";
 
 const Promotions = () => {
   const navigate = useNavigate();
@@ -21,6 +23,7 @@ const Promotions = () => {
   const [promotions, setPromotions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [clientInfo, setClientInfo] = useState(null);
+  const [addingToCart, setAddingToCart] = useState({}); // Gestion des états de chargement par article
   const { Userprofile } = useSelector((state) => state.user);
 
   // Récupérer les promotions du client
@@ -69,6 +72,70 @@ const Promotions = () => {
     fetchPromotions();
     dispatch(fetchUserProfile());
   }, [navigate, dispatch]);
+
+  // Fonction pour ajouter un article au panier
+  const addToCart = (article, promotion) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Veuillez vous connecter pour ajouter au panier");
+      navigate("/login");
+      return;
+    }
+
+    // Définir l'état de chargement pour cet article
+    setAddingToCart(prev => ({ ...prev, [article.id]: true }));
+
+    // Récupérer le panier actuel depuis les cookies
+    const currentCart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
+    
+    // Vérifier si l'article est déjà dans le panier
+    const existingItemIndex = currentCart.findIndex(item => item.id === article.id);
+    
+    if (existingItemIndex !== -1) {
+      // Article déjà dans le panier, augmenter la quantité
+      currentCart[existingItemIndex].quantity += 1;
+      currentCart[existingItemIndex].total = (
+        parseFloat(currentCart[existingItemIndex].price === 0 ? 
+        currentCart[existingItemIndex].Initialprice : 
+        currentCart[existingItemIndex].price) * 
+        currentCart[existingItemIndex].quantity
+      ).toFixed(2);
+      
+      toast.success("Ajouté au panier avec succès");
+    } else {
+      // Nouvel article à ajouter
+      const cartItem = {
+        id: article.id,
+        name: article.name,
+        price: parseFloat(article.pivot.promo_price),
+        Initialprice: parseFloat(article.pivot.original_price),
+        quantity: 1,
+        total: parseFloat(article.pivot.promo_price).toFixed(2),
+        img: article.img || "/default-product.png",
+        isPromotion: true,
+        promo_id: promotion.id,
+        promo_name: promotion.name,
+        discount_percent: article.pivot.discount_percent
+      };
+      
+      currentCart.push(cartItem);
+      toast.success("Article ajouté au panier");
+    }
+    
+    // Sauvegarder le panier mis à jour
+    Cookies.set("cart", JSON.stringify(currentCart), { expires: 7 });
+    
+    // Simuler un délai pour l'effet visuel
+    setTimeout(() => {
+      setAddingToCart(prev => ({ ...prev, [article.id]: false }));
+      
+      // Afficher une notification de confirmation avec une coche
+      const event = new CustomEvent('cartUpdated', { 
+        detail: { itemCount: currentCart.length } 
+      });
+      window.dispatchEvent(event);
+    }, 500);
+  };
 
   const viewArticleDetails = (article, promotion) => {
     navigate(`/product/${article.id}`, {
@@ -205,8 +272,28 @@ const Promotions = () => {
                     {promotion.articles && promotion.articles.map((article) => (
                       <div
                         key={article.id}
-                        className="border border-blue-200 rounded-xl p-4 hover:shadow-lg transition-all bg-white"
+                        className="border border-blue-200 rounded-xl p-4 hover:shadow-lg transition-all bg-white relative group"
                       >
+                        {/* Bouton Ajouter au panier en haut à gauche - VERT */}
+                        <div className="absolute top-2 left-2 z-10">
+                          <button
+                            onClick={() => addToCart(article, promotion)}
+                            disabled={addingToCart[article.id]}
+                            className={`flex items-center justify-center w-10 h-10 rounded-full text-xs font-semibold shadow-lg transition-all ${
+                              addingToCart[article.id]
+                                ? 'bg-blue-400 text-white cursor-not-allowed'
+                                : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white'
+                            }`}
+                            title="Ajouter au panier"
+                          >
+                            {addingToCart[article.id] ? (
+                              <FaSpinner className="animate-spin text-sm" />
+                            ) : (
+                              <FaShoppingCart className="text-base" />
+                            )}
+                          </button>
+                        </div>
+
                         <div className="relative mb-3">
                           <img
                             src={article.img}

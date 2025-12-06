@@ -143,10 +143,37 @@ export const API_ENDPOINTS = {
     UPDATE: (id) => `${API_BASE_URL}/cadeaux/${id}`,
     DELETE: (id) => `${API_BASE_URL}/cadeaux/${id}`,
     TOGGLE_STATUS: (id) => `${API_BASE_URL}/cadeaux/${id}/toggle-status`,
-    // ✅ Routes pour les acquisitions
     ACQUIRE: (id) => `${API_BASE_URL}/cadeaux/${id}/acquire`,
     MY_ACQUISITIONS: `${API_BASE_URL}/cadeaux/my-acquisitions/list`,
     ACQUISITION_BY_CODE: (code) => `${API_BASE_URL}/cadeaux/acquisition/${code}`,
+  },
+
+  // ==================== PRODUITS GRATUITS ====================
+  FREE_PRODUCTS: {
+    ALL: `${API_BASE_URL}/free-products`,
+    BY_ID: (id) => `${API_BASE_URL}/free-products/${id}`,
+    RESERVE: (id) => `${API_BASE_URL}/free-products/${id}/reserve`,
+    MY_RESERVATIONS: `${API_BASE_URL}/free-products/my-reservations/list`,
+    RESERVATION_BY_ID: (id) => `${API_BASE_URL}/free-products/reservations/${id}`,
+  },
+
+  // ==================== CODES PROMO PARTENAIRES ====================
+ // ==================== CODES PROMO PARTENAIRES ====================
+CODE_PROMO: {
+  ALL: `${API_BASE_URL}/promo-codes`,  // ✅ CORRECTION: promo-codes au lieu de code-promos
+  BY_ID: (id) => `${API_BASE_URL}/promo-codes/${id}`, // ✅ CORRECTION
+  RESERVE: (id) => `${API_BASE_URL}/promo-codes/${id}/reserve`, // ✅ CORRECTION
+  MY_CODES: `${API_BASE_URL}/promo-codes/my`, // ✅ CORRECTION: /my au lieu de /my-codes
+},
+
+  // ==================== LOYALTY CARD (✅ NOUVEAU) ====================
+  LOYALTY: {
+    GET: `${API_BASE_URL}/customer/loyalty-card`,
+    GENERATE: `${API_BASE_URL}/customer/loyalty-card/generate`,
+    REPORT_LOST: `${API_BASE_URL}/customer/loyalty-card/report-lost`,
+    HISTORY: `${API_BASE_URL}/customer/loyalty-card/history`,
+    BALANCE: `${API_BASE_URL}/customer/loyalty-card/balance`,
+    VALIDATE: `${API_BASE_URL}/customer/loyalty-card/validate`,
   },
 };
 

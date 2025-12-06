@@ -152,7 +152,9 @@ const Header = () => {
   const navLinks = [
     { path: "/", label: "Accueil", icon: "fa-home" },
     { path: "/categories", label: "Product", icon: "fa-th-large" },
-    { path: "/MesDeals", label: "deals", icon: "fa-tag" },
+    { path: "/MesDeals", label: "Deals", icon: "fa-tag" },
+      { path: "/recipes", label: "Recettes", icon: "fa-utensils" },
+
     { path: "/Catalogue", label: "Catalogue", icon: "fa-book" },
     { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" },
     { path: "/contact", label: "Contact", icon: "fa-envelope" }

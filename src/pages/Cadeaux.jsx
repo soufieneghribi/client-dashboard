@@ -11,7 +11,10 @@ import {
   FaCheckCircle,
   FaCalendarAlt,
   FaTimes,
-  FaHistory
+  FaHistory,
+  FaChevronLeft,
+  FaWallet,
+  FaGift
 } from "react-icons/fa";
 import { MdCardGiftcard, MdLocalOffer } from "react-icons/md";
 import { fetchUserProfile } from "../store/slices/user";
@@ -156,7 +159,7 @@ const Cadeaux = () => {
       if (acquireResponse.ok && acquireResult.success) {
         // Succès de l'acquisition
         const acquisitionData = acquireResult.data;
-        const codeAcquisition = acquisitionData?.acquisition?.code_acquisition;
+        const codeAcquisition = acquisitionData?.acquisition?.code_cadeau;
         
         toast.success(
           `🎁 Cadeau "${selectedCadeau.titre}" acquis avec succès !\n` +
@@ -209,9 +212,9 @@ const Cadeaux = () => {
 
   if (loading || userLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
-          <FaSpinner className="animate-spin text-6xl text-pink-500 mx-auto mb-4" />
+          <FaSpinner className="animate-spin text-6xl text-blue-600 mx-auto mb-4" />
           <p className="text-xl text-gray-600">Chargement des cadeaux...</p>
         </div>
       </div>
@@ -220,15 +223,15 @@ const Cadeaux = () => {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md">
-          <MdCardGiftcard className="text-8xl text-pink-500 mx-auto mb-4" />
+          <MdCardGiftcard className="text-8xl text-blue-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
             Connectez-vous pour accéder aux cadeaux
           </h2>
           <button
             onClick={() => navigate("/login")}
-            className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-8 py-3 rounded-xl font-semibold hover:from-pink-600 hover:to-purple-600 transition-all"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all"
           >
             Se connecter
           </button>
@@ -238,74 +241,137 @@ const Cadeaux = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {/* Header moderne cohérent avec MesCadeaux */}
+      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-2xl">
+        <div className="container mx-auto px-4 py-5">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-gray-600 hover:text-pink-600 transition-colors"
+              className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/20 transition-all duration-200"
             >
-              <FaArrowLeft className="text-xl" />
-              <span className="font-semibold">Retour</span>
+              <FaChevronLeft className="text-sm" />
+              <span className="font-medium text-xs">Retour</span>
             </button>
             
-            <div className="text-right">
-              <div className="flex items-center gap-2 justify-end mb-1">
-                <MdCardGiftcard className="text-pink-500 text-3xl" />
-                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600">
-                  Boutique Cadeaux
-                </h1>
+            {/* Cagnotte rapide */}
+            <div className="bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/20">
+              <div className="flex items-center gap-2">
+                <FaWallet className="text-amber-300 text-sm" />
+                <span className="text-white font-bold text-md">{userCagnotte.toFixed(2)} DT</span>
               </div>
-              <p className="text-gray-600">Échangez votre cagnotte contre des cadeaux</p>
             </div>
           </div>
+          
+          {/* Titre */}
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20 mb-3">
+              <FaGift className="text-2xl" />
+              <h1 className="text-2xl font-bold">
+                 Cadeaux
+              </h1>
+            </div>
+            <p className="text-white/80 text-sm">
+              Échangez votre cagnotte contre des cadeaux exclusifs
+            </p>
+          </div>
+        </div>
+      </div>
 
-          {/* Solde Cagnotte */}
-          <div className="mt-6 bg-gradient-to-r from-pink-100 to-purple-100 p-4 rounded-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-white p-3 rounded-full">
-                  <FaCoins className="text-2xl text-yellow-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 font-semibold">Votre Cagnotte</p>
-                  <p className="text-3xl font-bold text-pink-600">
-                    {userCagnotte.toFixed(2)} DT
-                  </p>
+      <div className="container mx-auto px-4 py-6">
+        {/* Section statistiques compacte */}
+        <div className="max-w-6xl mx-auto mb-8">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 mb-1">
+                  Votre sélection
+                </h2>
+                <p className="text-gray-600 text-xs">
+                  Cadeaux disponibles pour échange
+                </p>
+              </div>
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center">
+                <FaGift className="text-sm text-white" />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-gradient-to-br from-white to-purple-50 rounded-lg p-3 border border-purple-100 group hover:shadow-md transition-all duration-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-purple-200 rounded-md flex items-center justify-center">
+                    <FaGift className="text-sm text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600">Total</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {cadeaux.length}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Cadeaux disponibles</p>
-                  <p className="text-2xl font-bold text-purple-600">{cadeaux.length}</p>
+              
+              <div className="bg-gradient-to-br from-white to-blue-50 rounded-lg p-3 border border-blue-100 group hover:shadow-md transition-all duration-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-md flex items-center justify-center">
+                    <FaWallet className="text-sm text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600">Votre cagnotte</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {userCagnotte.toFixed(2)} DT
+                    </p>
+                  </div>
                 </div>
-                <button
-                  onClick={() => navigate('/mes-cadeaux')}
-                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-600 transition-all shadow-md"
-                >
-                  <FaHistory />
-                  Mes Cadeaux
-                </button>
               </div>
+              
+              <div className="bg-gradient-to-br from-white to-green-50 rounded-lg p-3 border border-green-100 group hover:shadow-md transition-all duration-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-green-200 rounded-md flex items-center justify-center">
+                    <FaCheckCircle className="text-sm text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600">Disponibles</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {cadeaux.filter(c => c.quantite_disponible > 0 && new Date(c.date_fin_validite) >= new Date()).length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+<div className="bg-gradient-to-br from-white to-purple-50 rounded-lg p-3 border border-purple-100 group hover:shadow-md transition-all duration-200">
+  <div className="flex items-center gap-2 mb-1">
+    <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-purple-200 rounded-md flex items-center justify-center">
+      <FaHistory className="text-sm text-purple-600" />
+    </div>
+    <div>
+      <p className="text-xs font-semibold text-gray-600">Mes cadeaux</p>
+      <button
+        onClick={() => navigate('/mes-cadeaux')}
+        className="mt-1 px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs font-semibold rounded-lg transition-all shadow-sm hover:shadow"
+      >
+        Voir mes cadeaux
+      </button>
+    </div>
+  </div>
+</div>
             </div>
           </div>
         </div>
 
         {/* Filtres par Catégorie */}
         {categories.length > 1 && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
+          <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg border border-gray-100 p-5 mb-8">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Catégories</h3>
             <div className="flex flex-wrap gap-2">
               {categories.map((categorie) => (
                 <button
                   key={categorie}
                   onClick={() => setSelectedCategorie(categorie)}
-                  className={`px-4 py-2 rounded-full font-semibold transition-all ${
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
                     selectedCategorie === categorie
-                      ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                   }`}
                 >
                   {categorie}
@@ -316,151 +382,153 @@ const Cadeaux = () => {
         )}
 
         {/* Liste des Cadeaux */}
-        {cadeauxFiltres.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-            <div className="text-8xl mb-6">🎁</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              Aucun cadeau disponible
-            </h2>
-            <p className="text-gray-600 mb-6">
-              {selectedCategorie !== "Tous" 
-                ? `Aucun cadeau dans la catégorie "${selectedCategorie}"`
-                : "Revenez bientôt pour découvrir nos nouveaux cadeaux !"}
-            </p>
-            <button
-              onClick={() => navigate('/catalogue')}
-              className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-8 py-3 rounded-xl font-semibold hover:from-pink-600 hover:to-purple-600 transition-all"
-            >
-              Retour au Catalogue
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {cadeauxFiltres.map((cadeau) => {
-              const peutAcheter = canAfford(cadeau.prix_cagnotte);
-              const estDisponible = cadeau.est_publie && cadeau.quantite_disponible > 0;
-              const estExpire = new Date(cadeau.date_fin_validite) < new Date();
-              
-              return (
-                <div
-                  key={cadeau.id}
-                  className={`bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 ${
-                    estDisponible && !estExpire
-                      ? 'hover:shadow-2xl hover:-translate-y-1'
-                      : 'opacity-60'
-                  }`}
-                >
-                  {/* Image */}
-                  <div className="relative h-48 bg-gradient-to-br from-pink-100 to-purple-100">
-                    <img
-                      src={cadeau.image}
-                      alt={cadeau.titre}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/300x200?text=Cadeau';
-                      }}
-                    />
-                    
-                    {/* Badges */}
-                    <div className="absolute top-2 right-2 space-y-2">
-                      {!estDisponible && (
-                        <span className="bg-gray-800 text-white px-3 py-1 rounded-full text-xs font-bold block">
-                          Épuisé
-                        </span>
-                      )}
-                      {estExpire && (
-                        <span className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold block">
-                          Expiré
-                        </span>
-                      )}
-                      {cadeau.categorie && (
-                        <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold block">
-                          {cadeau.categorie}
-                        </span>
-                      )}
-                    </div>
+        <div className="max-w-6xl mx-auto">
+          {cadeauxFiltres.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+              <div className="text-8xl mb-6">🎁</div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Aucun cadeau disponible
+              </h2>
+              <p className="text-gray-600 mb-6">
+                {selectedCategorie !== "Tous" 
+                  ? `Aucun cadeau dans la catégorie "${selectedCategorie}"`
+                  : "Revenez bientôt pour découvrir nos nouveaux cadeaux !"}
+              </p>
+              <button
+                onClick={() => navigate('/catalogue')}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+              >
+                Retour au Catalogue
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {cadeauxFiltres.map((cadeau) => {
+                const peutAcheter = canAfford(cadeau.prix_cagnotte);
+                const estDisponible = cadeau.est_publie && cadeau.quantite_disponible > 0;
+                const estExpire = new Date(cadeau.date_fin_validite) < new Date();
+                
+                return (
+                  <div
+                    key={cadeau.id}
+                    className={`bg-white rounded-2xl shadow-lg border-2 overflow-hidden transition-all duration-300 ${
+                      estDisponible && !estExpire && peutAcheter
+                        ? 'hover:shadow-2xl hover:-translate-y-1 border-purple-200 hover:border-purple-300'
+                        : 'border-gray-200'
+                    } ${!(estDisponible && !estExpire) ? 'opacity-60' : ''}`}
+                  >
+                    {/* Image */}
+                    <div className="relative h-48 bg-gradient-to-br from-blue-100 to-purple-100">
+                      <img
+                        src={cadeau.image}
+                        alt={cadeau.titre}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/300x200?text=Cadeau';
+                        }}
+                      />
+                      
+                      {/* Badges */}
+                      <div className="absolute top-2 right-2 space-y-2">
+                        {!estDisponible && (
+                          <span className="bg-gray-800 text-white px-3 py-1 rounded-full text-xs font-bold block">
+                            Épuisé
+                          </span>
+                        )}
+                        {estExpire && (
+                          <span className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold block">
+                            Expiré
+                          </span>
+                        )}
+                        {cadeau.categorie && (
+                          <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold block">
+                            {cadeau.categorie}
+                          </span>
+                        )}
+                      </div>
 
-                    {/* Prix en Cagnotte */}
-                    <div className="absolute bottom-2 left-2 bg-white rounded-full px-4 py-2 shadow-lg">
-                      <div className="flex items-center gap-2">
-                        <FaCoins className="text-yellow-500" />
-                        <span className="font-bold text-pink-600 text-lg">
-                          {parseFloat(cadeau.prix_cagnotte).toFixed(2)} DT
-                        </span>
+                      {/* Prix en Cagnotte */}
+                      <div className="absolute bottom-2 left-2 bg-white rounded-lg px-4 py-2 shadow-lg">
+                        <div className="flex items-center gap-2">
+                          <FaCoins className="text-yellow-500" />
+                          <span className="font-bold text-blue-600 text-lg">
+                            {parseFloat(cadeau.prix_cagnotte).toFixed(2)} DT
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Contenu */}
-                  <div className="p-4">
-                    <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2 min-h-[3.5rem]">
-                      {cadeau.titre}
-                    </h3>
-                    
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-3 min-h-[4rem]">
-                      {cadeau.description}
-                    </p>
-
-                    {/* Partenaire */}
-                    {cadeau.partenaire && (
-                      <div className="flex items-center gap-2 mb-3 text-sm text-gray-500">
-                        <MdLocalOffer className="text-purple-500" />
-                        <span>Par {cadeau.partenaire}</span>
-                      </div>
-                    )}
-
-                    {/* Dates de validité */}
-                    <div className="flex items-center gap-2 mb-3 text-xs text-gray-500">
-                      <FaCalendarAlt className="text-pink-500" />
-                      <span>
-                        Valide jusqu'au {new Date(cadeau.date_fin_validite).toLocaleDateString('fr-FR')}
-                      </span>
-                    </div>
-
-                    {/* Quantité disponible */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <FaBox className="text-purple-500" />
-                        <span className="text-gray-600">
-                          {cadeau.quantite_disponible} disponible{cadeau.quantite_disponible > 1 ? 's' : ''}
-                        </span>
-                      </div>
-                      {peutAcheter && estDisponible && !estExpire && (
-                        <FaCheckCircle className="text-green-500 text-xl" />
-                      )}
-                    </div>
-
-                    {/* Bouton Échanger */}
-                    <button
-                      onClick={() => openConfirmModal(cadeau)}
-                      disabled={!peutAcheter || !estDisponible || estExpire}
-                      className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${
-                        peutAcheter && estDisponible && !estExpire
-                          ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:from-pink-600 hover:to-purple-600 shadow-lg hover:shadow-xl'
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
-                    >
-                      {!estDisponible
-                        ? 'Épuisé'
-                        : estExpire
-                        ? 'Expiré'
-                        : !peutAcheter
-                        ? 'Cagnotte insuffisante'
-                        : '🎁 Échanger'}
-                    </button>
-
-                    {/* Conditions */}
-                    {cadeau.conditions && (
-                      <p className="text-xs text-gray-500 mt-3 italic">
-                        * {cadeau.conditions}
+                    {/* Contenu */}
+                    <div className="p-5">
+                      <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2 min-h-[3.5rem]">
+                        {cadeau.titre}
+                      </h3>
+                      
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-3 min-h-[4rem]">
+                        {cadeau.description}
                       </p>
-                    )}
+
+                      {/* Partenaire */}
+                      {cadeau.partenaire && (
+                        <div className="flex items-center gap-2 mb-3 text-sm text-gray-500">
+                          <MdLocalOffer className="text-purple-500" />
+                          <span>Par {cadeau.partenaire}</span>
+                        </div>
+                      )}
+
+                      {/* Dates de validité */}
+                      <div className="flex items-center gap-2 mb-3 text-xs text-gray-500">
+                        <FaCalendarAlt className="text-blue-500" />
+                        <span>
+                          Valide jusqu'au {new Date(cadeau.date_fin_validite).toLocaleDateString('fr-FR')}
+                        </span>
+                      </div>
+
+                      {/* Quantité disponible */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <FaBox className="text-purple-500" />
+                          <span className="text-gray-600">
+                            {cadeau.quantite_disponible} disponible{cadeau.quantite_disponible > 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        {peutAcheter && estDisponible && !estExpire && (
+                          <FaCheckCircle className="text-green-500 text-xl" />
+                        )}
+                      </div>
+
+                      {/* Bouton Échanger */}
+                      <button
+                        onClick={() => openConfirmModal(cadeau)}
+                        disabled={!peutAcheter || !estDisponible || estExpire}
+                        className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${
+                          peutAcheter && estDisponible && !estExpire
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl'
+                            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        {!estDisponible
+                          ? 'Épuisé'
+                          : estExpire
+                          ? 'Expiré'
+                          : !peutAcheter
+                          ? 'Cagnotte insuffisante'
+                          : '🎁 Échanger'}
+                      </button>
+
+                      {/* Conditions */}
+                      {cadeau.conditions && (
+                        <p className="text-xs text-gray-500 mt-3 italic">
+                          * {cadeau.conditions}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal de Confirmation */}
@@ -468,7 +536,7 @@ const Cadeaux = () => {
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             {/* Header */}
-            <div className="bg-gradient-to-r from-pink-500 to-purple-500 text-white p-6 rounded-t-3xl">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-3xl">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-2xl font-bold">🎁 Confirmer l'échange</h2>
                 <button
@@ -556,7 +624,7 @@ const Cadeaux = () => {
                 <button
                   onClick={echangerCadeau}
                   disabled={exchangeLoading}
-                  className="flex-1 py-3 px-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-bold hover:from-pink-600 hover:to-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {exchangeLoading ? (
                     <>

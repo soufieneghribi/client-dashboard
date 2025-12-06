@@ -27,7 +27,8 @@ const GOOGLE_MAPS_API_KEY = "AIzaSyAFwGAsC3VUZYdxkEwB43DEf5tpSx4hAZg";
 // ==================== CONSTANTS ====================
 const API_BASE_URL = apiConfig.API_BASE_URL;
 const DEFAULT_LOCATION = { lat: 36.8065, lng: 10.1815 }; // Tunis center
-const DEFAULT_DELIVERY_FEE = 5;
+const DEFAULT_DELIVERY_FEE = 2.5; // ✅ Frais de livraison: 2.5 DT pour la livraison
+const PICKUP_DELIVERY_FEE = 0; // ✅ Emporté: Gratuit (0 DT)
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -98,7 +99,6 @@ const getAddressFromCoordinates = async (lat, lng) => {
     const data = await response.json();
     
     if (data.status === 'OK' && data.results && data.results.length > 0) {
-      // Retourner l'adresse formatée (la plus détaillée)
       return data.results[0].formatted_address;
     } else {
       console.error('Geocoding error:', data.status);
@@ -137,6 +137,9 @@ const OrderConfirmation = () => {
 
   const totalTTC = parseFloat(receivedTotal) || 0;
 
+  // ✅ CORRECTION: Déterminer le type de commande initial basé sur les frais de livraison
+  const initialOrderType = (parseFloat(receivedDeliveryFee) === 0 || receivedDeliveryFee === 0) ? "pickup" : "delivery";
+  
   const [formData, setFormData] = useState({
     contact_person_name: "",
     contact_person_number: "",
@@ -144,7 +147,7 @@ const OrderConfirmation = () => {
     longitude: "",
     latitude: "",
     cart: orderDetails,
-    order_type: "delivery",
+    order_type: initialOrderType, // ✅ "delivery" ou "pickup" basé sur les frais
     payment_method: "cash",
     delivery_fee: parseFloat(receivedDeliveryFee) || DEFAULT_DELIVERY_FEE,
     cagnotte_deduction: parseFloat(receivedCagnotteDeduction) || 0,
@@ -236,7 +239,6 @@ const OrderConfirmation = () => {
         async (position) => {
           const { latitude, longitude } = position.coords;
           
-          // Récupérer l'adresse automatiquement
           setAddressLoading(true);
           const address = await getAddressFromCoordinates(latitude, longitude);
           setAddressLoading(false);
@@ -245,7 +247,7 @@ const OrderConfirmation = () => {
             ...prev,
             latitude: latitude.toString(),
             longitude: longitude.toString(),
-            address: address || prev.address, // Utiliser l'adresse récupérée ou garder l'ancienne
+            address: address || prev.address,
           }));
           setGeolocationStatus('success');
           
@@ -293,16 +295,66 @@ const OrderConfirmation = () => {
       setManualLocation(true);
     };
 
-    getGeolocation();
-  }, [authChecked]);
+    // ✅ CORRECTION: Ne pas lancer la géolocalisation si c'est un retrait en magasin
+    if (formData.order_type === 'delivery') {
+      getGeolocation();
+    } else {
+      setGeolocationStatus('not_needed');
+    }
+  }, [authChecked, formData.order_type]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    
+    // ✅ Mettre à jour delivery_fee automatiquement selon order_type
+    if (name === "order_type") {
+      const newDeliveryFee = value === "pickup" ? PICKUP_DELIVERY_FEE : DEFAULT_DELIVERY_FEE;
+      setFormData((prevData) => ({ 
+        ...prevData, 
+        [name]: value,
+        delivery_fee: newDeliveryFee,
+        // Réinitialiser la localisation si on passe de delivery à pickup
+        ...(value === "pickup" && {
+          latitude: "",
+          longitude: "",
+          address: ""
+        })
+      }));
+      
+      // Si on passe à delivery et qu'on n'a pas encore de géolocalisation, lancer la détection
+      if (value === "delivery" && (!prevData.latitude || !prevData.longitude)) {
+        setGeolocationStatus('loading');
+        setTimeout(() => {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              async (position) => {
+                const { latitude, longitude } = position.coords;
+                const address = await getAddressFromCoordinates(latitude, longitude);
+                setFormData(prev => ({
+                  ...prev,
+                  latitude: latitude.toString(),
+                  longitude: longitude.toString(),
+                  address: address || prev.address,
+                }));
+                setGeolocationStatus('success');
+                toast.success("📍 Position détectée automatiquement");
+              },
+              () => {
+                setGeolocationStatus('error');
+                toast.error("Impossible de détecter votre position. Sélectionnez-la manuellement sur la carte.");
+              }
+            );
+          } else {
+            setGeolocationStatus('error');
+          }
+        }, 100);
+      }
+    } else {
+      setFormData((prevData) => ({ ...prevData, [name]: value }));
+    }
   };
 
   const handleMapClick = async ({ lat, lng }) => {
-    // Récupérer l'adresse automatiquement
     setAddressLoading(true);
     const address = await getAddressFromCoordinates(lat, lng);
     setAddressLoading(false);
@@ -311,7 +363,7 @@ const OrderConfirmation = () => {
       ...prev, 
       latitude: lat.toString(), 
       longitude: lng.toString(),
-      address: address || prev.address, // Utiliser l'adresse récupérée ou garder l'ancienne
+      address: address || prev.address,
     }));
     setMapError(null);
     setManualLocation(true);
@@ -338,7 +390,6 @@ const OrderConfirmation = () => {
       async (position) => {
         const { latitude, longitude } = position.coords;
         
-        // Récupérer l'adresse automatiquement
         setAddressLoading(true);
         const address = await getAddressFromCoordinates(latitude, longitude);
         setAddressLoading(false);
@@ -369,45 +420,29 @@ const OrderConfirmation = () => {
   };
 
   const calculateOrderAmount = () => {
-    // ⭐ CORRECTION : Utiliser le total déjà calculé par le panier
-    // Le panier (CartShopping) a déjà calculé le bon montant avec les promotions
-    if (receivedTotal && !isNaN(receivedTotal) && receivedTotal > 0) {
-      // Recalculer uniquement si la cagnotte a changé
-      const deliveryFee = parseFloat(formData.delivery_fee) || DEFAULT_DELIVERY_FEE;
-      const cagnotteDeduction = parseFloat(formData.cagnotte_deduction) || 0;
-      const receivedCagnotteValue = parseFloat(receivedCagnotteDeduction) || 0;
-      
-      // Si la cagnotte n'a pas changé, utiliser le total reçu
-      if (cagnotteDeduction === receivedCagnotteValue) {
-        return receivedTotal;
-      }
-      
-      // Sinon, ajuster avec la nouvelle cagnotte
-      const adjustment = receivedCagnotteValue - cagnotteDeduction;
-      return receivedTotal + adjustment;
-    }
-    
-    // ⭐ FALLBACK : Si pas de receivedTotal, calculer manuellement
-    if (!orderDetails || orderDetails.length === 0) {
-      return 0;
-    }
-
+    // ✅ Calculer le sous-total des articles
     const calculatedSubtotal = orderDetails.reduce((total, item) => {
       const price = parseFloat(item.price) || 0;
       const quantity = parseInt(item.quantity) || 0;
       return total + (price * quantity);
     }, 0);
     
-    const deliveryFee = parseFloat(formData.delivery_fee) || DEFAULT_DELIVERY_FEE;
+    // ✅ CORRECTION: Utiliser directement les constantes
+    const deliveryFee = formData.order_type === 'pickup' 
+      ? PICKUP_DELIVERY_FEE  // 0 DT
+      : DEFAULT_DELIVERY_FEE; // 2.5 DT
+    
+    // ✅ Récupérer la déduction de cagnotte
     const cagnotteDeduction = parseFloat(formData.cagnotte_deduction) || 0;
     
+    // ✅ Calculer le total final : Sous-total + Frais de livraison - Cagnotte
     const calculatedAmount = calculatedSubtotal + deliveryFee - cagnotteDeduction;
     
     if (isNaN(calculatedAmount) || !isFinite(calculatedAmount)) {
       return 0;
     }
     
-    return calculatedAmount;
+    return Math.max(0, calculatedAmount); // Ne jamais retourner un montant négatif
   };
 
   const handleSubmit = async () => {
@@ -420,9 +455,9 @@ const OrderConfirmation = () => {
     const validations = [
       { condition: !contact_person_name?.trim(), message: "Veuillez saisir votre nom complet." },
       { condition: !contact_person_number?.trim(), message: "Veuillez saisir votre numéro de téléphone." },
-      { condition: !address?.trim(), message: "Veuillez saisir votre adresse de livraison." },
+      { condition: formData.order_type === 'delivery' && !address?.trim(), message: "Veuillez saisir votre adresse de livraison." },
       { condition: !payment_method, message: "Veuillez sélectionner un mode de paiement." },
-      { condition: !latitude || !longitude, message: "Veuillez sélectionner votre localisation sur la carte." },
+      { condition: formData.order_type === 'delivery' && (!latitude || !longitude), message: "Veuillez sélectionner votre localisation sur la carte." },
     ];
 
     for (const validation of validations) {
@@ -452,44 +487,58 @@ const OrderConfirmation = () => {
     
     const finalOrderAmount = parseFloat(calculatedOrderAmount.toFixed(2));
     
+    // ✅ CORRECTION: Utiliser les constantes directement
+    const deliveryFee = formData.order_type === 'pickup' 
+      ? PICKUP_DELIVERY_FEE  // 0 DT
+      : DEFAULT_DELIVERY_FEE; // 2.5 DT
+      
+    const cagnotteDeduction = parseFloat(formData.cagnotte_deduction) || 0;
+    
     const orderData = {
       order_amount: finalOrderAmount,
-      cagnotte_deduction: parseFloat(formData.cagnotte_deduction || 0),
-      delivery_fee: parseFloat(formData.delivery_fee || DEFAULT_DELIVERY_FEE),
-      contact_person_name: contact_person_name.trim(), // ⭐ AJOUTÉ
-      contact_person_number: contact_person_number.trim(), // ⭐ AJOUTÉ
-      address: address.trim(),
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
+      cagnotte_deduction: cagnotteDeduction,
+      delivery_fee: deliveryFee, // ✅ 0 pour pickup, 2.5 pour delivery
+      contact_person_name: contact_person_name.trim(),
+      contact_person_number: contact_person_number.trim(),
+      address: formData.order_type === 'delivery' ? address.trim() : 'Emporté en magasin',
+      latitude: formData.order_type === 'delivery' ? parseFloat(latitude) : null,
+      longitude: formData.order_type === 'delivery' ? parseFloat(longitude) : null,
       order_type: formData.order_type || "delivery",
       payment_method: formData.payment_method || "cash",
-   cart: formData.cart.map(item => {
-  const cartItem = {
-    id: parseInt(item.id),
-    quantity: parseInt(item.quantity),
-    price: parseFloat(item.price || 0)
-  };
-  
-  // ✅ CORRECTION : Vérifier si promo_id existe ET si c'est une promotion valide
-  if (item.isPromotion === true && item.promo_id) {
-    cartItem.promo_id = parseInt(item.promo_id);
-  }
-  
-  return cartItem;
-})
+      cart: formData.cart.map(item => {
+        const cartItem = {
+          id: parseInt(item.id),
+          quantity: parseInt(item.quantity),
+          price: parseFloat(item.price || 0)
+        };
+        
+        if (item.isPromotion === true && item.promo_id) {
+          cartItem.promo_id = parseInt(item.promo_id);
+        }
+        
+        return cartItem;
+      })
     };
 
+    // ✅ Validation finale avant envoi
     if (!orderData.order_amount || isNaN(orderData.order_amount)) {
       toast.error("Erreur de calcul du montant final.");
       setIsSubmitting(false);
       return;
     }
 
-    // ⭐ LOG DE DEBUGGING DÉTAILLÉ
+    if (!orderData.delivery_fee && orderData.delivery_fee !== 0) {
+      toast.error("Frais de livraison manquants.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // 📊 LOG DE DEBUGGING DÉTAILLÉ
     console.log("📦 Données de commande envoyées:", {
       order_amount: orderData.order_amount,
       delivery_fee: orderData.delivery_fee,
       cagnotte_deduction: orderData.cagnotte_deduction,
+      order_type: orderData.order_type,
       cart_items: orderData.cart,
       has_promotions: orderData.cart.some(item => item.promo_id),
     });
@@ -545,14 +594,12 @@ const OrderConfirmation = () => {
         const status = error.response.status;
         const errorData = error.response.data;
         
-        // Log détaillé pour le debugging
         console.error("Status:", status);
         console.error("Error Data:", errorData);
         
         if (status === 400) {
           const errorMsg = errorData.message || errorData.error || JSON.stringify(errorData);
           
-          // Afficher les détails de l'erreur de validation
           if (errorData.errors && typeof errorData.errors === 'object') {
             const errorDetails = Object.entries(errorData.errors)
               .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs[0] : msgs}`)
@@ -629,6 +676,44 @@ const OrderConfirmation = () => {
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-bold mb-4">Informations personnelles</h2>
           <form className="space-y-4">
+            {/* ✅ Type de commande */}
+            <div>
+              <label className="block font-medium mb-2">Type de commande *</label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => handleInputChange({ target: { name: 'order_type', value: 'delivery' } })}
+                  className={`p-4 border-2 rounded-lg transition-all ${
+                    formData.order_type === 'delivery'
+                      ? 'border-green-500 bg-green-50 text-green-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-green-300'
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="text-2xl mb-2">🚚</div>
+                    <div className="font-semibold">Livraison</div>
+                    <div className="text-sm mt-1">2.5 DT</div>
+                  </div>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => handleInputChange({ target: { name: 'order_type', value: 'pickup' } })}
+                  className={`p-4 border-2 rounded-lg transition-all ${
+                    formData.order_type === 'pickup'
+                      ? 'border-green-500 bg-green-50 text-green-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-green-300'
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="text-2xl mb-2">🏪</div>
+                    <div className="font-semibold">Emporté</div>
+                    <div className="text-sm mt-1 text-green-600 font-semibold">GRATUIT</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
             <div>
               <label className="block font-medium mb-2">Nom et Prénom *</label>
               <input
@@ -642,34 +727,37 @@ const OrderConfirmation = () => {
               />
             </div>
             
-            <div>
-              <label className="block font-medium mb-2">
-                Adresse complète *
-                {addressLoading && (
-                  <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded animate-pulse">
-                    ⏳ Récupération de l'adresse...
-                  </span>
-                )}
-                {!addressLoading && formData.address && (
-                  <span className="ml-2 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                    ✅ Adresse détectée automatiquement
-                  </span>
-                )}
-              </label>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                rows="3"
-                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                placeholder="Votre adresse de livraison complète (sera remplie automatiquement depuis la carte)"
-                required
-                disabled={addressLoading}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                💡 L'adresse se remplit automatiquement quand vous sélectionnez votre position sur la carte
-              </p>
-            </div>
+            {/* ✅ Adresse conditionnelle (seulement pour delivery) */}
+            {formData.order_type === 'delivery' && (
+              <div>
+                <label className="block font-medium mb-2">
+                  Adresse complète *
+                  {addressLoading && (
+                    <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded animate-pulse">
+                      ⏳ Récupération de l'adresse...
+                    </span>
+                  )}
+                  {!addressLoading && formData.address && (
+                    <span className="ml-2 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                      ✅ Adresse détectée automatiquement
+                    </span>
+                  )}
+                </label>
+                <textarea
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  rows="3"
+                  className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder="Votre adresse de livraison complète (sera remplie automatiquement depuis la carte)"
+                  required
+                  disabled={addressLoading}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  💡 L'adresse se remplit automatiquement quand vous sélectionnez votre position sur la carte
+                </p>
+              </div>
+            )}
             
             <div>
               <label className="block font-medium mb-2">Téléphone *</label>
@@ -701,7 +789,9 @@ const OrderConfirmation = () => {
           </form>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        {/* ✅ Carte conditionnelle (seulement pour delivery) */}
+        {formData.order_type === 'delivery' ? (
+          <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Localisation</h2>
             <div className="flex items-center space-x-2">
@@ -780,11 +870,37 @@ const OrderConfirmation = () => {
             <ul className="list-disc list-inside mt-1 space-y-1">
               <li>📍 Cliquez sur la carte pour sélectionner votre position exacte</li>
               <li>🏠 L'adresse se remplit automatiquement depuis la carte</li>
-              <li>🔄 Utilisez le bouton &quot;Réessayer&quot; si la détection automatique échoue</li>
+              <li>🔄 Utilisez le bouton "Réessayer" si la détection automatique échoue</li>
               <li>🔍 Zoomez pour une sélection plus précise</li>
             </ul>
           </div>
         </div>
+        ) : (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🏪</div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Emporté sélectionné</h3>
+              <p className="text-gray-600 mb-4">
+                Votre commande sera prête pour le retrait en magasin
+              </p>
+              <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4 inline-block">
+                <p className="text-green-700 font-semibold text-lg">
+                  ✅ Frais de livraison : GRATUIT
+                </p>
+              </div>
+              <div className="mt-6 text-left bg-gray-50 p-4 rounded-lg">
+                <p className="font-semibold text-gray-700 mb-2">📍 Adresse du magasin :</p>
+                <p className="text-gray-600">
+                  [Votre adresse de magasin ici]<br/>
+                  Tunis, Tunisie
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Horaires : Lun-Sam 9h-19h
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
@@ -820,7 +936,9 @@ const OrderConfirmation = () => {
           
           <div className="flex justify-between items-center text-gray-700">
             <span>Frais de livraison</span>
-            <span>{formData.delivery_fee.toFixed(2)} DT</span>
+            <span className={formData.order_type === 'pickup' ? 'text-green-600 font-semibold' : ''}>
+              {formData.order_type === 'pickup' ? 'GRATUIT' : `${DEFAULT_DELIVERY_FEE.toFixed(2)} DT`}
+            </span>
           </div>
           
           {formData.cagnotte_deduction > 0 && (
@@ -835,7 +953,6 @@ const OrderConfirmation = () => {
             <span className="text-blue-600">{calculateOrderAmount().toFixed(2)} DT</span>
           </div>
           
-          {/* Afficher l'économie totale avec les promotions */}
           {orderDetails.some(item => item.isPromotion && item.Initialprice) && (
             <div className="mt-3 p-3 bg-red-50 border-l-4 border-red-500 rounded">
               <p className="text-sm text-red-700 font-medium">

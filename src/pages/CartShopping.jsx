@@ -11,7 +11,7 @@ const CartShopping = () => {
   const [cartItems, setCartItems] = useState([]);
   const { Userprofile } = useSelector((state) => state.user);
   const [show, setShow] = useState(false);
-  const [useCagnotte, setUseCagnotte] = useState(false); // ✅ Juste pour UI, pas de déduction réelle
+  const [useCagnotte, setUseCagnotte] = useState(false);
   const navigate = useNavigate();
   const auth = useSelector((state) => state.auth);
   const dispatch = useDispatch();
@@ -45,7 +45,6 @@ const CartShopping = () => {
     const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
     setCartItems(cart);
 
-    // ✅ Charger la préférence d'utilisation de la cagnotte (UI seulement)
     const savedUseCagnotte = localStorage.getItem('use_cagnotte') === 'true';
     setUseCagnotte(savedUseCagnotte);
   }, [dispatch, auth.isLoggedIn]);
@@ -58,13 +57,10 @@ const CartShopping = () => {
     }
   }, [auth.isLoggedIn]);
 
+  // ✅ MODIFIÉ: Suppression des frais de livraison du calcul du panier
   const calculateTotal = useMemo(() => {
     const subtotal = cartItems.reduce((acc, item) => acc + parseFloat(item.total), 0);
-    const QTotal = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-    const delivery = 5;
     
-    // ✅ Calculer la déduction POTENTIELLE (pour affichage uniquement)
-    const totalBeforeDeduction = subtotal + delivery;
     let cagnotteDeduction = 0;
     
     if (useCagnotte && Userprofile?.cagnotte_balance) {
@@ -72,12 +68,12 @@ const CartShopping = () => {
       cagnotteDeduction = Math.min(cagnotteBalance, subtotal);
     }
     
-    const totalTTC = Math.max(0, totalBeforeDeduction - cagnotteDeduction).toFixed(2);
+    const totalTTC = Math.max(0, subtotal - cagnotteDeduction).toFixed(2);
     
-    return { subtotal, delivery, totalTTC, totalBeforeDeduction, cagnotteDeduction };
+    return { subtotal, totalTTC, cagnotteDeduction };
   }, [cartItems, useCagnotte, Userprofile?.cagnotte_balance]);
 
-  const { subtotal, delivery, totalTTC, totalBeforeDeduction, cagnotteDeduction } = calculateTotal;
+  const { subtotal, totalTTC, cagnotteDeduction } = calculateTotal;
 
   const handleRemoveItem = (itemId) => {
     const updatedCart = cartItems.filter((item) => item.id !== itemId);
@@ -98,27 +94,27 @@ const CartShopping = () => {
       return;
     }
 
-    // ✅ Passer les données à OrderConfirmation (la déduction se fera là-bas)
+    // ✅ MODIFIÉ: Ne pas inclure deliveryFee ici, il sera calculé dans OrderConfirmation
     const checkoutData = {
       orderDetails: cartItems.map(item => ({
-  id: item.id,
-  name: item.name,
-  price: parseFloat(item.price === 0 ? item.Initialprice : item.price),
-  quantity: parseInt(item.quantity),
-  total: parseFloat(item.total),
-  isPromotion: item.isPromotion || false,  // ✅ AJOUTER
-  promo_id: item.promo_id || null           // ✅ AJOUTER
-})),
+        id: item.id,
+        name: item.name,
+        price: parseFloat(item.price === 0 ? item.Initialprice : item.price),
+        quantity: parseInt(item.quantity),
+        total: parseFloat(item.total),
+        isPromotion: item.isPromotion || false,
+        promo_id: item.promo_id || null,
+        Initialprice: item.Initialprice || item.price
+      })),
       subtotal: parseFloat(subtotal),
-      deliveryFee: 5,
-      totalTTC: parseFloat(totalTTC),
-      cagnotteDeduction: useCagnotte ? cagnotteDeduction : 0, // ✅ Montant calculé, pas encore déduit
-      useCagnotte: useCagnotte // ✅ Indiquer si l'utilisateur veut utiliser la cagnotte
+      totalTTC: parseFloat(totalTTC), // Total sans frais de livraison
+      cagnotteDeduction: useCagnotte ? cagnotteDeduction : 0,
+      useCagnotte: useCagnotte
     };
     
     toast.success("Passage à la confirmation de commande");
     Cookies.remove("cart");
-    localStorage.removeItem('use_cagnotte'); // ✅ Nettoyer la préférence
+    localStorage.removeItem('use_cagnotte');
     navigate("/order-confirmation", { state: checkoutData });
   };
 
@@ -131,7 +127,6 @@ const CartShopping = () => {
     return Math.min(cagnotteBalance, cartSubtotal);
   };
 
-  // ✅ Confirmer l'utilisation de la cagnotte (UI seulement, pas de déduction)
   const cagnotteConfirmation = () => {
     const deduction = calculateCagnotteDeduction();
     
@@ -140,7 +135,6 @@ const CartShopping = () => {
       return;
     }
 
-    // ✅ Sauvegarder la préférence pour l'UI
     localStorage.setItem('use_cagnotte', 'true');
     setUseCagnotte(true);
     
@@ -155,7 +149,6 @@ const CartShopping = () => {
     setShow(false);
   };
 
-  // ✅ Annuler l'utilisation de la cagnotte (UI seulement)
   const cancelCagnotteUse = () => {
     localStorage.removeItem('use_cagnotte');
     setUseCagnotte(false);
@@ -311,15 +304,15 @@ const CartShopping = () => {
               <div className="card-body">
                 <h2 className="h5 fw-bold mb-4" style={{ color: '#3b82f6' }}>Panier Total</h2>
                 <div className="d-flex justify-content-between py-2">
-                  <span>Montant global :</span>
+                  <span>Sous-total :</span>
                   <span>{subtotal.toFixed(2)} DT</span>
                 </div>
-                <div className="d-flex justify-content-between py-2">
-                  <span>Livraison :</span>
-                  <span>{delivery.toFixed(2)} DT</span>
+                
+                {/* ✅ Note sur les frais de livraison */}
+                <div className="alert alert-info py-2 px-3 mt-2 mb-2">
+                  <small>ℹ️ Les frais de livraison seront calculés à l'étape suivante</small>
                 </div>
                 
-                {/* ✅ Afficher la déduction PRÉVUE si activée */}
                 {useCagnotte && cagnotteDeduction > 0 && (
                   <>
                     <hr />
@@ -341,11 +334,10 @@ const CartShopping = () => {
                 
                 <hr />
                 <div className="d-flex justify-content-between py-2 fw-bold fs-5">
-                  <span>Total TTC :</span>
+                  <span>Total :</span>
                   <span>{totalTTC} DT</span>
                 </div>
                 
-                {/* ✅ Afficher le montant économisé si la cagnotte est activée */}
                 {useCagnotte && cagnotteDeduction > 0 && (
                   <div className="alert alert-success mt-2 py-2 px-3 mb-0">
                     <small>🎉 Vous économiserez {cagnotteDeduction.toFixed(2)} DT grâce à votre cagnotte !</small>
@@ -373,67 +365,68 @@ const CartShopping = () => {
                     </button>
                   </div>
                 </div>
-<Modal
-  isOpen={show}
-  onRequestClose={handleClose}
-  contentLabel="Confirmation de cagnotte"
-  className="modal-content p-4 mx-auto bg-white rounded shadow-lg"
-  overlayClassName="modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
-  style={{
-    content: {
-      maxWidth: '500px',
-      margin: '0 1rem'
-    },
-    overlay: {
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      zIndex: 1050
-    }
-  }}
->
-  <h2 className="h4 fw-bold mb-4">Utiliser Ma Cagnotte</h2>
-  <div className="alert alert-info">
-    <small>💡 L&apos;utilisation de la cagnotte est optionnelle. La déduction sera effectuée uniquement lors de la confirmation finale de votre commande.</small>
-  </div>
-  <div className="mt-4 fw-medium">
-    <div className="d-flex justify-content-between mb-2">
-      <span>Total du panier :</span>  
-      <span>{subtotal.toFixed(2)} DT</span>
-    </div>
-    <div className="d-flex justify-content-between mb-2">
-      <span>Cagnotte disponible :</span>  
-      <span className="text-success">{Userprofile?.cagnotte_balance || 0} DT</span> {/* ← CORRIGÉ */}
-    </div>
-    <hr />
-    <div className="d-flex justify-content-between mb-2">
-      <span className="fw-bold">Montant à déduire :</span>  
-      <span className="fw-bold text-primary">
-        {calculateCagnotteDeduction().toFixed(2)} DT
-      </span>
-    </div>
-    <div className="d-flex justify-content-between mb-2">
-      <span>Montant restant :</span>  
-      <span>
-        {Math.max(0, subtotal - calculateCagnotteDeduction()).toFixed(2)} DT
-      </span>
-    </div>
-  </div>
-  <div className="d-flex justify-content-between gap-2 mt-4">
-    <button
-      onClick={Annuler}
-      className="btn flex-fill rounded-pill text-white"
-      style={{ backgroundColor: '#6c757d' }}
-    >
-      Annuler
-    </button>
-    <button
-      onClick={cagnotteConfirmation}
-      className="btn flex-fill rounded-pill text-white"
-      style={{ backgroundColor: '#28a745' }}
-    >
-      Confirmer
-    </button>
-  </div>
-</Modal>
+
+                <Modal
+                  isOpen={show}
+                  onRequestClose={handleClose}
+                  contentLabel="Confirmation de cagnotte"
+                  className="modal-content p-4 mx-auto bg-white rounded shadow-lg"
+                  overlayClassName="modal-overlay position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+                  style={{
+                    content: {
+                      maxWidth: '500px',
+                      margin: '0 1rem'
+                    },
+                    overlay: {
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      zIndex: 1050
+                    }
+                  }}
+                >
+                  <h2 className="h4 fw-bold mb-4">Utiliser Ma Cagnotte</h2>
+                  <div className="alert alert-info">
+                    <small>💡 L&apos;utilisation de la cagnotte est optionnelle. La déduction sera effectuée uniquement lors de la confirmation finale de votre commande.</small>
+                  </div>
+                  <div className="mt-4 fw-medium">
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Total du panier :</span>  
+                      <span>{subtotal.toFixed(2)} DT</span>
+                    </div>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Cagnotte disponible :</span>  
+                      <span className="text-success">{Userprofile?.cagnotte_balance || 0} DT</span>
+                    </div>
+                    <hr />
+                    <div className="d-flex justify-content-between mb-2">
+                      <span className="fw-bold">Montant à déduire :</span>  
+                      <span className="fw-bold text-primary">
+                        {calculateCagnotteDeduction().toFixed(2)} DT
+                      </span>
+                    </div>
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Montant restant :</span>  
+                      <span>
+                        {Math.max(0, subtotal - calculateCagnotteDeduction()).toFixed(2)} DT
+                      </span>
+                    </div>
+                  </div>
+                  <div className="d-flex justify-content-between gap-2 mt-4">
+                    <button
+                      onClick={Annuler}
+                      className="btn flex-fill rounded-pill text-white"
+                      style={{ backgroundColor: '#6c757d' }}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={cagnotteConfirmation}
+                      className="btn flex-fill rounded-pill text-white"
+                      style={{ backgroundColor: '#28a745' }}
+                    >
+                      Confirmer
+                    </button>
+                  </div>
+                </Modal>
 
                 <button
                   onClick={() => navigate("/")}

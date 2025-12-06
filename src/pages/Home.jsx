@@ -118,7 +118,6 @@ const Home = () => {
     { id: 3, img: nejmaImg, name: "Nejma" },
     { id: 4, img: jadidaImg, name: "Jadida" },
     { id: 5, img: natilaitImg, name: "Natilait" },
-    { id: 6, img: sicamImg, name: "Sicam" },
     { id: 7, img: signalImg, name: "Signal" },
     { id: 8, img: KolyoumImg, name: "Kolyoum" },
     { id: 9, img: MGJaimeImg, name: "MG Jaime" },

@@ -20,7 +20,6 @@ import lilasImg from "../assets/lilas.jpg";
 import nejmaImg from "../assets/nejma.jpg";
 import jadidaImg from "../assets/jadida.jpg";
 import natilaitImg from "../assets/natilait.jpg";
-import sicamImg from "../assets/sicam.jpg";
 import signalImg from "../assets/signal.jpg";
 import KolyoumImg from "../assets/images/Kolyoum.png";
 import MGJaimeImg from "../assets/images/mgjaime.jpg";

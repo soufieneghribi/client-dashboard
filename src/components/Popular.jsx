@@ -17,9 +17,10 @@ import {
   Badge,
   Spinner,
 } from "react-bootstrap";
-import { FaTag, FaStar, FaShoppingCart } from "react-icons/fa";
+import { FaTag, FaStar, FaShoppingCart, FaHeart } from "react-icons/fa";
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
+import WishlistButton from "./WishlistButton";
 
 const Popular = () => {
   const dispatch = useDispatch();
@@ -182,7 +183,7 @@ const Popular = () => {
         <div className="d-flex align-items-center gap-3">
           {hasPromotions ? (
             <>
-              
+
             </>
           ) : (
             <>
@@ -200,17 +201,17 @@ const Popular = () => {
         </div>
 
         {/* Bouton Voir Plus */}
-      <Button
-  onClick={() => navigate("/promotions")}
-  className="py-2 px-4 rounded-xl font-semibold text-white shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
-  style={{
-    background: "linear-gradient(90deg, #4F46E5, #6366F1)", // Indigo dégradé
-    border: "none",
-    fontSize: "0.9rem",
-  }}
->
-  Voir Plus
-</Button>
+        <Button
+          onClick={() => navigate("/promotions")}
+          className="py-2 px-4 rounded-xl font-semibold text-white shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+          style={{
+            background: "linear-gradient(90deg, #4F46E5, #6366F1)", // Indigo dégradé
+            border: "none",
+            fontSize: "0.9rem",
+          }}
+        >
+          Voir Plus
+        </Button>
 
       </div>
 
@@ -220,9 +221,8 @@ const Popular = () => {
           {slides.map((slide, index) => (
             <Row
               key={index}
-              className={`g-2 g-md-3 transition-all duration-500 ${
-                index === currentIndex ? "d-flex" : "d-none"
-              }`}
+              className={`g-2 g-md-3 transition-all duration-500 ${index === currentIndex ? "d-flex" : "d-none"
+                }`}
             >
               {slide.map((product) => {
                 const imageUrl = getImageUrl(product);
@@ -244,29 +244,34 @@ const Popular = () => {
                           />
                         )}
 
-                        {/* Panier */}
-                        <Button
-                          variant=""
-                          size="sm"
-                          className="position-absolute top-0 end-0 m-1 rounded-circle d-flex align-items-center justify-content-center"
-                          onClick={() => addToCartHandler(product)}
-                          title="Ajouter au panier"
-                          style={{
-                            width: "28px",
-                            height: "28px",
-                            background: "#1E90FF",
-                            color: "white",
-                            border: "none",
-                          }}
-                        >
-                          <FaShoppingCart size={14} />
-                        </Button>
+                        {/* Wishlist & Cart Buttons */}
+                        <div className="position-absolute top-0 end-0 m-1 d-flex gap-1">
+                          <div style={{ transform: "scale(0.8)" }}>
+                            <WishlistButton productId={product.id} size="small" />
+                          </div>
+                          <Button
+                            variant=""
+                            size="sm"
+                            className="rounded-circle d-flex align-items-center justify-content-center"
+                            onClick={() => addToCartHandler(product)}
+                            title="Ajouter au panier"
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              background: "#1E90FF",
+                              color: "white",
+                              border: "none",
+                            }}
+                          >
+                            <FaShoppingCart size={14} />
+                          </Button>
+                        </div>
 
                         {/* Badge promo */}
                         {product.isPromotion && product.pivot ? (
-    <Badge className="position-absolute top-0 start-0 m-1 badge-red">
-  -{parseFloat(product.pivot.discount_percent).toFixed(0)}%
-</Badge>
+                          <Badge className="position-absolute top-0 start-0 m-1 badge-red">
+                            -{parseFloat(product.pivot.discount_percent).toFixed(0)}%
+                          </Badge>
 
 
                         ) : (

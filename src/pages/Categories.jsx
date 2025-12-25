@@ -104,28 +104,28 @@ const Categories = () => {
     if (filteredCategories.length > 0) {
       // Vérifier si on vient de la page Home avec une catégorie présélectionnée
       const preselectedId = location.state?.preselectedCategoryId;
-      
+
       if (preselectedId) {
         const preselectedCategory = filteredCategories.find(
           cat => cat.id === preselectedId
         );
         if (preselectedCategory) {
           setSelectedCategory(preselectedCategory);
-          
+
           // Trouver le slide qui contient la catégorie présélectionnée
-          const slideIndex = slides.findIndex(slide => 
+          const slideIndex = slides.findIndex(slide =>
             slide.some(cat => cat.id === preselectedId)
           );
           if (slideIndex !== -1) {
             setCurrentSlide(slideIndex);
           }
-          
+
           // Nettoyer le state de navigation pour éviter les conflits futurs
           window.history.replaceState({}, document.title);
           return;
         }
       }
-      
+
       // Sinon, sélectionner la première catégorie par défaut uniquement si aucune n'est sélectionnée
       if (!selectedCategory) {
         setSelectedCategory(filteredCategories[0]);
@@ -148,12 +148,12 @@ const Categories = () => {
   // 🔥 FONCTION OPTIMISÉE : Gérer la sélection de catégorie
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
-    
+
     // Trouver le slide qui contient la catégorie sélectionnée
-    const slideIndex = slides.findIndex(slide => 
+    const slideIndex = slides.findIndex(slide =>
       slide.some(cat => cat.id === category.id)
     );
-    
+
     if (slideIndex !== -1 && slideIndex !== currentSlide) {
       setCurrentSlide(slideIndex);
     }
@@ -162,9 +162,9 @@ const Categories = () => {
   // 🔥 Navigation vers la page produits séparée
   const handleSubCategoryClick = (subCategory) => {
     navigate('/products', {
-      state: { 
-        subId: subCategory.id, 
-        subTitle: subCategory.title 
+      state: {
+        subId: subCategory.id,
+        subTitle: subCategory.title
       }
     });
   };
@@ -212,7 +212,7 @@ const Categories = () => {
           </div>
 
           {/* Carousel - Pause au hover avec flèches de navigation */}
-          <div 
+          <div
             className="relative"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
@@ -232,21 +232,19 @@ const Categories = () => {
               {slides.map((slide, index) => (
                 <div
                   key={index}
-                  className={`flex justify-center gap-4 transition-all duration-700 ease-in-out ${
-                    index === currentSlide 
-                      ? "opacity-100 transform translate-x-0" 
+                  className={`flex justify-center gap-4 transition-all duration-700 ease-in-out ${index === currentSlide
+                      ? "opacity-100 transform translate-x-0"
                       : "opacity-0 transform translate-x-full absolute"
-                  }`}
+                    }`}
                 >
                   {slide.map((category) => (
                     <div
                       key={category.id}
                       onClick={() => handleCategorySelect(category)}
-                      className={`relative h-44 flex-1 rounded-2xl shadow-lg overflow-hidden cursor-pointer group transition-all duration-500 ease-out ${
-                        selectedCategory?.id === category.id
+                      className={`relative h-44 flex-1 rounded-2xl shadow-lg overflow-hidden cursor-pointer group transition-all duration-500 ease-out ${selectedCategory?.id === category.id
                           ? "ring-4 ring-blue-500 scale-105 shadow-2xl"
                           : "hover:scale-105 hover:shadow-xl"
-                      }`}
+                        }`}
                       style={{
                         backgroundImage: `url(${IMAGE_BASE_URL}/${category.picture})`,
                         backgroundSize: "cover",
@@ -254,7 +252,7 @@ const Categories = () => {
                       }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent group-hover:from-black/90 transition-all duration-300"></div>
-                      
+
                       {/* Badge de sélection */}
                       {selectedCategory?.id === category.id && (
                         <div className="absolute top-3 right-3 bg-blue-500 text-white rounded-full p-2.5 shadow-xl animate-pulse">
@@ -298,11 +296,10 @@ const Categories = () => {
                 {slides.map((_, idx) => (
                   <button
                     key={idx}
-                    className={`h-3 rounded-full transition-all duration-500 cursor-pointer ${
-                      currentSlide === idx
+                    className={`h-3 rounded-full transition-all duration-500 cursor-pointer ${currentSlide === idx
                         ? "bg-blue-600 w-8"
                         : "bg-gray-300 w-3 hover:bg-gray-400 hover:w-4"
-                    }`}
+                      }`}
                     onClick={() => setCurrentSlide(idx)}
                   />
                 ))}
@@ -345,7 +342,7 @@ const Categories = () => {
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-                    
+
                     {/* Badge "Voir les produits" au hover */}
                     <div className="absolute inset-0 bg-blue-600/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <div className="text-white text-center">

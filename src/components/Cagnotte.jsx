@@ -8,7 +8,7 @@ const Cagnotte = () => {
   const { depense, marque, frequence, anniversaire, loading: dealsLoading } = useSelector((state) => state.deals);
   const { isLoggedIn } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
-  
+
   const [offerHistory, setOfferHistory] = useState([]);
   const [dealHistory, setDealHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -27,7 +27,7 @@ const Cagnotte = () => {
     setHistoryLoading(true);
     try {
       const token = localStorage.getItem('token');
-      
+
       // Fetch offer history
       const offerResponse = await fetch(
         'https://tn360-back-office-122923924979.europe-west1.run.app/api/v1/customer/offer-history',
@@ -38,7 +38,7 @@ const Cagnotte = () => {
           }
         }
       );
-      
+
       if (offerResponse.ok) {
         const offerData = await offerResponse.json();
         setOfferHistory(offerData.data || []);
@@ -54,7 +54,7 @@ const Cagnotte = () => {
           }
         }
       );
-      
+
       if (dealResponse.ok) {
         const dealData = await dealResponse.json();
         setDealHistory(dealData.data || []);
@@ -73,21 +73,21 @@ const Cagnotte = () => {
     ...anniversaire.map(d => ({ ...d, type: 'anniversaire' }))
   ];
 
-  const totalEarned = dealHistory.reduce((sum, deal) => 
+  const totalEarned = dealHistory.reduce((sum, deal) =>
     sum + (parseFloat(deal.amount_earned_total) || 0), 0
   );
 
-  const totalCagnotteUsed = offerHistory.reduce((sum, offer) => 
+  const totalCagnotteUsed = offerHistory.reduce((sum, offer) =>
     sum + (parseFloat(offer.cagnotte_used) || 0), 0
   );
 
   if (userLoading || dealsLoading || historyLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '400px' 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '400px'
       }}>
         <div style={{
           textAlign: 'center',
@@ -102,8 +102,8 @@ const Cagnotte = () => {
 
   if (!isLoggedIn) {
     return (
-      <div style={{ 
-        textAlign: 'center', 
+      <div style={{
+        textAlign: 'center',
         padding: '80px 20px',
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         minHeight: '100vh',
@@ -112,8 +112,8 @@ const Cagnotte = () => {
         justifyContent: 'center',
         alignItems: 'center'
       }}>
-        <div style={{fontSize: '80px', marginBottom: '20px'}}>💰</div>
-        <h2 style={{color: 'white', fontSize: '32px', marginBottom: '15px'}}>
+        <div style={{ fontSize: '80px', marginBottom: '20px' }}>💰</div>
+        <h2 style={{ color: 'white', fontSize: '32px', marginBottom: '15px' }}>
           Connectez-vous pour voir votre cagnotte
         </h2>
       </div>
@@ -290,12 +290,12 @@ const Cagnotte = () => {
                           padding: '4px 12px',
                           borderRadius: '20px',
                           fontSize: '12px',
-                          backgroundColor: deal.deal_type === 'marque' ? '#E3F2FD' : 
-                                         deal.deal_type === 'depense' ? '#FFF3E0' :
-                                         deal.deal_type === 'frequence' ? '#F3E5F5' : '#E8F5E9',
-                          color: deal.deal_type === 'marque' ? '#1565C0' : 
-                                 deal.deal_type === 'depense' ? '#E65100' :
-                                 deal.deal_type === 'frequence' ? '#6A1B9A' : '#2E7D32',
+                          backgroundColor: deal.deal_type === 'marque' ? '#E3F2FD' :
+                            deal.deal_type === 'depense' ? '#FFF3E0' :
+                              deal.deal_type === 'frequence' ? '#F3E5F5' : '#E8F5E9',
+                          color: deal.deal_type === 'marque' ? '#1565C0' :
+                            deal.deal_type === 'depense' ? '#E65100' :
+                              deal.deal_type === 'frequence' ? '#6A1B9A' : '#2E7D32',
                           fontWeight: '600'
                         }}>
                           {deal.deal_type || 'Deal'}

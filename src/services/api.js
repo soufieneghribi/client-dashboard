@@ -107,7 +107,8 @@ export const API_ENDPOINTS = {
     BY_ID: (orderId) => `${API_BASE_URL}/orders/${orderId}`,
     UPDATE: (orderId) => `${API_BASE_URL}/orders/${orderId}`,
     CANCEL: (orderId) => `${API_BASE_URL}/orders/${orderId}/cancel`,
-    PDF: (orderId) => `${API_BASE_URL}/orders/orderpdf/${orderId}`,
+    PDF: (orderId) => `${BASE_URL}/orders/${orderId}/download`, // Public web route
+    PDF_WEB: (orderId) => `${BASE_URL}/orders/${orderId}/pdf`, // Public web route (can return base64)
   },
 
   // ==================== PAYMENTS ====================
@@ -158,13 +159,39 @@ export const API_ENDPOINTS = {
   },
 
   // ==================== CODES PROMO PARTENAIRES ====================
- // ==================== CODES PROMO PARTENAIRES ====================
-CODE_PROMO: {
-  ALL: `${API_BASE_URL}/promo-codes`,  // ✅ CORRECTION: promo-codes au lieu de code-promos
-  BY_ID: (id) => `${API_BASE_URL}/promo-codes/${id}`, // ✅ CORRECTION
-  RESERVE: (id) => `${API_BASE_URL}/promo-codes/${id}/reserve`, // ✅ CORRECTION
-  MY_CODES: `${API_BASE_URL}/promo-codes/my`, // ✅ CORRECTION: /my au lieu de /my-codes
-},
+  // ==================== CODES PROMO PARTENAIRES ====================
+  CODE_PROMO: {
+    ALL: `${API_BASE_URL}/promo-codes`,  // ✅ CORRECTION: promo-codes au lieu de code-promos
+    BY_ID: (id) => `${API_BASE_URL}/promo-codes/${id}`, // ✅ CORRECTION
+    RESERVE: (id) => `${API_BASE_URL}/promo-codes/${id}/reserve`, // ✅ CORRECTION
+    MY_CODES: `${API_BASE_URL}/promo-codes/my`, // ✅ CORRECTION: /my au lieu de /my-codes
+  },
+
+  // ==================== WISHLIST ====================
+  WISHLIST: {
+    ALL: `${API_BASE_URL}/customer/wishlist`,
+    ADD: `${API_BASE_URL}/customer/wishlist/add`,
+    REMOVE: `${API_BASE_URL}/customer/wishlist/remove`,
+    CHECK: (productId) => `${API_BASE_URL}/customer/wishlist/check/${productId}`,
+    BATCH_CHECK: `${API_BASE_URL}/customer/wishlist/check`,
+    CLEAR: `${API_BASE_URL}/customer/wishlist/clear`,
+    SYNC: `${API_BASE_URL}/customer/wishlist/sync`,
+    COUNT: `${API_BASE_URL}/customer/wishlist/count`,
+    TOGGLE: `${API_BASE_URL}/customer/wishlist/toggle`,
+  },
+
+  // ==================== DELIVERY ====================
+  DELIVERY: {
+    CALCULATE_FEE: `${API_BASE_URL}/delivery/calculate-fee`,
+    AVAILABLE_MODES: `${API_BASE_URL}/delivery/available-modes`,
+  },
+
+  // ==================== STORES ====================
+  STORES: {
+    ALL: `${API_BASE_URL}/stores`,
+    NEARBY: `${API_BASE_URL}/stores/nearby`,
+    DETAILS: (id) => `${API_BASE_URL}/stores/${id}`,
+  },
 
   // ==================== LOYALTY CARD (✅ NOUVEAU) ====================
   LOYALTY: {
@@ -181,7 +208,7 @@ CODE_PROMO: {
 
 export const getAuthHeaders = (token = null) => {
   const authToken = token || localStorage.getItem('token');
-  
+
   return {
     'Authorization': `Bearer ${authToken}`,
     'Content-Type': 'application/json',
@@ -189,9 +216,17 @@ export const getAuthHeaders = (token = null) => {
   };
 };
 
+export const getAuthHeadersBinary = (token = null) => {
+  const authToken = token || localStorage.getItem('token');
+
+  return {
+    'Authorization': `Bearer ${authToken}`,
+  };
+};
+
 export const getAuthHeadersMultipart = (token = null) => {
   const authToken = token || localStorage.getItem('token');
-  
+
   return {
     'Authorization': `Bearer ${authToken}`,
     'Content-Type': 'multipart/form-data',
@@ -245,7 +280,7 @@ export const validateToken = async (token) => {
       method: 'GET',
       headers: getAuthHeaders(token),
     });
-    
+
     return response.ok;
   } catch (error) {
     return false;
@@ -259,6 +294,7 @@ export default {
   GOOGLE_MAPS_API_KEY,
   ENDPOINTS: API_ENDPOINTS,
   getAuthHeaders,
+  getAuthHeadersBinary,
   getAuthHeadersMultipart,
   handleApiError,
   validateToken,

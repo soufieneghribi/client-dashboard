@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout, loginSuccess } from "../store/slices/authSlice";
 import { Link, useNavigate } from "react-router-dom";
 import { SearchProduct as searchProduct, clearSearch } from "../store/slices/search";
+import { fetchWishlist, selectWishlistCount } from "../store/slices/wishlist";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Company_Logo from "../assets/images/logo_0.png";
 import { Navbar, Nav, Container, Form, Button, Dropdown, Badge, Offcanvas, InputGroup } from 'react-bootstrap';
@@ -20,6 +21,7 @@ const Header = () => {
 
   const auth = useSelector((state) => state.auth);
   const { searchResults, loading: searchLoading, error: searchError } = useSelector((state) => state.search);
+  const wishlistCount = useSelector(selectWishlistCount);
 
   // URL de base pour les images
   const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
@@ -27,18 +29,18 @@ const Header = () => {
   // Fonction pour obtenir l'URL de l'image
   const getImageUrl = (product) => {
     let imageUrl = product.img || product.image_url || product.image || product.thumbnail || product.photo;
-    
+
     if (!imageUrl && product.images && product.images.length > 0) {
       imageUrl = product.images[0];
     }
-    
+
     if (!imageUrl) return null;
-    
+
     // Si l'URL est déjà complète, la retourner telle quelle
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl;
     }
-    
+
     // Sinon, ajouter le préfixe du serveur
     return `${IMAGE_BASE_URL}/${imageUrl}`;
   };
@@ -50,11 +52,11 @@ const Header = () => {
 
     if (!imageUrl || imageError) {
       return (
-        <div 
+        <div
           className="d-flex align-items-center justify-content-center bg-light rounded me-3"
-          style={{ 
-            width: '50px', 
-            height: '50px', 
+          style={{
+            width: '50px',
+            height: '50px',
             minWidth: '50px',
             backgroundColor: '#f0f0f0'
           }}
@@ -69,9 +71,9 @@ const Header = () => {
         src={imageUrl}
         alt={product.name}
         className="me-3 rounded"
-        style={{ 
-          width: '50px', 
-          height: '50px', 
+        style={{
+          width: '50px',
+          height: '50px',
           minWidth: '50px',
           objectFit: 'cover',
           border: '1px solid #e0e0e0'
@@ -109,6 +111,13 @@ const Header = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Fetch wishlist count when user is logged in
+  useEffect(() => {
+    if (auth.isLoggedIn) {
+      dispatch(fetchWishlist());
+    }
+  }, [auth.isLoggedIn, dispatch]);
+
   const debouncedSearch = useCallback(
     debounce((query) => {
       if (query.trim()) {
@@ -122,7 +131,7 @@ const Header = () => {
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
-    
+
     if (!value.trim()) {
       dispatch(clearSearch());
       setShowSearchResults(false);
@@ -153,7 +162,7 @@ const Header = () => {
     { path: "/", label: "Accueil", icon: "fa-home" },
     { path: "/categories", label: "Product", icon: "fa-th-large" },
     { path: "/MesDeals", label: "Deals", icon: "fa-tag" },
-      { path: "/recipes", label: "Recettes", icon: "fa-utensils" },
+    { path: "/recipes", label: "Recettes", icon: "fa-utensils" },
 
     { path: "/Catalogue", label: "Catalogue", icon: "fa-book" },
     { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" },
@@ -228,8 +237,8 @@ const Header = () => {
 
             {/* Dropdown des résultats de recherche */}
             {showSearchResults && searchQuery && Array.isArray(searchResults) && searchResults.length > 0 && (
-              <div 
-                className="position-absolute bg-white shadow-lg rounded mt-1 w-100 border" 
+              <div
+                className="position-absolute bg-white shadow-lg rounded mt-1 w-100 border"
                 style={{ zIndex: 1000, maxHeight: '450px', overflowY: 'auto' }}
               >
                 {/* En-tête du dropdown */}
@@ -238,9 +247,9 @@ const Header = () => {
                     {searchResults.length} résultat{searchResults.length > 1 ? 's' : ''}
                   </span>
                   {searchResults.length > 5 && (
-                    <Button 
-                      variant="link" 
-                      size="sm" 
+                    <Button
+                      variant="link"
+                      size="sm"
                       className="text-decoration-none p-0"
                       onClick={handleSearchSubmit}
                     >
@@ -255,16 +264,16 @@ const Header = () => {
                     key={product.id}
                     className="d-flex align-items-center p-3 border-bottom cursor-pointer"
                     onClick={() => handleProductClick(product.id, product.type_id)}
-                    style={{ 
+                    style={{
                       cursor: 'pointer',
-                      transition: 'background 0.2s' 
+                      transition: 'background 0.2s'
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.background = '#f8f9fa'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
                   >
                     {/* Image du produit */}
                     <ProductImage product={product} />
-                    
+
                     {/* Informations du produit */}
                     <div className="flex-grow-1" style={{ minWidth: 0 }}>
                       <p className="mb-0 fw-medium text-dark text-truncate">
@@ -291,7 +300,7 @@ const Header = () => {
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Prix */}
                     {product.price && (
                       <div className="text-success fw-bold ms-2" style={{ whiteSpace: 'nowrap' }}>
@@ -303,10 +312,10 @@ const Header = () => {
 
                 {/* Afficher plus de résultats */}
                 {searchResults.length > 5 && (
-                  <div 
+                  <div
                     className="text-center py-3 text-primary fw-medium cursor-pointer"
                     onClick={handleSearchSubmit}
-                    style={{ 
+                    style={{
                       cursor: 'pointer',
                       transition: 'background 0.2s'
                     }}
@@ -321,8 +330,8 @@ const Header = () => {
 
             {/* Message "Aucun résultat" */}
             {showSearchResults && searchQuery && Array.isArray(searchResults) && searchResults.length === 0 && !searchLoading && (
-              <div 
-                className="position-absolute bg-white shadow-lg rounded mt-1 w-100 border text-center py-4" 
+              <div
+                className="position-absolute bg-white shadow-lg rounded mt-1 w-100 border text-center py-4"
                 style={{ zIndex: 1000 }}
               >
                 <i className="fas fa-search text-muted mb-2" style={{ fontSize: '2rem' }}></i>
@@ -363,6 +372,16 @@ const Header = () => {
                 </Button>
               </div>
             )}
+
+            {/* Wishlist Icon with Counter */}
+            <Button variant="link" as={Link} to="/favoris" className="position-relative text-secondary p-2">
+              <i className="fas fa-heart fs-4"></i>
+              {wishlistCount > 0 && (
+                <Badge bg="danger" pill className="position-absolute top-0 start-100 translate-middle" style={{ fontSize: '0.6rem' }}>
+                  {wishlistCount}
+                </Badge>
+              )}
+            </Button>
 
             {/* Dynamic Cart Counter */}
             <Button variant="link" as={Link} to="/cart-shopping" className="position-relative text-secondary p-2">

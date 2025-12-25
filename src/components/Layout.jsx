@@ -6,7 +6,7 @@ import { Toaster } from "react-hot-toast";
 const Layout = ({ children }) => {
     return (
         <div className="min-h-screen flex flex-col">
-            <Toaster/>
+            <Toaster />
             <Header />
             <main className="flex-grow">
                 {children}

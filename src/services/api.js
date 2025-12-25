@@ -206,8 +206,24 @@ export const API_ENDPOINTS = {
 
 // ==================== HELPER FUNCTIONS ====================
 
+export const getFullAuthToken = () => {
+  try {
+    const localToken = localStorage.getItem('token');
+    const cookieToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('auth_token='))
+      ?.split('=')[1];
+
+    // Attempting to get from state is harder here without importing store
+    // but localStorage and Cookies cover 99% of persistent cases.
+    return localToken || cookieToken || null;
+  } catch (e) {
+    return null;
+  }
+};
+
 export const getAuthHeaders = (token = null) => {
-  const authToken = token || localStorage.getItem('token');
+  const authToken = token || getFullAuthToken();
 
   return {
     'Authorization': `Bearer ${authToken}`,

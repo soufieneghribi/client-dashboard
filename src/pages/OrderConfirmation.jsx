@@ -99,14 +99,42 @@ const getAddressFromCoordinates = async (lat, lng) => {
     const data = await response.json();
 
     if (data.status === 'OK' && data.results && data.results.length > 0) {
-      return data.results[0].formatted_address;
+      const result = data.results[0];
+      const components = result.address_components;
+
+      const structured = {
+        full_address: result.formatted_address,
+        rue: "",
+        ville: "",
+        gouvernorat: "",
+        code_postal: ""
+      };
+
+      // Extraire les composants de l'adresse Google
+      components.forEach(comp => {
+        const types = comp.types;
+        if (types.includes("route") || types.includes("street_number")) {
+          structured.rue += (structured.rue ? " " : "") + comp.long_name;
+        }
+        if (types.includes("locality") || types.includes("administrative_area_level_2")) {
+          structured.ville = comp.long_name;
+        }
+        if (types.includes("administrative_area_level_1")) {
+          structured.gouvernorat = comp.long_name;
+        }
+        if (types.includes("postal_code")) {
+          structured.code_postal = comp.long_name;
+        }
+      });
+
+      return structured;
     } else {
       console.error('Geocoding error:', data.status);
-      return '';
+      return null;
     }
   } catch (error) {
     console.error('Error fetching address:', error);
-    return '';
+    return null;
   }
 };
 
@@ -209,6 +237,9 @@ const OrderConfirmation = () => {
   const [relayPointFee, setRelayPointFee] = useState(0);
 
   useEffect(() => {
+    // Prevent multiple concurrent checks
+    if (authChecked && tokenValid) return;
+
     const checkAuthentication = async () => {
       const token = getAuthToken();
 
@@ -218,33 +249,42 @@ const OrderConfirmation = () => {
         return;
       }
 
-      const { isValid, user } = await testTokenValidity(token);
-      setTokenValid(isValid);
-
-      if (!isValid) {
-        toast.error("Session expirée. Veuillez vous reconnecter.");
-        dispatch(logout());
-        navigate("/login");
+      // Check if we already have a valid session in Redux to avoid redundant API calls
+      if (auth.isLoggedIn && auth.user && !authChecked) {
+        setTokenValid(true);
+        setAuthChecked(true);
         return;
       }
 
-      dispatch(refreshAuth());
-
       try {
-        await dispatch(fetchUserProfile()).unwrap();
+        const { isValid, user } = await testTokenValidity(token);
+        setTokenValid(isValid);
+
+        if (!isValid) {
+          toast.error("Session expirée. Veuillez vous reconnecter.");
+          dispatch(logout());
+          navigate("/login");
+          return;
+        }
+
+        // Only refresh if needed
+        if (!auth.isLoggedIn) {
+          dispatch(refreshAuth());
+        }
+
+        if (!Userprofile) {
+          await dispatch(fetchUserProfile()).unwrap();
+        }
         setAuthChecked(true);
       } catch (error) {
-        toast.error("Erreur lors du chargement du profil.");
-        setAuthChecked(true);
+        console.error("Auth check failed:", error);
+        setAuthChecked(true); // Don't block UI forever
       }
     };
 
-    const timer = setTimeout(() => {
-      checkAuthentication();
-    }, 100);
-
+    const timer = setTimeout(checkAuthentication, 100);
     return () => clearTimeout(timer);
-  }, [auth.isLoggedIn, dispatch, navigate]);
+  }, [auth.isLoggedIn, authChecked, tokenValid, navigate, dispatch, Userprofile]);
 
   useEffect(() => {
     if (!orderDetails || orderDetails.length === 0) {
@@ -273,8 +313,12 @@ const OrderConfirmation = () => {
   // Calculate delivery fee when relevant fields change
   useEffect(() => {
     const shouldCalculateFee =
-      (formData.order_type === 'delivery' && selectedMode && formData.rue && formData.ville && formData.gouvernorat) ||
-      (formData.order_type === 'relay_point' && selectedRelayPoint);
+      (formData.order_type === 'delivery' && selectedMode && (
+        (formData.rue && formData.ville && formData.gouvernorat) ||
+        (validateCoordinates(formData.latitude, formData.longitude))
+      ));
+    // ❌ SUPPRIMÉ: (formData.order_type === 'relay_point' && selectedRelayPoint)
+    // Car RelayPointSelector gère déjà le calcul du frais pour les points relais
 
     if (shouldCalculateFee && orderDetails.length > 0) {
       const cartTotal = orderDetails.reduce((total, item) => {
@@ -293,6 +337,9 @@ const OrderConfirmation = () => {
           ville: formData.ville,
           gouvernorat: formData.gouvernorat,
           code_postal: formData.code_postal || "",
+          // ✅ AJOUT CRITIQUE: Inclure les coordonnées dans l'adresse pour le service de calcul
+          latitude: !isNaN(parseFloat(formData.latitude)) ? parseFloat(formData.latitude) : null,
+          longitude: !isNaN(parseFloat(formData.longitude)) ? parseFloat(formData.longitude) : null,
         };
       } else if (formData.order_type === 'relay_point' && selectedRelayPoint) {
         deliveryAddress = {
@@ -323,12 +370,20 @@ const OrderConfirmation = () => {
         mode_livraison_id: modeId,
         store_id: storeId,
         cart_items: cartItems,
-        // ✅ Ajout des coordonnées pour le calcul de distance
-        latitude: parseFloat(formData.latitude),
-        longitude: parseFloat(formData.longitude)
       }));
     }
-  }, [formData.rue, formData.ville, formData.gouvernorat, formData.code_postal, formData.order_type, selectedMode, orderDetails, dispatch]);
+  }, [
+    formData.rue,
+    formData.ville,
+    formData.gouvernorat,
+    formData.code_postal,
+    formData.latitude,
+    formData.longitude,
+    formData.order_type,
+    selectedMode,
+    orderDetails,
+    dispatch
+  ]);
 
   // Update delivery fee in formData when calculated
   useEffect(() => {
@@ -386,21 +441,25 @@ const OrderConfirmation = () => {
           }
 
           setAddressLoading(true);
-          const address = await getAddressFromCoordinates(latitude, longitude);
+          const structuredAddress = await getAddressFromCoordinates(latitude, longitude);
           setAddressLoading(false);
 
           setFormData(prev => ({
             ...prev,
             latitude: latitude.toFixed(6),
             longitude: longitude.toFixed(6),
-            address: address || prev.address,
+            rue: structuredAddress?.rue || prev.rue,
+            ville: structuredAddress?.ville || prev.ville,
+            gouvernorat: structuredAddress?.gouvernorat || prev.gouvernorat,
+            code_postal: structuredAddress?.code_postal || prev.code_postal,
+            address: structuredAddress?.full_address || prev.address,
           }));
 
           setGeolocationStatus('success');
           setManualLocation(false);
           setRetryCount(0);
 
-          if (address) {
+          if (structuredAddress) {
             toast.success("📍 Position et adresse détectées automatiquement!", {
               duration: 4000,
               icon: "🎯"
@@ -495,20 +554,24 @@ const OrderConfirmation = () => {
     setAddressLoading(true);
     setGeolocationStatus('loading');
 
-    const address = await getAddressFromCoordinates(lat, lng);
+    const structuredAddress = await getAddressFromCoordinates(lat, lng);
     setAddressLoading(false);
 
     setFormData(prev => ({
       ...prev,
       latitude: lat.toFixed(6),
       longitude: lng.toFixed(6),
-      address: address || prev.address,
+      rue: structuredAddress?.rue || prev.rue,
+      ville: structuredAddress?.ville || prev.ville,
+      gouvernorat: structuredAddress?.gouvernorat || prev.gouvernorat,
+      code_postal: structuredAddress?.code_postal || prev.code_postal,
+      address: structuredAddress?.full_address || prev.address,
     }));
 
     setGeolocationStatus('success');
     setManualLocation(true);
 
-    if (address) {
+    if (structuredAddress) {
       toast.success("📍 Position et adresse mises à jour!", { duration: 3000 });
     } else {
       toast.success("📍 Position mise à jour!", { duration: 3000 });
@@ -666,21 +729,27 @@ const OrderConfirmation = () => {
       return;
     }
 
-    const finalOrderAmount = parseFloat(calculatedOrderAmount.toFixed(2));
-    // ✅ Utiliser le frais calculé dynamiquement (respect du backend)
-    const deliveryFee = formData.delivery_fee !== null && formData.delivery_fee !== undefined && formData.delivery_fee !== 0
-      ? parseFloat(formData.delivery_fee)
-      : (formData.order_type === 'pickup' ? PICKUP_DELIVERY_FEE : (calculatedFee || DEFAULT_DELIVERY_FEE));
+    // ✅ PRIORITÉ: Utiliser le frais calculé depuis Redux s'il existe
+    const deliveryFee = (formData.order_type === 'delivery' || formData.order_type === 'relay_point')
+      ? (calculatedFee !== null ? parseFloat(calculatedFee) : parseFloat(formData.delivery_fee || 0))
+      : PICKUP_DELIVERY_FEE;
 
-    console.log("🛠️ Submit Debug:", {
+    const cagnotteDeduction = parseFloat(formData.cagnotte_deduction) || 0;
+
+    // ✅ RE-CALCULER LE MONTANT TOTAL FINAL AVEC LE VRAI FRAIS
+    const subtotalLocal = orderDetails.reduce((t, i) => t + (parseFloat(i.price) * parseInt(i.quantity)), 0);
+    const finalOrderAmount = parseFloat((subtotalLocal + deliveryFee - cagnotteDeduction).toFixed(2));
+
+    console.log("🛠️ Submit Debug Final:", {
+      subtotal: subtotalLocal,
       formData_fee: formData.delivery_fee,
       calculatedFee_redux: calculatedFee,
       final_deliveryFee: deliveryFee,
+      cagnotte: cagnotteDeduction,
       finalOrderAmount: finalOrderAmount,
-      order_type: formData.order_type
+      order_type: formData.order_type,
+      selected_mode: selectedMode
     });
-
-    const cagnotteDeduction = parseFloat(formData.cagnotte_deduction) || 0;
 
     // ============================================
     // 5. CONSTRUIRE orderData - PARTIE CRITIQUE
@@ -695,6 +764,12 @@ const OrderConfirmation = () => {
       // ✅ Retour au respect du backend : on envoie le vrai type
       order_type: formData.order_type || "delivery",
       payment_method: formData.payment_method || "cash",
+      // ✅ AJOUT PARAMÈTRES CRITIQUES POUR SYNCHRO BACKEND
+      mode_livraison_id: selectedMode,
+      city: formData.ville,
+      gouvernorat: formData.gouvernorat,
+      state: formData.gouvernorat, // Alias pour le backend
+      postal_code: formData.code_postal,
       cart: formData.cart.map(item => {
         const cartItem = {
           id: parseInt(item.id),
@@ -1396,8 +1471,15 @@ const OrderConfirmation = () => {
 
                   <div className="flex justify-between text-white/50">
                     <span>Livraison</span>
-                    <span className={formData.delivery_fee === 0 ? 'text-green-400 font-extrabold' : 'text-white'}>
-                      {formData.delivery_fee === 0 ? 'GRATUIT' : `${formData.delivery_fee.toFixed(2)} DT`}
+                    <span className={formData.delivery_fee === 0 && !isCalculatingFee ? 'text-green-400 font-extrabold' : 'text-white uppercase text-[10px]'}>
+                      {isCalculatingFee ? (
+                        <span className="flex items-center gap-2 text-orange-400">
+                          <div className="animate-spin h-3 w-3 border-2 border-orange-400 border-t-transparent rounded-full"></div>
+                          CALCUL EN COURS...
+                        </span>
+                      ) : (
+                        formData.delivery_fee === 0 ? 'GRATUIT' : `${formData.delivery_fee.toFixed(2)} DT`
+                      )}
                     </span>
                   </div>
 

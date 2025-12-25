@@ -30,7 +30,10 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
     useEffect(() => {
         if (stores.length > 0 && deliveryModes && deliveryModes.length > 0 && cartTotal > 0) {
             stores.forEach(store => {
-                calculateFeeForStore(store);
+                // Optimisation : ne recalculer que si le prix n'est pas déjà connu
+                if (storeFees[store.id] === undefined && !loadingFees[store.id]) {
+                    calculateFeeForStore(store);
+                }
             });
         }
     }, [stores, deliveryModes, cartTotal, cartItems]);
@@ -54,8 +57,8 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
             const deliveryAddress = {
                 ville: store.city || '',
                 gouvernorat: store.gouvernorat || '',
-                latitude: store.latitude,
-                longitude: store.longitude,
+                latitude: !isNaN(parseFloat(store.latitude)) ? parseFloat(store.latitude) : null,
+                longitude: !isNaN(parseFloat(store.longitude)) ? parseFloat(store.longitude) : null,
             };
 
             const params = {

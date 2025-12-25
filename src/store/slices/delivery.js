@@ -122,7 +122,7 @@ const deliverySlice = createSlice({
             })
             .addCase(calculateDeliveryFee.fulfilled, (state, action) => {
                 state.calculating = false;
-                state.calculatedFee = action.payload.delivery_fee || 0;
+                state.calculatedFee = action.payload.delivery_fee ?? action.payload.frais_livraison ?? 0;
                 state.feeDetails = action.payload;
                 console.log("✅ Delivery fee calculated:", state.calculatedFee);
             })

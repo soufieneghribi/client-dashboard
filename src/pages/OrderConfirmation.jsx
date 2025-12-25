@@ -228,9 +228,9 @@ const OrderConfirmation = () => {
   const [addressLoading, setAddressLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Store selection state
-  const [selectedStore, setSelectedStore] = useState(null);
-  const [selectedStoreFee, setSelectedStoreFee] = useState(null);
+  // Store selection state (for Magasin/Pickup)
+  const [selectedPickupStore, setSelectedPickupStore] = useState(null);
+  const [pickupStoreFee, setPickupStoreFee] = useState(0);
 
   // Relay point selection state
   const [selectedRelayPoint, setSelectedRelayPoint] = useState(null);
@@ -242,8 +242,10 @@ const OrderConfirmation = () => {
 
     const checkAuthentication = async () => {
       const token = getAuthToken();
+      console.log('🔐 checkAuthentication: Token found:', token ? 'YES (starts with ' + token.substring(0, 10) + '...)' : 'NO');
 
       if (!token) {
+        console.warn('🔐 checkAuthentication: No token found. Redirecting to login.');
         toast.error("Vous devez être connecté pour passer une commande.");
         navigate("/login");
         return;
@@ -251,16 +253,20 @@ const OrderConfirmation = () => {
 
       // Check if we already have a valid session in Redux to avoid redundant API calls
       if (auth.isLoggedIn && auth.user && !authChecked) {
+        console.log('🔐 checkAuthentication: Already logged in Redux. Skipping API check.');
         setTokenValid(true);
         setAuthChecked(true);
         return;
       }
 
       try {
+        console.log('🔐 checkAuthentication: Testing token validity...');
         const { isValid, user } = await testTokenValidity(token);
+        console.log('🔐 checkAuthentication: Token validity result:', isValid);
         setTokenValid(isValid);
 
         if (!isValid) {
+          console.error('🔐 checkAuthentication: Token is INVALID. Logging out.');
           toast.error("Session expirée. Veuillez vous reconnecter.");
           dispatch(logout());
           navigate("/login");
@@ -269,15 +275,17 @@ const OrderConfirmation = () => {
 
         // Only refresh if needed
         if (!auth.isLoggedIn) {
+          console.log('🔐 checkAuthentication: Refreshing auth...');
           dispatch(refreshAuth());
         }
 
         if (!Userprofile) {
+          console.log('🔐 checkAuthentication: Fetching user profile...');
           await dispatch(fetchUserProfile()).unwrap();
         }
         setAuthChecked(true);
       } catch (error) {
-        console.error("Auth check failed:", error);
+        console.error("🔐 checkAuthentication: Error during check:", error);
         setAuthChecked(true); // Don't block UI forever
       }
     };
@@ -394,7 +402,7 @@ const OrderConfirmation = () => {
       }));
       console.log("✅ Delivery fee updated:", calculatedFee);
     } else if (formData.order_type === 'pickup' || formData.order_type === 'store_pickup') {
-      // ✅ CORRECTION: Ne pas mettre 0 pour relay_point
+      // ✅ CORRECTION: For pickup, fee is always 0
       setFormData(prev => ({
         ...prev,
         delivery_fee: PICKUP_DELIVERY_FEE,
@@ -590,20 +598,23 @@ const OrderConfirmation = () => {
       return total + (price * quantity);
     }, 0);
 
-    // ✅ CORRECTION: Utiliser formData.delivery_fee OU calculatedFee (le vrai frais calculé)
-    const deliveryFee = (formData.delivery_fee !== null && formData.delivery_fee !== 0)
-      ? parseFloat(formData.delivery_fee)
-      : (formData.order_type === 'pickup' ? 0 : (calculatedFee || 0));
+    // ✅ Uniform calculation logic
+    const deliveryFee = (formData.order_type === 'delivery' || formData.order_type === 'relay_point')
+      ? (calculatedFee !== null ? parseFloat(calculatedFee) : (parseFloat(formData.delivery_fee) || 0))
+      : PICKUP_DELIVERY_FEE;
 
     const cagnotteDeduction = parseFloat(formData.cagnotte_deduction) || 0;
 
-    const calculatedAmount = calculatedSubtotal + deliveryFee - cagnotteDeduction;
+    // Use current delivery fee from formData (which is updated by selectors)
+    const currentDeliveryFee = parseFloat(formData.delivery_fee) || 0;
+
+    const calculatedAmount = calculatedSubtotal + currentDeliveryFee - cagnotteDeduction;
 
     if (isNaN(calculatedAmount) || !isFinite(calculatedAmount)) {
       return 0;
     }
 
-    return Math.max(0, calculatedAmount);
+    return Math.max(0, parseFloat(calculatedAmount.toFixed(2)));
   };
 
   /**
@@ -729,16 +740,14 @@ const OrderConfirmation = () => {
       return;
     }
 
-    // ✅ PRIORITÉ: Utiliser le frais calculé depuis Redux s'il existe
-    const deliveryFee = (formData.order_type === 'delivery' || formData.order_type === 'relay_point')
-      ? (calculatedFee !== null ? parseFloat(calculatedFee) : parseFloat(formData.delivery_fee || 0))
-      : PICKUP_DELIVERY_FEE;
+    // ✅ PRIORITÉ: Utiliser le frais dans formData (mis à jour par les sélecteurs ou Redux)
+    const deliveryFee = parseFloat(formData.delivery_fee || 0);
 
     const cagnotteDeduction = parseFloat(formData.cagnotte_deduction) || 0;
 
     // ✅ RE-CALCULER LE MONTANT TOTAL FINAL AVEC LE VRAI FRAIS
     const subtotalLocal = orderDetails.reduce((t, i) => t + (parseFloat(i.price) * parseInt(i.quantity)), 0);
-    const finalOrderAmount = parseFloat((subtotalLocal + deliveryFee - cagnotteDeduction).toFixed(2));
+    const finalOrderAmount = calculateOrderAmount();
 
     console.log("🛠️ Submit Debug Final:", {
       subtotal: subtotalLocal,
@@ -766,10 +775,12 @@ const OrderConfirmation = () => {
       payment_method: formData.payment_method || "cash",
       // ✅ AJOUT PARAMÈTRES CRITIQUES POUR SYNCHRO BACKEND
       mode_livraison_id: selectedMode,
-      city: formData.ville,
-      gouvernorat: formData.gouvernorat,
-      state: formData.gouvernorat, // Alias pour le backend
-      postal_code: formData.code_postal,
+      ...(formData.ville?.trim() && { city: String(formData.ville).trim() }),
+      ...(formData.gouvernorat?.trim() && {
+        gouvernorat: String(formData.gouvernorat).trim(),
+        state: String(formData.gouvernorat).trim()
+      }),
+      ...(formData.code_postal?.trim() && { postal_code: String(formData.code_postal).trim() }),
       cart: formData.cart.map(item => {
         const cartItem = {
           id: parseInt(item.id),
@@ -821,13 +832,18 @@ const OrderConfirmation = () => {
         ['point relais', 'point-relais', 'relais'].includes(m.nom?.toLowerCase())
       );
       if (relayMode?.mode_livraison_id) {
-        orderData.mode_livraison_id = relayMode.mode_livraison_id.toString();
+        orderData.mode_livraison_id = relayMode.mode_livraison_id;
       } else {
         orderData.mode_livraison_id = 'POINT_RELAIS';
       }
     } else {
       // Pour pickup standard: juste l'adresse "Emporté en magasin"
       orderData.address = 'Emporté en magasin';
+
+      // ⭐ AJOUT: Inclure store_id pour le retrait en magasin s'il est sélectionné
+      if (selectedPickupStore?.id) {
+        orderData.store_id = selectedPickupStore.id;
+      }
       // NE PAS inclure latitude et longitude
     }
 
@@ -915,6 +931,7 @@ const OrderConfirmation = () => {
     // ============================================
 
     try {
+      console.log('📦 handleSubmit: Sending order place request...', orderData);
       const response = await axios.post(
         `${API_BASE_URL}/customer/order/place`,
         orderData,
@@ -928,6 +945,8 @@ const OrderConfirmation = () => {
         }
       );
 
+      console.log('📦 handleSubmit: Order place response successful:', response.data);
+
       if (response.data.message || response.status === 200 || response.status === 201) {
         toast.success("✅ Commande passée avec succès!", { duration: 4000 });
         setModalIsOpen(true);
@@ -936,18 +955,19 @@ const OrderConfirmation = () => {
         sessionStorage.removeItem("cart");
         localStorage.removeItem('cagnotte_deduction');
       } else {
+        console.warn('📦 handleSubmit: Response successful but message not as expected:', response.data);
         toast.error(`Erreur : ${response.data.message || "Une erreur est survenue."}`);
       }
     } catch (error) {
-      console.error("❌ Erreur lors de la commande:", error);
-      console.error("📋 Données envoyées:", orderData);
+      console.error("❌ handleSubmit: Error during order place:", error);
+      console.error("📋 handleSubmit: Data that was sent:", orderData);
 
       if (error.response) {
         const status = error.response.status;
         const errorData = error.response.data;
 
-        console.error("🔢 Status:", status);
-        console.error("📨 Réponse serveur:", errorData);
+        console.error("🔢 handleSubmit: Server responded with status:", status);
+        console.error("📨 handleSubmit: Server error data:", errorData);
 
         if (status === 400) {
           const errorMsg = errorData.message || errorData.error || JSON.stringify(errorData);
@@ -966,9 +986,23 @@ const OrderConfirmation = () => {
           } else {
             toast.error(`❌ Erreur: ${errorMsg}`, { duration: 6000 });
           }
-        } else if (status === 403 || status === 401) {
+        } else if (status === 401) {
+          console.error("🔐 handleSubmit: AUTH ERROR (401). Redirecting to login...");
           toast.error("🔐 Session expirée. Veuillez vous reconnecter.");
           setTimeout(() => navigate("/login"), 2000);
+        } else if (status === 403) {
+          console.error("🚫 handleSubmit: FORBIDDEN (403). Access denied or data mismatch.");
+
+          if (errorData.errors && typeof errorData.errors === 'object') {
+            const errorDetails = Object.entries(errorData.errors)
+              .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs[0] : msgs}`)
+              .join(" | ");
+            toast.error(`🚫 Erreur permission/données: ${errorDetails}`, { duration: 8000 });
+          } else if (errorData.error === 'Order amount mismatch') {
+            toast.error(`💰 Mismatch montant: Attendu ${errorData.expected_total} DT, Reçu ${errorData.received_amount} DT`, { duration: 8000 });
+          } else {
+            toast.error(`🚫 Accès refusé ou commande invalide: ${errorData.message || "Contactez le support."}`);
+          }
         } else if (status === 422) {
           const errors = errorData.errors || {};
           const errorMessages = Object.entries(errors).map(([field, msgs]) =>
@@ -982,10 +1016,10 @@ const OrderConfirmation = () => {
           toast.error(`❌ Erreur ${status}: ${errorData.message || JSON.stringify(errorData)}`);
         }
       } else if (error.request) {
-        console.error("📡 Aucune réponse du serveur:", error.request);
+        console.error("📡 handleSubmit: No response from server:", error.request);
         toast.error("📡 Erreur de connexion réseau. Vérifiez votre connexion.");
       } else {
-        console.error("⚠️ Erreur:", error.message);
+        console.error("⚠️ handleSubmit: Unexpected error:", error.message);
         toast.error("⚠️ Une erreur inattendue est survenue.");
       }
     } finally {
@@ -1180,6 +1214,9 @@ const OrderConfirmation = () => {
                               ...prev,
                               delivery_fee: fee || 0,
                               address: `Point relais: ${store.name}, ${store.address || ''}, ${store.city || ''}`,
+                              ville: store.city || prev.ville,
+                              gouvernorat: store.gouvernorat || prev.gouvernorat,
+                              code_postal: String(store.code_postal || prev.code_postal || ""),
                             }));
                           }}
                           selectedStoreId={selectedRelayPoint?.id}
@@ -1343,27 +1380,51 @@ const OrderConfirmation = () => {
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
-                        className="text-center py-10 space-y-6"
+                        className="space-y-8"
                       >
-                        <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center text-green-500 mx-auto">
-                          <FaStore size={40} />
-                        </div>
-                        <div>
-                          <h3 className="text-2xl font-black text-slate-800 tracking-tight">Emaporté en magasin</h3>
-                          <p className="text-slate-500 font-medium">Récupérez votre commande directement au point de vente</p>
-                        </div>
-                        <div className="bg-white px-8 py-3 rounded-full inline-flex items-center gap-2 border-2 border-green-500 text-green-600 font-black">
-                          <FaCheckCircle /> FRAIS DE LIVRAISON GRATUIT
-                        </div>
+                        <StorePickupSelector
+                          onStoreSelected={(store, fee) => {
+                            setSelectedPickupStore(store);
+                            setPickupStoreFee(fee || 0);
+                            setFormData(prev => ({
+                              ...prev,
+                              delivery_fee: fee || 0,
+                              address: `Retrait magasin: ${store.name}, ${store.address || ''}, ${store.city || ''}`,
+                              ville: store.city || prev.ville,
+                              gouvernorat: store.gouvernorat || prev.gouvernorat,
+                              code_postal: String(store.code_postal || prev.code_postal || ""),
+                            }));
+                          }}
+                          selectedStoreId={selectedPickupStore?.id}
+                        />
 
-                        <div className="max-w-md mx-auto p-6 bg-slate-50 rounded-3xl border border-slate-100 text-left mt-8">
-                          <div className="flex items-center gap-3 mb-4">
-                            <FaMapMarkerAlt className="text-slate-400" />
-                            <span className="font-bold text-slate-800">Point de retrait principal</span>
+                        {selectedPickupStore ? (
+                          <div className="p-6 bg-green-50 rounded-[1.5rem] border border-green-100 flex items-start gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white flex-shrink-0">
+                              <FaStore />
+                            </div>
+                            <div>
+                              <p className="font-bold text-green-800 tracking-tight">{selectedPickupStore.name}</p>
+                              <p className="text-sm text-green-600 font-medium">{selectedPickupStore.address}, {selectedPickupStore.city}</p>
+                              <div className="mt-2 inline-flex items-center gap-1 bg-white px-3 py-1 rounded-full text-xs font-black text-green-700 border border-green-100">
+                                HORAIRES: Lun-Sam 09:00 - 19:00
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-slate-600 font-medium ml-7">Tunis, Tunisie</p>
-                          <p className="text-sm text-slate-400 ml-7 mt-1">🕒 Horaires : Lun-Sam 09:00 - 19:00</p>
-                        </div>
+                        ) : (
+                          <div className="text-center py-10 space-y-6">
+                            <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center text-green-500 mx-auto">
+                              <FaStore size={40} />
+                            </div>
+                            <div>
+                              <h3 className="text-2xl font-black text-slate-800 tracking-tight">Emporté en magasin</h3>
+                              <p className="text-slate-500 font-medium">Veuillez sélectionner un point de retrait</p>
+                            </div>
+                            <div className="bg-white px-8 py-3 rounded-full inline-flex items-center gap-2 border-2 border-green-500 text-green-600 font-black">
+                              <FaCheckCircle /> FRAIS DE LIVRAISON GRATUIT
+                            </div>
+                          </div>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>

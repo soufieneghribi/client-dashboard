@@ -6,9 +6,12 @@ import { logout, updateUser as updateAuthUser } from "./authSlice";
 import { API_ENDPOINTS, getAuthHeaders } from "../../services/api";
 
 /**
- * User Redux Slice
- * Manages user authentication, profile, and related operations
- * All API calls are secure with proper error handling
+ * User Redux Slice - CORRIGÉ
+ * 
+ * Corrections:
+ * 1. ✅ Option `silent` pour désactiver les toasts d'erreur
+ * 2. ✅ Ne pas afficher de toast si l'erreur est gérée par le composant
+ * 3. ✅ Pas de redirection automatique sur 401 si `silent: true`
  */
 
 // ==================== CONSTANTS ====================
@@ -21,12 +24,12 @@ let lastRequestTime = 0;
 const waitForRateLimit = async () => {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
-  
+
   if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
     const waitTime = RATE_LIMIT_DELAY - timeSinceLastRequest;
     await new Promise(resolve => setTimeout(resolve, waitTime));
   }
-  
+
   lastRequestTime = Date.now();
 };
 
@@ -39,7 +42,7 @@ const getAuthToken = () => {
       .split('; ')
       .find(row => row.startsWith('auth_token='))
       ?.split('=')[1];
-    
+
     return localToken || reduxToken || cookieToken || null;
   } catch (error) {
     return null;
@@ -49,7 +52,7 @@ const getAuthToken = () => {
 const testTokenValidity = async (token) => {
   try {
     await waitForRateLimit();
-    
+
     const response = await axios.get(
       API_ENDPOINTS.USER.PROFILE,
       {
@@ -57,7 +60,7 @@ const testTokenValidity = async (token) => {
         timeout: 10000
       }
     );
-    
+
     if (response.data && (response.data.id || response.data.email || response.data.ID_client)) {
       return true;
     } else {
@@ -67,12 +70,12 @@ const testTokenValidity = async (token) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
       return false;
     }
-    
+
     if (error.response?.status === 429) {
       console.warn("Rate limit hit during token validation");
       return true;
     }
-    
+
     return true;
   }
 };
@@ -84,7 +87,7 @@ export const forgetPassword = createAsyncThunk(
   async ({ email }, { rejectWithValue }) => {
     try {
       await waitForRateLimit();
-      
+
       const { data } = await axios.post(
         API_ENDPOINTS.AUTH.FORGOT_PASSWORD,
         { email }
@@ -96,7 +99,7 @@ export const forgetPassword = createAsyncThunk(
         toast.error("Trop de tentatives. Veuillez réessayer dans quelques instants.");
         return rejectWithValue("Rate limit exceeded");
       }
-      
+
       if (error.response) {
         toast.error(error.response.data.message || "Une erreur est survenue.");
         return rejectWithValue(error.response.data.message || "Une erreur est survenue.");
@@ -108,22 +111,17 @@ export const forgetPassword = createAsyncThunk(
   }
 );
 
-/**
- * Sign Up - User Registration
- * ⭐ MODIFIÉ : Ne navigue plus automatiquement
- * La navigation est gérée dans Register.jsx
- */
 export const signUp = createAsyncThunk(
   "user/signup",
   async ({ user, navigate }) => {
     try {
       await waitForRateLimit();
-      
+
       const { data } = await axios.post(
         API_ENDPOINTS.AUTH.REGISTER,
         user
       );
-      
+
       toast.success("Compte créé. Veuillez vérifier votre e-mail pour activer votre compte.");
       return data;
     } catch (error) {
@@ -131,7 +129,7 @@ export const signUp = createAsyncThunk(
         toast.error("Trop de tentatives. Veuillez réessayer dans quelques instants.");
         throw new Error("Rate limit exceeded");
       }
-      
+
       const errorMessage = error.response?.data?.message || "Compte déjà existant.";
       toast.error(errorMessage);
       throw error;
@@ -139,25 +137,33 @@ export const signUp = createAsyncThunk(
   }
 );
 
+/**
+ * ✅ NOUVEAU: Fetch User Profile avec option silent
+ * @param {Object} options - { silent: boolean } - Si true, pas de toast ni redirection
+ */
 export const fetchUserProfile = createAsyncThunk(
   "user/fetchUserProfile",
-  async (_, { rejectWithValue, dispatch, getState }) => {
+  async (options = {}, { rejectWithValue, dispatch, getState }) => {
+    const { silent = false } = typeof options === 'object' ? options : { silent: false };
+
     try {
       const state = getState();
       const lastFetch = state.user.lastFetch;
       const now = Date.now();
       const fiveMinutes = 5 * 60 * 1000;
-      
+
+      // Cache: si profil existe et < 5min, le retourner
       if (lastFetch && (now - lastFetch) < fiveMinutes && state.user.Userprofile) {
         return state.user.Userprofile;
       }
-      
+
       const token = getAuthToken();
-      
+
       if (!token) {
         throw new Error("Token d'authentification non trouvé");
       }
 
+      // Validation du token seulement si pas de profil en cache
       if (!state.user.Userprofile) {
         const isValid = await testTokenValidity(token);
         if (!isValid) {
@@ -166,33 +172,60 @@ export const fetchUserProfile = createAsyncThunk(
       }
 
       await waitForRateLimit();
-      
+
       const { data } = await axios.get(API_ENDPOINTS.USER.PROFILE, {
         headers: getAuthHeaders(token),
         timeout: API_TIMEOUT
       });
-      
+
       return data;
     } catch (error) {
+      console.error("❌ Erreur fetchUserProfile:", error.response?.status, error.message);
+
+      // Rate limit
       if (error.response?.status === 429) {
-        toast.error("Trop de requêtes. Veuillez patienter un moment.");
+        if (!silent) {
+          toast.error("Trop de requêtes. Veuillez patienter un moment.");
+        }
         return rejectWithValue("Rate limit exceeded");
       }
-      
+
       const errorMessage = error.response?.data?.message || error.message || "Erreur lors du chargement du profil";
-      
-      if (error.response?.status === 401 || error.response?.status === 403 || error.message.includes("Token invalide") || error.message.includes("Token non trouvé")) {
-        toast.error("Session expirée. Veuillez vous reconnecter.");
-        dispatch(logout());
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
-      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-        toast.error("Délai d'attente dépassé. Veuillez réessayer.");
-      } else if (error.message !== "Rate limit exceeded") {
+
+      // Erreur d'authentification (401/403)
+      if (error.response?.status === 401 || error.response?.status === 403 ||
+        error.message.includes("Token invalide") || error.message.includes("Token non trouvé")) {
+
+        // ✅ Si silent, ne pas afficher de toast ni rediriger
+        if (!silent) {
+          toast.error("Session expirée. Veuillez vous reconnecter.");
+          dispatch(logout());
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+        } else if (error.response?.status === 401) {
+          // Mode silencieux: logout seulement si c'est vraiment un 401 (Unauthorized)
+          dispatch(logout());
+        }
+
+        return rejectWithValue({
+          message: errorMessage,
+          status: error.response?.status,
+          shouldRedirect: !silent
+        });
+      }
+
+      // Timeout
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        if (!silent) {
+          toast.error("Délai d'attente dépassé. Veuillez réessayer.");
+        }
+      }
+      // Autres erreurs
+      else if (error.message !== "Rate limit exceeded" && !silent) {
         toast.error(errorMessage);
       }
-      
+
       return rejectWithValue(errorMessage);
     }
   }
@@ -203,7 +236,7 @@ export const fetchUserProfileForce = createAsyncThunk(
   async (_, { rejectWithValue, dispatch }) => {
     try {
       const token = getAuthToken();
-      
+
       if (!token) {
         throw new Error("Token d'authentification non trouvé");
       }
@@ -212,32 +245,29 @@ export const fetchUserProfileForce = createAsyncThunk(
         headers: getAuthHeaders(token),
         timeout: API_TIMEOUT
       });
-      
+
       return data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || "Erreur lors du chargement du profil";
-      
+
       if (error.response?.status === 401 || error.response?.status === 403) {
         dispatch(logout());
         setTimeout(() => {
           window.location.href = '/login';
         }, 2000);
       }
-      
+
       return rejectWithValue(errorMessage);
     }
   }
 );
 
-/**
- * Update User Profile - MISE À JOUR AVEC GESTION D'ERREUR 422 AMÉLIORÉE
- */
 export const updateUserProfile = createAsyncThunk(
   "user/updateUserProfile",
   async (profileData, { rejectWithValue, dispatch, getState }) => {
     try {
       await waitForRateLimit();
-      
+
       const token = getAuthToken();
 
       if (!token) {
@@ -253,15 +283,13 @@ export const updateUserProfile = createAsyncThunk(
         }
       );
 
-      // Mettre à jour immédiatement le state local avec les données du formulaire
       const state = getState();
       const currentProfile = state.user.Userprofile;
-      
+
       dispatch(updateAuthUser(data));
-      
-      // Retourner les données fusionnées pour une mise à jour immédiate
+
       const updatedData = { ...currentProfile, ...profileData, ...data };
-      
+
       toast.success("Profil mis à jour avec succès");
       return updatedData;
     } catch (error) {
@@ -270,56 +298,28 @@ export const updateUserProfile = createAsyncThunk(
         return rejectWithValue("Rate limit exceeded");
       }
 
+      let errorMessage = "Erreur lors de la mise à jour du profil";
+
       if (error.response?.status === 422) {
-        const validationErrors = error.response.data.errors;
-        
-        if (validationErrors) {
-          if (Array.isArray(validationErrors)) {
-            const firstError = validationErrors[0]?.message || validationErrors[0] || "Erreur de validation";
-            toast.error(firstError);
-            return rejectWithValue(firstError);
-          }
-          
-          if (typeof validationErrors === 'object') {
-            const firstKey = Object.keys(validationErrors)[0];
-            const firstError = Array.isArray(validationErrors[firstKey]) 
-              ? validationErrors[firstKey][0] 
-              : validationErrors[firstKey];
-            toast.error(firstError);
-            return rejectWithValue(firstError);
-          }
+        const errors = error.response.data.errors;
+        if (errors) {
+          const errorMessages = Object.values(errors).flat();
+          errorMessage = errorMessages[0] || errorMessage;
         }
-        
-        toast.error("Erreur de validation des données");
-        return rejectWithValue("Erreur de validation des données");
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
       }
 
-      const errorMessage = error.response?.data?.message || "Erreur lors de la mise à jour du profil";
-      
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        toast.error("Session expirée. Veuillez vous reconnecter.");
-        dispatch(logout());
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
-      } else {
-        toast.error(errorMessage);
-      }
-      
+      toast.error(errorMessage);
       return rejectWithValue(errorMessage);
     }
   }
 );
 
-/**
- * Update Cagnotte in Database
- */
 export const updateCagnotteInDB = createAsyncThunk(
   "user/updateCagnotteInDB",
-  async (amount, { rejectWithValue, dispatch }) => {
+  async (amount, { rejectWithValue }) => {
     try {
-      await waitForRateLimit();
-      
       const token = getAuthToken();
 
       if (!token) {
@@ -328,47 +328,26 @@ export const updateCagnotteInDB = createAsyncThunk(
 
       const { data } = await axios.post(
         API_ENDPOINTS.USER.UPDATE_CAGNOTTE,
-        { cagnotte: amount },
+        { amount },
         {
           headers: getAuthHeaders(token),
           timeout: API_TIMEOUT
         }
       );
 
-      dispatch(updateAuthUser(data));
       return data;
     } catch (error) {
-      if (error.response?.status === 429) {
-        toast.error("Trop de requêtes. Veuillez patienter un moment.");
-        return rejectWithValue("Rate limit exceeded");
-      }
-
       const errorMessage = error.response?.data?.message || "Erreur lors de la mise à jour de la cagnotte";
-      
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        toast.error("Session expirée. Veuillez vous reconnecter.");
-        dispatch(logout());
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
-      } else {
-        toast.error(errorMessage);
-      }
-      
+      toast.error(errorMessage);
       return rejectWithValue(errorMessage);
     }
   }
 );
 
-/**
- * Change Password
- */
 export const changePassword = createAsyncThunk(
   "user/changePassword",
-  async (passwordData, { rejectWithValue }) => {
+  async ({ currentPassword, newPassword }, { rejectWithValue }) => {
     try {
-      await waitForRateLimit();
-      
       const token = getAuthToken();
 
       if (!token) {
@@ -377,29 +356,24 @@ export const changePassword = createAsyncThunk(
 
       const { data } = await axios.post(
         API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
-        passwordData,
+        { current_password: currentPassword, new_password: newPassword },
         {
           headers: getAuthHeaders(token),
           timeout: API_TIMEOUT
         }
       );
 
-      toast.success("Mot de passe changé avec succès");
+      toast.success("Mot de passe modifié avec succès");
       return data;
     } catch (error) {
-      if (error.response?.status === 429) {
-        toast.error("Trop de requêtes. Veuillez patienter un moment.");
-        return rejectWithValue("Rate limit exceeded");
-      }
-
       const errorMessage = error.response?.data?.message || "Erreur lors du changement de mot de passe";
-      
+
       if (error.response?.status === 401 || error.response?.status === 403) {
         toast.error("Mot de passe actuel incorrect");
       } else {
         toast.error(errorMessage);
       }
-      
+
       return rejectWithValue(errorMessage);
     }
   }
@@ -410,7 +384,7 @@ export const googleLogin = createAsyncThunk(
   async (token, { rejectWithValue }) => {
     try {
       await waitForRateLimit();
-      
+
       const { data } = await axios.post(
         API_ENDPOINTS.AUTH.GOOGLE_LOGIN,
         { token }
@@ -422,7 +396,7 @@ export const googleLogin = createAsyncThunk(
         toast.error("Trop de requêtes. Veuillez patienter un moment.");
         return rejectWithValue("Rate limit exceeded");
       }
-      
+
       const errorMessage = error.response?.data?.message || "Erreur lors de la connexion Google";
       toast.error(errorMessage);
       return rejectWithValue(errorMessage);
@@ -435,7 +409,7 @@ export const googleRegister = createAsyncThunk(
   async (token, { rejectWithValue }) => {
     try {
       await waitForRateLimit();
-      
+
       const { data } = await axios.post(
         API_ENDPOINTS.AUTH.GOOGLE_REGISTER,
         { token }
@@ -447,15 +421,15 @@ export const googleRegister = createAsyncThunk(
         toast.error("Trop de requêtes. Veuillez patienter un moment.");
         return rejectWithValue("Rate limit exceeded");
       }
-      
+
       const errorMessage = error.response?.data?.message || "Erreur lors de l'inscription Google";
-      
+
       if (error.response?.status === 409) {
         toast.error("Cet email est déjà utilisé. Veuillez vous connecter.");
       } else {
         toast.error(errorMessage);
       }
-      
+
       return rejectWithValue(errorMessage);
     }
   }
@@ -495,7 +469,7 @@ const UserSlice = createSlice({
       if (state.loggedInUser) {
         state.loggedInUser = { ...state.loggedInUser, ...action.payload };
       }
-      state.lastFetch = Date.now(); // Force le cache à être considéré comme frais
+      state.lastFetch = Date.now();
     },
     setLastFetch: (state, action) => {
       state.lastFetch = action.payload;
@@ -588,7 +562,7 @@ const UserSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       .addCase(forgetPassword.pending, (state) => {
         state.loading = true;
       })
@@ -645,12 +619,12 @@ const UserSlice = createSlice({
 
 // ==================== EXPORTS ====================
 
-export const { 
-  clearError, 
-  clearUserProfile, 
-  updateUserLocal, 
+export const {
+  clearError,
+  clearUserProfile,
+  updateUserLocal,
   setLastFetch,
-  clearAllUserData 
+  clearAllUserData
 } = UserSlice.actions;
 
 export const selectUserProfile = (state) => state.user.Userprofile;

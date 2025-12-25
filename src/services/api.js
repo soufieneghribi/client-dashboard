@@ -214,16 +214,23 @@ export const getFullAuthToken = () => {
       .find(row => row.startsWith('auth_token='))
       ?.split('=')[1];
 
-    // Attempting to get from state is harder here without importing store
-    // but localStorage and Cookies cover 99% of persistent cases.
-    return localToken || cookieToken || null;
+    const token = localToken || cookieToken || null;
+    if (!token) {
+      console.warn('🔑 getFullAuthToken: No token found in localStorage or Cookies');
+    }
+    return token;
   } catch (e) {
+    console.error('🔑 getFullAuthToken Error:', e);
     return null;
   }
 };
 
 export const getAuthHeaders = (token = null) => {
   const authToken = token || getFullAuthToken();
+
+  if (!authToken) {
+    console.error('🔑 getAuthHeaders: No auth token available!');
+  }
 
   return {
     'Authorization': `Bearer ${authToken}`,

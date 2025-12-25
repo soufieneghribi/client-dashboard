@@ -9,6 +9,7 @@ import { FaMapMarkerAlt, FaStore, FaClock, FaCheck, FaTruck } from 'react-icons/
 
 /**
  * RelayPointSelector - Component for selecting a relay point/store
+ * ✅ CORRIGÉ: Gestion d'erreur silencieuse pour éviter les toasts multiples
  * Displays list of stores with calculated delivery fees
  * Matches mobile app functionality
  */
@@ -20,6 +21,7 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
     const [selectedId, setSelectedId] = useState(selectedStoreId);
     const [storeFees, setStoreFees] = useState({});
     const [loadingFees, setLoadingFees] = useState({});
+    const [authError, setAuthError] = useState(false); // ✅ NOUVEAU: Détecter erreur auth
 
     // Fetch stores on mount
     useEffect(() => {
@@ -28,6 +30,12 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
 
     // Calculate fees for all stores when they load or dependencies change
     useEffect(() => {
+        // ✅ Ne pas calculer si erreur d'authentification détectée
+        if (authError) {
+            console.log("⚠️ Auth error detected, skipping fee calculation");
+            return;
+        }
+
         if (stores.length > 0 && deliveryModes && deliveryModes.length > 0 && cartTotal > 0) {
             stores.forEach(store => {
                 // Optimisation : ne recalculer que si le prix n'est pas déjà connu
@@ -36,14 +44,14 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                 }
             });
         }
-    }, [stores, deliveryModes, cartTotal, cartItems]);
+    }, [stores, deliveryModes, cartTotal, cartItems, authError]);
 
     const calculateFeeForStore = async (store) => {
         if (!cartTotal || !cartItems || cartItems.length === 0) return;
 
-        console.log("🔍 Modes disponibles:", deliveryModes);
+        console.log(`🔍 Calculating fee for store ${store.id} (${store.name})...`);
+
         // Find Point Relais mode ID
-        // Important: Mobile app uses 'POINT_RELAIS' as a fallback code
         const relayMode = deliveryModes?.find(m =>
             m.code === 'POINT_RELAIS' ||
             ['point relais', 'point-relais', 'relais'].includes(m.nom?.toLowerCase())
@@ -65,7 +73,6 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                 delivery_address: deliveryAddress,
                 cart_total: cartTotal,
                 mode_livraison_id: modeId,
-                // ⭐ CRITIQUE: store_id: null pour forcer l'entrepôt comme origine (comme sur mobile)
                 store_id: null,
                 total_weight: 0.0,
                 cart_items: cartItems.map(item => ({
@@ -80,7 +87,8 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                 { headers: getAuthHeaders() }
             );
 
-            // ⭐ CORRECT FONCTIONNEMENT: Utiliser 'frais_livraison' comme sur le modèle mobile
+            console.log(`✅ Fee for store ${store.id}:`, response.data.frais_livraison);
+
             const fee = response.data.frais_livraison !== undefined
                 ? response.data.frais_livraison
                 : (response.data.delivery_fee !== undefined ? response.data.delivery_fee : null);
@@ -90,8 +98,16 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                 [store.id]: fee
             }));
         } catch (error) {
-            console.error(`Error calculating fee for store ${store.id}:`, error);
-            // Si erreur, on ne met pas 0 par défaut pour éviter l'erreur de mismatch côté serveur
+            console.error(`❌ Error calculating fee for store ${store.id}:`, error.response?.status, error.message);
+
+            // ✅ CORRECTION CRITIQUE: Gestion silencieuse des erreurs 401/403
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                console.error("🚨 AUTH ERROR during fee calculation - Setting authError flag");
+                setAuthError(true);
+                // ✅ NE PAS afficher de toast ici - c'est géré par OrderConfirmation
+                // Le parent (OrderConfirmation) gère déjà la validation du token
+            }
+
             setStoreFees(prev => ({
                 ...prev,
                 [store.id]: null
@@ -125,6 +141,17 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                 <div className="text-4xl mb-4 opacity-20">📍</div>
                 <p className="text-slate-500 font-bold uppercase tracking-tight">Aucun point relais disponible</p>
                 <p className="text-slate-400 text-xs mt-1">Revenez plus tard ou choisissez un autre mode.</p>
+            </div>
+        );
+    }
+
+    // ✅ NOUVEAU: Afficher un message si erreur d'auth détectée
+    if (authError) {
+        return (
+            <div className="bg-orange-50 rounded-[2rem] p-10 text-center border-2 border-orange-200">
+                <div className="text-4xl mb-4">⚠️</div>
+                <p className="text-orange-700 font-bold uppercase tracking-tight">Session expirée</p>
+                <p className="text-orange-500 text-xs mt-1">Veuillez vous reconnecter pour voir les frais de livraison.</p>
             </div>
         );
     }

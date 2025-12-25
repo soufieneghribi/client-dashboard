@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStores, selectAllStores, selectStoresLoading, selectStore } from '../store/slices/stores';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -71,8 +72,8 @@ const StorePickupSelector = ({ onStoreSelected, selectedStoreId }) => {
                                 transition={{ delay: index * 0.05 }}
                                 onClick={() => handleStoreSelect(store)}
                                 className={`relative group p-5 rounded-[1.75rem] cursor-pointer transition-all border-2 overflow-hidden ${isSelected
-                                        ? 'border-green-500 bg-white shadow-xl shadow-green-900/5 ring-4 ring-green-50'
-                                        : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'
+                                    ? 'border-green-500 bg-white shadow-xl shadow-green-900/5 ring-4 ring-green-50'
+                                    : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'
                                     }`}
                             >
                                 <div className="flex items-center gap-4 relative z-10">

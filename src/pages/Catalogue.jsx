@@ -4,9 +4,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { API_ENDPOINTS, getAuthHeaders } from "../services/api";
 import { toast } from "react-hot-toast";
 import { fetchUserProfile } from "../store/slices/user";
-import { 
-  FaSpinner, 
-  FaCoins, 
+import {
+  FaSpinner,
+  FaCoins,
   FaGift,
   FaUtensils,
   FaTag,
@@ -27,7 +27,7 @@ import { GiPartyPopper } from "react-icons/gi";
 const Catalogue = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
+
   // Redux state
   const { Userprofile, loading: userLoading } = useSelector((state) => state.user);
   const { isLoggedIn } = useSelector((state) => state.auth);
@@ -132,7 +132,7 @@ const Catalogue = () => {
         const result = await response.json();
         if (result.success) {
           const available = (result.data || []).filter(p =>
-            p.is_published && 
+            p.is_published &&
             p.remaining_quantity > 0 &&
             (!p.valid_until || new Date(p.valid_until) >= new Date())
           );
@@ -155,12 +155,12 @@ const Catalogue = () => {
       try {
         setLoadingCodesPromo(true);
         const token = localStorage.getItem("token");
-        
+
         if (!token) {
           setLoadingCodesPromo(false);
           return;
         }
-        
+
         const response = await fetch(
           `${API_ENDPOINTS.CODE_PROMO.ALL}?per_page=5`,
           {
@@ -171,9 +171,9 @@ const Catalogue = () => {
 
         if (response.ok) {
           const result = await response.json();
-          
+
           let codesData = [];
-          
+
           if (result.success && result.data) {
             codesData = result.data;
           } else if (Array.isArray(result)) {
@@ -181,24 +181,24 @@ const Catalogue = () => {
           } else if (Array.isArray(result.data)) {
             codesData = result.data;
           }
-          
+
           if (codesData.length > 0) {
             const now = new Date();
             const availableCodes = codesData.filter((code) => {
               if (!code) return false;
-              
+
               const isActive = code.is_active === true || code.is_active === 1;
               if (!isActive) return false;
-              
+
               const notExpired = !code.valid_to || new Date(code.valid_to) >= now;
               if (!notExpired) return false;
-              
+
               const notUpcoming = !code.valid_from || new Date(code.valid_from) <= now;
               if (!notUpcoming) return false;
-              
+
               return true;
             });
-            
+
             setCodesPromo(availableCodes);
           } else {
             setCodesPromo([]);
@@ -216,20 +216,20 @@ const Catalogue = () => {
 
   // Composant carte optimisée et claire
   const CategoryCard = ({ icon: Icon, title, subtitle, count, onClick, loading, gradient, iconBg }) => (
-    <div 
+    <div
       onClick={loading ? null : onClick}
       className={`group relative bg-white rounded-3xl shadow-lg border border-gray-100 p-8 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
     >
       {/* Effet de fond au hover */}
       <div className={`absolute inset-0 ${gradient || 'from-blue-50/30 to-purple-50/30'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
-      
+
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-6">
           {/* Icône */}
           <div className={`w-16 h-16 ${iconBg || 'bg-gradient-to-br from-blue-500 to-indigo-600'} rounded-2xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-md`}>
             <Icon className="text-3xl text-white" />
           </div>
-          
+
           {/* Compteur */}
           {count !== undefined && (
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white px-4 py-2 rounded-xl font-bold text-lg shadow-sm">
@@ -237,20 +237,20 @@ const Catalogue = () => {
             </div>
           )}
         </div>
-        
+
         <h3 className="text-2xl font-bold text-gray-900 mb-2">
           {title}
         </h3>
         <p className="text-gray-600 text-base mb-6 leading-relaxed">
           {subtitle}
         </p>
-        
+
         <div className="flex items-center text-blue-600 font-semibold">
           <span>Explorer</span>
           <FaArrowRight className="ml-2 group-hover:translate-x-1 transition-transform duration-300" />
         </div>
       </div>
-      
+
       {loading && (
         <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center rounded-3xl z-20">
           <FaSpinner className="animate-spin text-3xl text-blue-600" />
@@ -261,7 +261,7 @@ const Catalogue = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/20">
-      
+
       {/* En-tête avec dégradé moderne */}
       <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-lg relative overflow-hidden">
         {/* Effets de fond */}
@@ -269,28 +269,28 @@ const Catalogue = () => {
           <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"></div>
         </div>
-        
+
         <div className="container mx-auto px-4 py-8 relative z-10">
           {/* Barre supérieure réduite */}
           <div className="flex items-center justify-between mb-6">
-            <button 
+            <button
               onClick={() => navigate(-1)}
               className="flex items-center gap-2 text-white/90 hover:text-white transition-all duration-200 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/20"
             >
               <FaChevronLeft className="text-sm" />
               <span className="font-medium text-xs">Retour</span>
             </button>
-            
-           
+
+
           </div>
-          
+
           {/* Titres réduits */}
           <div className="text-center mb-4">
             <div className="inline-flex items-center gap-1 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/20 mb-3">
               <GiPartyPopper className="text-sm text-yellow-300" />
               <span className="text-white/90 text-xs font-medium">Avantages</span>
             </div>
-            
+
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight">
               Catalogue
             </h1>
@@ -302,7 +302,7 @@ const Catalogue = () => {
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        
+
         {/* Section statistiques compacte */}
         <div className="max-w-6xl mx-auto mb-8">
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-5">
@@ -319,7 +319,7 @@ const Catalogue = () => {
                 <FaGem className="text-sm text-white" />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
               <div className="bg-gradient-to-br from-white to-blue-50 rounded-lg p-3 border border-blue-100 group hover:shadow-md transition-all duration-200">
                 <div className="flex items-center gap-2 mb-1">
@@ -334,7 +334,7 @@ const Catalogue = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-gradient-to-br from-white to-emerald-50 rounded-lg p-3 border border-emerald-100 group hover:shadow-md transition-all duration-200">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-8 h-8 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-md flex items-center justify-center">
@@ -348,7 +348,7 @@ const Catalogue = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-gradient-to-br from-white to-purple-50 rounded-lg p-3 border border-purple-100 group hover:shadow-md transition-all duration-200">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-purple-200 rounded-md flex items-center justify-center">
@@ -362,7 +362,7 @@ const Catalogue = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-gradient-to-br from-white to-amber-50 rounded-lg p-3 border border-amber-100 group hover:shadow-md transition-all duration-200">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-8 h-8 bg-gradient-to-br from-amber-100 to-amber-200 rounded-md flex items-center justify-center">
@@ -377,15 +377,15 @@ const Catalogue = () => {
                 </div>
               </div>
             </div>
-            
-           
+
+
           </div>
         </div>
-        
+
         {/* Grille des catégories */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl mx-auto mb-8">
-          
-         
+
+
 
           <CategoryCard
             icon={FaTag}
@@ -431,10 +431,10 @@ const Catalogue = () => {
             iconBg="bg-gradient-to-br from-blue-500 to-cyan-600"
           />
 
-       
+
         </div>
-        
-      
+
+
       </div>
     </div>
   );

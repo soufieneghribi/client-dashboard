@@ -17,6 +17,9 @@ import dealsReducer from "./slices/deals"; // au lieu de deal.js
 import promotionsReducer from "./slices/promotions"; // ✅ Nouveau slice pour les promotions
 import loyaltyCardReducer from './slices/loyaltyCardSlice';  // ✅ NOUVEAU
 import CodePromoReducer from './slices/CodePromo';  // ✅ NOUVEAU - Codes promo partenaires
+import wishlistReducer from './slices/wishlist';  // ✅ NOUVEAU - Wishlist/Favoris
+import deliveryReducer from './slices/delivery';  // ✅ NOUVEAU - Delivery fee calculation
+import storesReducer from './slices/stores';  // ✅ NOUVEAU - Stores/Relay points
 
 
 // Import du middleware d'authentification
@@ -41,6 +44,9 @@ const store = configureStore({
         loyaltyCard: loyaltyCardReducer,  // ✅ NOUVEAU
         promotions: promotionsReducer, // ✅ Nouveau reducer pour les promotions
         codePromo: CodePromoReducer,  // ✅ NOUVEAU - Codes promo partenaires
+        wishlist: wishlistReducer,  // ✅ NOUVEAU - Wishlist/Favoris
+        delivery: deliveryReducer,  // ✅ NOUVEAU - Delivery fee calculation
+        stores: storesReducer,  // ✅ NOUVEAU - Stores/Relay points
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

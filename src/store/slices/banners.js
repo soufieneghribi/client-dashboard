@@ -8,6 +8,8 @@ export const fetchBanners = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(API_ENDPOINTS.BANNERS.ALL);
+      console.log("📢 Banners API Response:", response.data);
+      console.log("📢 Number of banners received:", Array.isArray(response.data) ? response.data.length : "Not an array");
       return response.data;
     } catch (error) {
       console.error("Error fetching banners:", error);

@@ -25,6 +25,8 @@
     "google-map-react": "^2.2.1",
     "i18next": "^24.2.2",
     "js-cookie": "^3.0.5",
+    "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.2",
     "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.545.0",

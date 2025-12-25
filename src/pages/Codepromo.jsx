@@ -163,11 +163,10 @@ const CodePromo = () => {
             {/* Bouton Filtres */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`px-5 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${
-                showFilters
+              className={`px-5 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${showFilters
                   ? "bg-indigo-600 text-white shadow-sm"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
             >
               <FaFilter />
               <span>Filtres</span>
@@ -405,11 +404,10 @@ const CodePromo = () => {
 
                       {/* Bouton d'action */}
                       <button
-                        className={`w-full py-2.5 rounded-xl font-semibold transition-all ${
-                          available
+                        className={`w-full py-2.5 rounded-xl font-semibold transition-all ${available
                             ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
                             : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        }`}
+                          }`}
                         disabled={!available}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -421,10 +419,10 @@ const CodePromo = () => {
                         {expired
                           ? "Expiré"
                           : upcoming
-                          ? "Bientôt disponible"
-                          : depleted
-                          ? "Stock épuisé"
-                          : "Obtenir mon code"}
+                            ? "Bientôt disponible"
+                            : depleted
+                              ? "Stock épuisé"
+                              : "Obtenir mon code"}
                       </button>
                     </div>
                   </div>

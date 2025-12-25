@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCategories } from "../store/slices/categorie";
 import { fetchRecommendedProduct } from "../store/slices/recommended";
+import { selectIsLoggedIn, selectUser } from "../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import FeaturedRecipes from "../components/FeaturedRecipes";
@@ -31,6 +32,9 @@ const Home = () => {
     error: categoriesError,
   } = useSelector((state) => state.categorie);
 
+  const isLoggedIn = useSelector(selectIsLoggedIn);
+  const user = useSelector(selectUser);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -39,6 +43,24 @@ const Home = () => {
   const [brandIndex, setBrandIndex] = useState(0);
   const [brandsPerSlide, setBrandsPerSlide] = useState(getBrandsPerSlide());
   const [isPaused, setIsPaused] = useState(false);
+
+  // Helper function to get time-based greeting emoji
+  const getTimeOfDayEmoji = () => {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 12) return "🌞";
+    if (hour >= 12 && hour < 18) return "🌥️";
+    return "🌙";
+  };
+
+  // Get greeting message
+  const getGreeting = () => {
+    const emoji = getTimeOfDayEmoji();
+    if (isLoggedIn && user) {
+      const firstName = user.nom || user.name || "";
+      return `Bienvenu ${firstName} ${emoji}`;
+    }
+    return `Bienvenu 360TN ${emoji}`;
+  };
 
   useEffect(() => {
     dispatch(fetchCategories());
@@ -140,7 +162,14 @@ const Home = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-10 space-y-16">
-        
+
+        {/* 🔹 Greeting Message */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+            {getGreeting()}
+          </h1>
+        </div>
+
         {/* 🔹 Bannières */}
         <Banners />
 
@@ -177,11 +206,10 @@ const Home = () => {
                 {slides.map((slide, index) => (
                   <div
                     key={index}
-                    className={`flex justify-center gap-4 transition-all duration-500 ease-in-out ${
-                      index === currentIndex
-                        ? "opacity-100 block"
-                        : "opacity-0 hidden"
-                    }`}
+                    className={`flex justify-center gap-4 transition-all duration-500 ease-in-out ${index === currentIndex
+                      ? "opacity-100 block"
+                      : "opacity-0 hidden"
+                      }`}
                   >
                     {slide.map((category) => (
                       <div
@@ -350,7 +378,7 @@ const Home = () => {
             </p>
           </div>
 
-          <div 
+          <div
             className="relative"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
@@ -360,11 +388,10 @@ const Home = () => {
               {brandSlides.map((slide, index) => (
                 <div
                   key={index}
-                  className={`flex justify-center gap-4 md:gap-6 transition-all duration-500 ease-in-out ${
-                    index === brandIndex
-                      ? "opacity-100 block"
-                      : "opacity-0 hidden"
-                  }`}
+                  className={`flex justify-center gap-4 md:gap-6 transition-all duration-500 ease-in-out ${index === brandIndex
+                    ? "opacity-100 block"
+                    : "opacity-0 hidden"
+                    }`}
                 >
                   {slide.map((brand) => (
                     <div
@@ -382,10 +409,10 @@ const Home = () => {
                           }}
                         />
                       </div>
-                      
+
                       {/* Overlay au hover avec effet de fond */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      
+
                       {/* Nom de la marque - visible au hover */}
                       <div className="absolute bottom-0 w-full py-3 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <div className="bg-gradient-to-t from-black/80 to-transparent pt-6 pb-2">
@@ -394,7 +421,7 @@ const Home = () => {
                           </span>
                         </div>
                       </div>
-                      
+
                       {/* Effet de brillance */}
                       <div className="absolute inset-0 overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out"></div>
@@ -456,11 +483,10 @@ const Home = () => {
                   <button
                     key={idx}
                     onClick={() => setBrandIndex(idx)}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      brandIndex === idx
-                        ? ""
-                        : ""
-                    }`}
+                    className={`h-2 rounded-full transition-all duration-300 ${brandIndex === idx
+                      ? ""
+                      : ""
+                      }`}
                     aria-label={`Aller au slide ${idx + 1}`}
                   />
                 ))}

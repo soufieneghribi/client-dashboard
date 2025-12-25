@@ -11,6 +11,11 @@ const Banners = () => {
     dispatch(fetchBanners());
   }, [dispatch]);
 
+  useEffect(() => {
+    console.log("🎨 Banners in component:", banners);
+    console.log("🎨 Number of banners to display:", banners.length);
+  }, [banners]);
+
   // Aller à la slide précédente
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
@@ -43,8 +48,8 @@ const Banners = () => {
             <img
               src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}`}
               alt={banner.title || "Banner Image"}
-              className="w-full h-[400px] object-cover" 
-              // 👉 tu peux changer h-[400px] en ce que tu veux (ex: h-[250px], h-[600px], h-screen...)
+              className="w-full h-[400px] object-cover"
+            // 👉 tu peux changer h-[400px] en ce que tu veux (ex: h-[250px], h-[600px], h-screen...)
             />
           </div>
         ))}
@@ -72,9 +77,8 @@ const Banners = () => {
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
-            className={`w-3 h-3 rounded-full transition ${
-              currentIndex === index ? "bg-white" : "bg-white/50 hover:bg-white/80"
-            }`}
+            className={`w-3 h-3 rounded-full transition ${currentIndex === index ? "bg-white" : "bg-white/50 hover:bg-white/80"
+              }`}
           />
         ))}
       </div>

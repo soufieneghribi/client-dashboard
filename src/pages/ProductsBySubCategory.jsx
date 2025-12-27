@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { fetchProduct } from '../store/slices/product';
@@ -12,13 +12,21 @@ const ProductsBySubCategory = () => {
   const { categories } = useSelector((state) => state.categorie);
   const allProducts = product.products || [];
   const dispatch = useDispatch();
-  
+
   const subId = location.state?.subId;
   const [subTitle, setSubTitle] = useState(location.state?.subTitle || "Produits");
-  
+
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
+
+  // Calculer l'objet parent pour afficher son titre dynamiquement
+  const parentCategory = useMemo(() => {
+    if (!subId || !categories || categories.length === 0) return null;
+    const currentCat = categories.find(cat => cat.id === parseInt(subId));
+    if (!currentCat) return null;
+    return categories.find(cat => cat.id === currentCat.parent_id);
+  }, [subId, categories]);
 
   const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
 
@@ -37,7 +45,7 @@ const ProductsBySubCategory = () => {
   useEffect(() => {
     if (subId) {
       dispatch(fetchProduct(subId));
-      
+
       if (!location.state?.subTitle && categories && categories.length > 0) {
         const category = categories.find((cat) => cat.id === parseInt(subId));
         if (category) {
@@ -110,18 +118,19 @@ const ProductsBySubCategory = () => {
       </div>
     </Container>
   );
-  
+
   if (error) return (
     <Container className="py-5">
       <div className="alert alert-danger">Erreur : {error}</div>
     </Container>
   );
-  
+
   if (!subId) return (
     <Container className="py-5">
       <p className="text-center text-muted">Aucune catégorie sélectionnée</p>
     </Container>
   );
+
 
   return (
     <Container fluid className="py-4">
@@ -129,8 +138,11 @@ const ProductsBySubCategory = () => {
         <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/" }}>
           Accueil
         </Breadcrumb.Item>
-        <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/categories" }}>
-          Catégories
+        <Breadcrumb.Item
+          linkAs={Link}
+          linkProps={{ to: parentCategory ? `/categories?categoryId=${parentCategory.id}` : "/categories" }}
+        >
+          {parentCategory ? parentCategory.title : "Catégories"}
         </Breadcrumb.Item>
         <Breadcrumb.Item active>{subTitle}</Breadcrumb.Item>
       </Breadcrumb>

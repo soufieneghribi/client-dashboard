@@ -163,10 +163,15 @@ const Header = () => {
     { path: "/categories", label: "Product", icon: "fa-th-large" },
     { path: "/MesDeals", label: "Deals", icon: "fa-tag" },
     { path: "/recipes", label: "Recettes", icon: "fa-utensils" },
-
     { path: "/Catalogue", label: "Catalogue", icon: "fa-book" },
     { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" },
-    { path: "/contact", label: "Contact", icon: "fa-envelope" }
+    { path: "/contact", label: "Contact", icon: "fa-envelope" },
+    { path: "/reclamations", label: "Réclamations", icon: "fa-exclamation-circle" }
+
+  ];
+
+  const protectedNavLinks = [
+    { path: "/reclamations", label: "Réclamations", icon: "fa-exclamation-circle" }
   ];
 
   useEffect(() => {
@@ -356,6 +361,7 @@ const Header = () => {
                   <Dropdown.Item as={Link} to="/profile"><i className="fas fa-user me-2"></i> Mon Profil</Dropdown.Item>
                   <Dropdown.Item as={Link} to="/settings"><i className="fas fa-cog me-2"></i> Paramètres</Dropdown.Item>
                   <Dropdown.Item as={Link} to="/Mes-Commandes"><i className="fas fa-shopping-bag me-2"></i> Mes Commandes</Dropdown.Item>
+                  <Dropdown.Item as={Link} to="/reclamations"><i className="fas fa-exclamation-circle me-2"></i> Réclamations</Dropdown.Item>
                   <Dropdown.Divider />
                   <Dropdown.Item onClick={handleLogout} className="text-danger">
                     <i className="fas fa-sign-out-alt me-2"></i> Déconnexion
@@ -446,6 +452,9 @@ const Header = () => {
                 </Nav.Link>
                 <Nav.Link as={Link} to="/Mes-Commandes" className="py-2 text-dark" onClick={() => setShowMobileMenu(false)}>
                   <i className="fas fa-shopping-bag me-3 text-primary" style={{ width: '20px' }}></i> Mes Commandes
+                </Nav.Link>
+                <Nav.Link as={Link} to="/reclamations" className="py-2 text-dark" onClick={() => setShowMobileMenu(false)}>
+                  <i className="fas fa-exclamation-circle me-3 text-primary" style={{ width: '20px' }}></i> Réclamations
                 </Nav.Link>
                 <Nav.Link onClick={handleLogout} className="py-2 text-danger">
                   <i className="fas fa-sign-out-alt me-3" style={{ width: '20px' }}></i> Déconnexion

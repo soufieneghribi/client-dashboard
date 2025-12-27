@@ -43,6 +43,14 @@ import Codepromo from "./pages/Codepromo";
 import Codepromodetails from "./pages/Codepromodetails";
 import MescodePromo from "./pages/MescodePromo";
 
+// ⬅️ NOUVEAUX IMPORTS - Réclamations
+import Reclamations from "./pages/Reclamations";
+import ReclamationForm from "./pages/ReclamationForm";
+import ReclamationDetails from "./pages/ReclamationDetails";
+
+// ⬅️ NOUVEAU IMPORT - Toutes les catégories
+import AllCategories from "./pages/AllCategories";
+
 import "./styles/index.css";
 
 /**
@@ -53,9 +61,9 @@ console.error = (...args) => {
   if (
     typeof args[0] === 'string' &&
     (args[0].includes('Invalid attribute name') ||
-     args[0].includes('findDOMNode is deprecated') ||
-     args[0].includes('React does not recognize the') ||
-     (args[0].includes('Received `') && args[0].includes('for a non-boolean attribute')))
+      args[0].includes('findDOMNode is deprecated') ||
+      args[0].includes('React does not recognize the') ||
+      (args[0].includes('Received `') && args[0].includes('for a non-boolean attribute')))
   ) {
     return;
   }
@@ -78,10 +86,10 @@ console.warn = (...args) => {
  */
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route path='/' element={<App/>}>
+    <Route path='/' element={<App />}>
       {/* ==================== PUBLIC ROUTES ==================== */}
       <Route path="/" element={<Home />} />
-      <Route path='/inscrire' element={<Register/>} />
+      <Route path='/inscrire' element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/verify-email" element={<EmailVerification />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -89,12 +97,13 @@ const router = createBrowserRouter(
       <Route path="/catalogue" element={<Catalogue />} />
       <Route path="/promotions" element={<Promotions />} />
       <Route path="/cadeaux" element={<Cadeaux />} />
-      
+
       {/* ⬅️ NOUVELLES ROUTES - CODES PROMO (Publiques) */}
       <Route path="/code-promo" element={<Codepromo />} />
       <Route path="/code-promo/:id" element={<Codepromodetails />} />
-      
+
       <Route path="/categories" element={<Categories />} />
+      <Route path="/all-categories" element={<AllCategories />} />
       <Route path="/subcategory/:id" element={<SubCategory />} />
       <Route path="/products" element={<Products />} />
       <Route path="/product/:id" element={<ProductDetails />} />
@@ -105,77 +114,91 @@ const router = createBrowserRouter(
       <Route path="/MesDeals" element={<ProtectedRoute><MesDeals /></ProtectedRoute>} />
 
       {/* ==================== PROTECTED ROUTES ==================== */}
-      <Route 
-        path="/profile" 
-        element={<ProtectedRoute><Profile/></ProtectedRoute>}
+      <Route
+        path="/profile"
+        element={<ProtectedRoute><Profile /></ProtectedRoute>}
       />
-      
+
       {/* Carte de fidélité */}
-      <Route 
-        path="/loyalty-card" 
-        element={<ProtectedRoute><Loyality/></ProtectedRoute>}
+      <Route
+        path="/loyalty-card"
+        element={<ProtectedRoute><Loyality /></ProtectedRoute>}
       />
-      
-      <Route 
-        path="/favoris" 
-        element={<ProtectedRoute><Favoris/></ProtectedRoute>}
+
+      <Route
+        path="/favoris"
+        element={<ProtectedRoute><Favoris /></ProtectedRoute>}
       />
-      
-      <Route 
-        path="/cart-shopping" 
+
+      <Route
+        path="/cart-shopping"
         element={<ProtectedRoute><CartShopping /></ProtectedRoute>}
       />
-      
-      <Route 
-        path="/order-confirmation" 
-        element={<ProtectedRoute><OrderConfirmation/></ProtectedRoute>}
-      />
-      
-      <Route 
-        path="/Mes-Commandes" 
-        element={<ProtectedRoute><Orders/></ProtectedRoute>}
+
+      <Route
+        path="/order-confirmation"
+        element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>}
       />
 
-      <Route 
-        path="/order/:orderId" 
-        element={<ProtectedRoute><OrderDetails/></ProtectedRoute>} 
+      <Route
+        path="/Mes-Commandes"
+        element={<ProtectedRoute><Orders /></ProtectedRoute>}
       />
 
-      <Route 
-        path="/mes-cadeaux" 
+      <Route
+        path="/order/:orderId"
+        element={<ProtectedRoute><OrderDetails /></ProtectedRoute>}
+      />
+
+      <Route
+        path="/mes-cadeaux"
         element={<ProtectedRoute><MesCadeaux /></ProtectedRoute>}
       />
 
       {/* ⬅️ NOUVELLES ROUTES - CODES PROMO (Protégées) */}
-      <Route 
-        path="/mes-code-promo" 
+      <Route
+        path="/mes-code-promo"
         element={<ProtectedRoute><MescodePromo /></ProtectedRoute>}
       />
 
       {/* ⬅️ NOUVELLES ROUTES - PRODUITS GRATUITS */}
-      
+
       {/* Liste des produits gratuits - Accessible à tous */}
-      <Route 
-        path="/gratuite" 
+      <Route
+        path="/gratuite"
         element={<Gratuite />}
       />
-      
+
       {/* Détails d'un produit gratuit - Accessible à tous */}
-      <Route 
-        path="/gratuite/:id" 
+      <Route
+        path="/gratuite/:id"
         element={<GratuiteDetails />}
       />
-      
+
       {/* Page de succès après réservation - Protégée */}
-      <Route 
-        path="/gratuite/success" 
+      <Route
+        path="/gratuite/success"
         element={<ProtectedRoute><GratuiteSuccess /></ProtectedRoute>}
       />
-      
+
       {/* Mes réservations de produits gratuits - Protégée */}
-      <Route 
-        path="/mes-reservations" 
+      <Route
+        path="/mes-reservations"
         element={<ProtectedRoute><MesReservations /></ProtectedRoute>}
+      />
+
+      {/* ⬅️ NOUVELLES ROUTES - RÉCLAMATIONS (Protégées) */}
+      <Route
+        path="/reclamations"
+        element={<ProtectedRoute><Reclamations /></ProtectedRoute>}
+      />
+      <Route
+        path="/reclamations/new"
+        element={<ProtectedRoute><ReclamationForm /></ProtectedRoute>}
+      />
+      <Route
+        path="/reclamations/:id"
+        element={<ProtectedRoute><ReclamationDetails /></ProtectedRoute>}
       />
 
       {/* ==================== 404 FALLBACK ==================== */}
@@ -189,6 +212,6 @@ const router = createBrowserRouter(
  */
 createRoot(document.getElementById('root')).render(
   <Provider store={store}>
-    <RouterProvider router={router}/>
+    <RouterProvider router={router} />
   </Provider>
 );

@@ -11,45 +11,68 @@ const Banners = () => {
     dispatch(fetchBanners());
   }, [dispatch]);
 
-  useEffect(() => {
-    console.log("🎨 Banners in component:", banners);
-    console.log("🎨 Number of banners to display:", banners.length);
-  }, [banners]);
+  // Filter out type 4 banners which are low quality/mobile only
+  const visibleBanners = banners.filter(b => b.type !== 4 && b.type_id !== 4);
+
+  // Fonction pour obtenir l'URL de l'image selon le type de bannière
+  const getBannerImageUrl = (banner) => {
+    // Si l'image_path existe et commence par http, c'est une URL complète
+    if (banner.image_path && banner.image_path.startsWith('http')) {
+      return banner.image_path;
+    }
+
+    // Sinon, construire l'URL avec le base URL
+    if (banner.image_path) {
+      return `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}`;
+    }
+
+    // Fallback: utiliser une image par défaut
+    return 'https://via.placeholder.com/1200x400?text=Banner';
+  };
 
   // Aller à la slide précédente
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? visibleBanners.length - 1 : prev - 1));
   };
 
   // Aller à la slide suivante
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev === visibleBanners.length - 1 ? 0 : prev + 1));
   };
 
   // Auto-slide toutes les 3 secondes
   useEffect(() => {
+    if (visibleBanners.length === 0) return;
     const timer = setTimeout(nextSlide, 3000);
     return () => clearTimeout(timer);
-  }, [currentIndex, banners.length]);
+  }, [currentIndex, visibleBanners.length]);
 
   if (loading) return <p>Loading banners...</p>;
   if (error) return <p>Failed to load banners. Please try again.</p>;
-  if (banners.length === 0) return <p>No banners found.</p>;
+  if (visibleBanners.length === 0) return <p>No banners found.</p>;
 
   return (
-    <div className="relative w-full overflow-hidden">
+    <div className="relative w-full overflow-hidden rounded-2xl shadow-lg">
       {/* Slides container */}
       <div
         className="flex transition-transform duration-700 ease-in-out"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
-        {banners.map((banner) => (
-          <div key={banner.id} className="w-full flex-shrink-0">
+        {visibleBanners.map((banner, index) => (
+          <div key={banner.id || index} className="w-full flex-shrink-0">
             <img
-              src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}`}
-              alt={banner.title || "Banner Image"}
-              className="w-full h-[400px] object-cover"
-            // 👉 tu peux changer h-[400px] en ce que tu veux (ex: h-[250px], h-[600px], h-screen...)
+              src={getBannerImageUrl(banner)}
+              alt={banner.title || banner.name || "Banner Image"}
+              className="w-full object-cover h-[200px] sm:h-[250px] md:h-[300px] lg:h-[400px]"
+              onError={(e) => {
+                console.error(`❌ Failed to load banner image: ${banner.title || banner.name}`, banner);
+                e.target.src = 'https://via.placeholder.com/1200x400?text=Image+Non+Disponible';
+              }}
+            // Responsive heights:
+            // Mobile (< 640px): 200px
+            // Small tablet (640px - 768px): 250px
+            // Tablet (768px - 1024px): 300px
+            // Desktop (> 1024px): 400px
             />
           </div>
         ))}
@@ -58,22 +81,24 @@ const Banners = () => {
       {/* Bouton précédent */}
       <button
         onClick={prevSlide}
-        className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition"
+        className="absolute top-1/2 left-2 sm:left-4 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 sm:p-3 rounded-full transition-all duration-200 z-10"
+        aria-label="Slide précédent"
       >
-        ❮
+        <span className="text-lg sm:text-xl">❮</span>
       </button>
 
       {/* Bouton suivant */}
       <button
         onClick={nextSlide}
-        className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition"
+        className="absolute top-1/2 right-2 sm:right-4 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 sm:p-3 rounded-full transition-all duration-200 z-10"
+        aria-label="Slide suivant"
       >
-        ❯
+        <span className="text-lg sm:text-xl">❯</span>
       </button>
 
       {/* Indicateurs */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-        {banners.map((_, index) => (
+        {visibleBanners.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}

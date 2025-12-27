@@ -202,6 +202,16 @@ export const API_ENDPOINTS = {
     BALANCE: `${API_BASE_URL}/customer/loyalty-card/balance`,
     VALIDATE: `${API_BASE_URL}/customer/loyalty-card/validate`,
   },
+
+  // ==================== COMPLAINTS / RÉCLAMATIONS ====================
+  COMPLAINTS: {
+    ALL: `${API_BASE_URL}/complaints`,
+    BY_ID: (id) => `${API_BASE_URL}/complaints/${id}`,
+    CREATE: `${API_BASE_URL}/complaints`,
+    UPDATE: (id) => `${API_BASE_URL}/complaints/${id}`,
+    DELETE: (id) => `${API_BASE_URL}/complaints/${id}`,
+    BY_CLIENT: (clientId) => `${API_BASE_URL}/complaints/client/${clientId}`,
+  },
 };
 
 // ==================== HELPER FUNCTIONS ====================

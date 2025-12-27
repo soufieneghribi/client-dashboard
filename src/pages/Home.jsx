@@ -38,6 +38,8 @@ const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // État pour filtrer par univers (null = tous, 1 = Épicerie, 2 = Électronique)
+  const [selectedUniverse, setSelectedUniverse] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide());
   const [brandIndex, setBrandIndex] = useState(0);
@@ -67,34 +69,6 @@ const Home = () => {
     dispatch(fetchRecommendedProduct());
   }, [dispatch]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      setItemsPerSlide(getItemsPerSlide());
-      setBrandsPerSlide(getBrandsPerSlide());
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) =>
-        slides.length ? (prev + 1) % slides.length : 0
-      );
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [categories, itemsPerSlide]);
-
-  useEffect(() => {
-    if (isPaused) return;
-    const interval = setInterval(() => {
-      setBrandIndex((prev) =>
-        brandSlides.length ? (prev + 1) % brandSlides.length : 0
-      );
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [isPaused, brandsPerSlide]);
-
   function getItemsPerSlide() {
     if (window.innerWidth < 640) return 2;
     if (window.innerWidth < 1024) return 3;
@@ -108,9 +82,17 @@ const Home = () => {
     return 5;
   }
 
-  const filteredCategories = categories.filter(
-    (category) => category.parent_id === 0 && category.id !== 1
-  );
+  const getCategoryImageUrl = (picture) => {
+    if (!picture) return "https://via.placeholder.com/300x200?text=Category";
+    if (picture.startsWith('http')) return picture;
+    return `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${picture}`;
+  };
+
+  const filteredCategories = categories.filter((category) => {
+    if (selectedUniverse === 2) return category.parent_id === 144;
+    if (selectedUniverse === 1) return category.parent_id === 0 && category.id !== 1 && category.universe_id === 1;
+    return category.parent_id === 0 && category.id !== 1;
+  });
 
   const slides = filteredCategories.reduce((acc, cat, i) => {
     const slideIndex = Math.floor(i / itemsPerSlide);
@@ -119,20 +101,6 @@ const Home = () => {
     return acc;
   }, []);
 
-  const prevSlide = () =>
-    setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
-  const nextSlide = () =>
-    setCurrentIndex((prev) =>
-      prev === slides.length - 1 ? 0 : prev + 1
-    );
-
-  const handleCategoryClick = (id, title) => {
-    navigate("/categories", {
-      state: { preselectedCategoryId: id, categoryTitle: title },
-    });
-  };
-
-  // 🔹 Marques Data - Mise à jour avec les nouvelles images
   const brands = [
     { id: 1, img: deliceImg, name: "Délice" },
     { id: 2, img: lilasImg, name: "Lilas" },
@@ -151,12 +119,48 @@ const Home = () => {
     return acc;
   }, []);
 
-  const prevBrandSlide = () => {
-    setBrandIndex((prev) => (prev === 0 ? brandSlides.length - 1 : prev - 1));
-  };
+  useEffect(() => {
+    const handleResize = () => {
+      setItemsPerSlide(getItemsPerSlide());
+      setBrandsPerSlide(getBrandsPerSlide());
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-  const nextBrandSlide = () => {
-    setBrandIndex((prev) => (prev === brandSlides.length - 1 ? 0 : prev + 1));
+  useEffect(() => {
+    if (isPaused) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) =>
+        slides.length ? (prev + 1) % slides.length : 0
+      );
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [slides.length, isPaused]);
+
+  useEffect(() => {
+    if (isPaused) return;
+    const interval = setInterval(() => {
+      setBrandIndex((prev) =>
+        brandSlides.length ? (prev + 1) % brandSlides.length : 0
+      );
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isPaused, brandSlides.length]);
+
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [selectedUniverse]);
+
+  const prevSlide = () => setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  const nextSlide = () => setCurrentIndex((prev) => prev === slides.length - 1 ? 0 : prev + 1);
+  const prevBrandSlide = () => setBrandIndex((prev) => (prev === 0 ? brandSlides.length - 1 : prev - 1));
+  const nextBrandSlide = () => setBrandIndex((prev) => (prev === brandSlides.length - 1 ? 0 : prev + 1));
+
+  const handleCategoryClick = (id, title) => {
+    navigate(`/categories?categoryId=${id}`, {
+      state: { categoryTitle: title },
+    });
   };
 
   return (
@@ -172,6 +176,49 @@ const Home = () => {
 
         {/* 🔹 Bannières */}
         <Banners />
+
+        {/* 🔹 Boutons Catégories Principales (Tous / Épicerie / Électronique) */}
+        <section className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-8 px-4">
+          <button
+            onClick={() => setSelectedUniverse(null)}
+            className={`flex-1 max-w-xs font-bold py-4 sm:py-6 px-6 sm:px-8 rounded-2xl shadow-xl transform transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 sm:gap-4 ${selectedUniverse === null
+              ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+              }`}
+          >
+            <span className="text-3xl sm:text-4xl">🏪</span>
+            <div className="text-left">
+              <div className="text-lg sm:text-xl font-bold">Tous</div>
+              <div className="text-xs sm:text-sm opacity-90">Toutes les catégories</div>
+            </div>
+          </button>
+          <button
+            onClick={() => setSelectedUniverse(1)}
+            className={`flex-1 max-w-xs font-bold py-4 sm:py-6 px-6 sm:px-8 rounded-2xl shadow-xl transform transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 sm:gap-4 ${selectedUniverse === 1
+              ? 'bg-gradient-to-r from-green-500 to-green-600 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+              }`}
+          >
+            <span className="text-3xl sm:text-4xl">🛒</span>
+            <div className="text-left">
+              <div className="text-lg sm:text-xl font-bold">Épicerie</div>
+              <div className="text-xs sm:text-sm opacity-90">Alimentation & Maison</div>
+            </div>
+          </button>
+          <button
+            onClick={() => setSelectedUniverse(2)}
+            className={`flex-1 max-w-xs font-bold py-4 sm:py-6 px-6 sm:px-8 rounded-2xl shadow-xl transform transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 sm:gap-4 ${selectedUniverse === 2
+              ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200'
+              }`}
+          >
+            <span className="text-3xl sm:text-4xl">📱</span>
+            <div className="text-left">
+              <div className="text-lg sm:text-xl font-bold">Électronique</div>
+              <div className="text-xs sm:text-sm opacity-90">High-Tech & Électroménager</div>
+            </div>
+          </button>
+        </section>
 
         {/* 🔹 Catégories */}
         <section>
@@ -201,7 +248,11 @@ const Home = () => {
               </p>
             </div>
           ) : (
-            <div className="relative">
+            <div
+              className="relative"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
               <div className="overflow-hidden rounded-2xl">
                 {slides.map((slide, index) => (
                   <div
@@ -216,7 +267,7 @@ const Home = () => {
                         key={category.id}
                         className="relative h-36 sm:h-40 lg:h-44 flex-1 min-w-0 rounded-xl shadow-md overflow-hidden cursor-pointer group transform transition-all duration-300 hover:scale-105 hover:shadow-lg"
                         style={{
-                          backgroundImage: `url(https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${category.picture})`,
+                          backgroundImage: `url(${getCategoryImageUrl(category.picture)})`,
                           backgroundSize: "cover",
                           backgroundPosition: "center",
                         }}

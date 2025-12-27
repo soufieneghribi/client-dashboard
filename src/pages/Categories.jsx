@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCategories } from "../store/slices/categorie";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { FaCheckCircle, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { enrichProductListWithPromotions } from "../utils/promotionHelper";  // ⭐ AJOUTÉ
 
@@ -42,16 +42,18 @@ const Categories = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // États Carousel Catégories
   const [currentSlide, setCurrentSlide] = useState(0);
   const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide());
   const [isPaused, setIsPaused] = useState(false);
 
-  // États Sélections
-  const [selectedCategory, setSelectedCategory] = useState(null);
-
-  const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
+  const getCategoryImageUrl = (picture) => {
+    if (!picture) return "https://placehold.co/300x200?text=Catégorie";
+    if (picture.startsWith('http')) return picture;
+    return `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${picture}`;
+  };
 
   function getItemsPerSlide() {
     if (window.innerWidth < 640) return 2;
@@ -71,92 +73,122 @@ const Categories = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const filteredCategories = categories.filter(
-    (category) => category.parent_id === 0 && category.id !== 1
-  );
+  // 1. Déterminer la catégorie cible (URL > State)
+  const targetCategoryId = useMemo(() => {
+    const urlId = searchParams.get('categoryId');
+    if (urlId) return parseInt(urlId);
+    return location.state?.preselectedCategoryId || null;
+  }, [searchParams, location.state]);
 
-  const slides = filteredCategories.reduce((acc, cat, i) => {
-    const slideIndex = Math.floor(i / itemsPerSlide);
-    if (!acc[slideIndex]) acc[slideIndex] = [];
-    acc[slideIndex].push(cat);
-    return acc;
-  }, []);
+  // 2. Trouver la catégorie sélectionnée
+  const selectedCategory = useMemo(() => {
+    if (categories.length === 0) return null;
+    if (targetCategoryId) {
+      const found = categories.find(cat => cat.id === targetCategoryId);
+      if (found) return found;
+    }
+    // Fallback: Si on vient de la home Electronique (via state.universe_id par exemple) 
+    // ou si on détecte qu'on est dans une zone électronique
+    const topLevel = categories.filter(cat => cat.parent_id === 0 && cat.id !== 1);
+    return topLevel[0] || categories[0];
+  }, [categories, targetCategoryId]);
 
-  const subCategories = selectedCategory
-    ? categories.filter((cat) => cat.parent_id === selectedCategory.id)
-    : [];
+  // 3. Déterminer les catégories à afficher dans le carousel (Isolation Univers)
+  const carouselCategories = useMemo(() => {
+    if (categories.length === 0 || !selectedCategory) return [];
 
-  // 🔥 Fonctions de navigation du carousel
-  const goToPrevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
-    setIsPaused(true);
-    setTimeout(() => setIsPaused(false), 5000); // Resume après 5 secondes
-  };
+    // Détecter l'univers (1: Epicerie, 2: Electronique)
+    // Note: Dans votre DB, 144 est le root de l'électronique
+    const isElectronic = selectedCategory.universe_id === 2 ||
+      selectedCategory.id === 144 ||
+      selectedCategory.parent_id === 144 ||
+      (selectedCategory.parent_id !== 0 && categories.find(c => c.id === selectedCategory.parent_id)?.universe_id === 2);
 
-  const goToNextSlide = () => {
-    setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-    setIsPaused(true);
-    setTimeout(() => setIsPaused(false), 5000); // Resume après 5 secondes
-  };
-
-  // Gérer la catégorie présélectionnée depuis la page Home (une seule fois)
-  useEffect(() => {
-    if (filteredCategories.length > 0) {
-      // Vérifier si on vient de la page Home avec une catégorie présélectionnée
-      const preselectedId = location.state?.preselectedCategoryId;
-
-      if (preselectedId) {
-        const preselectedCategory = filteredCategories.find(
-          cat => cat.id === preselectedId
-        );
-        if (preselectedCategory) {
-          setSelectedCategory(preselectedCategory);
-
-          // Trouver le slide qui contient la catégorie présélectionnée
-          const slideIndex = slides.findIndex(slide =>
-            slide.some(cat => cat.id === preselectedId)
-          );
-          if (slideIndex !== -1) {
-            setCurrentSlide(slideIndex);
-          }
-
-          // Nettoyer le state de navigation pour éviter les conflits futurs
-          window.history.replaceState({}, document.title);
-          return;
-        }
+    if (isElectronic) {
+      // Pour l'électronique, on affiche toujours les catégories de niveau 2 (enfants de 144)
+      // sauf si on est déjà dans un niveau plus profond
+      if (selectedCategory.parent_id === 144 || selectedCategory.id === 144) {
+        return categories.filter(cat => cat.parent_id === 144);
       }
+      // Sinon, rester au niveau actuel
+      return categories.filter(cat => cat.parent_id === selectedCategory.parent_id);
+    }
 
-      // Sinon, sélectionner la première catégorie par défaut uniquement si aucune n'est sélectionnée
-      if (!selectedCategory) {
-        setSelectedCategory(filteredCategories[0]);
+    // Pour l'Épicerie (et autres)
+    const siblings = categories.filter(cat =>
+      cat.parent_id === selectedCategory.parent_id &&
+      cat.universe_id === selectedCategory.universe_id
+    );
+
+    // Nettoyage IDs techniques si nécessaire
+    return siblings.filter(cat => cat.id !== 1);
+  }, [categories, selectedCategory]);
+
+  // 4. Catégories affichées dans la grille inférieure (Enfants)
+  const subCategories = useMemo(() => {
+    if (!selectedCategory || categories.length === 0) return [];
+    return categories.filter((cat) =>
+      cat.id_parent === selectedCategory.id || cat.parent_id === selectedCategory.id
+    );
+  }, [categories, selectedCategory]);
+
+  // 5. Calculer les slides pour le carousel
+  const slides = useMemo(() => {
+    if (carouselCategories.length === 0) return [];
+    return carouselCategories.reduce((acc, cat, i) => {
+      const slideIndex = Math.floor(i / itemsPerSlide);
+      if (!acc[slideIndex]) acc[slideIndex] = [];
+      acc[slideIndex].push(cat);
+      return acc;
+    }, []);
+  }, [carouselCategories, itemsPerSlide]);
+
+  // 🔥 Navigation manuelle
+  const goToPrevSlide = (e) => {
+    if (e) e.stopPropagation();
+    setCurrentSlide((prev) => (prev <= 0 ? slides.length - 1 : prev - 1));
+    setIsPaused(true);
+    setTimeout(() => setIsPaused(false), 5000);
+  };
+
+  const goToNextSlide = (e) => {
+    if (e) e.stopPropagation();
+    setCurrentSlide((prev) => (prev >= slides.length - 1 ? 0 : prev + 1));
+    setIsPaused(true);
+    setTimeout(() => setIsPaused(false), 5000);
+  };
+
+  // 🔥 Synchroniser le slide initial seulement quand la sélection CHANGE
+  useEffect(() => {
+    if (selectedCategory && slides.length > 0) {
+      const slideIndex = slides.findIndex(slide =>
+        slide.some(cat => cat.id === selectedCategory.id)
+      );
+      if (slideIndex !== -1) {
+        // On ne saute vers le slide que si la catégorie n'est pas déjà visible
+        // Cela permet de naviguer manuellement sans être "ramené" en arrière
+        const isCurrentlyVisible = slides[currentSlide]?.some(cat => cat.id === selectedCategory.id);
+        if (!isCurrentlyVisible) {
+          setCurrentSlide(slideIndex);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredCategories.length]); // Ne dépend que de la longueur pour éviter les re-renders inutiles
+  }, [selectedCategory?.id, slides.length]);
+  // IMPORTANT: On ne dépend PAS de currentSlide ici pour éviter le blocage
 
-  // 🔥 AUTO-PLAY CAROUSEL - Défilement automatique
+  // 🔥 AUTO-PLAY CAROUSEL
   useEffect(() => {
     if (slides.length <= 1 || isPaused) return;
-
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-    }, 4000); // Change toutes les 4 secondes
-
+      setCurrentSlide((prev) => (prev >= slides.length - 1 ? 0 : prev + 1));
+    }, 4000);
     return () => clearInterval(interval);
   }, [slides.length, isPaused]);
 
-  // 🔥 FONCTION OPTIMISÉE : Gérer la sélection de catégorie
+  // 🔥 Gérer la sélection (Update URL)
   const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
-
-    // Trouver le slide qui contient la catégorie sélectionnée
-    const slideIndex = slides.findIndex(slide =>
-      slide.some(cat => cat.id === category.id)
-    );
-
-    if (slideIndex !== -1 && slideIndex !== currentSlide) {
-      setCurrentSlide(slideIndex);
-    }
+    setSearchParams({ categoryId: category.id.toString() }, { replace: true });
   };
 
   // 🔥 Navigation vers la page produits séparée
@@ -203,7 +235,7 @@ const Categories = () => {
                 📦 Catégories Principales
               </h2>
               <p className="text-gray-500 text-sm mt-1">
-                {filteredCategories.length} catégories disponibles
+                {carouselCategories.length} catégories disponibles
               </p>
             </div>
             <div className="text-sm text-gray-500">
@@ -233,8 +265,8 @@ const Categories = () => {
                 <div
                   key={index}
                   className={`flex justify-center gap-4 transition-all duration-700 ease-in-out ${index === currentSlide
-                      ? "opacity-100 transform translate-x-0"
-                      : "opacity-0 transform translate-x-full absolute"
+                    ? "opacity-100 transform translate-x-0"
+                    : "opacity-0 transform translate-x-full absolute"
                     }`}
                 >
                   {slide.map((category) => (
@@ -242,11 +274,11 @@ const Categories = () => {
                       key={category.id}
                       onClick={() => handleCategorySelect(category)}
                       className={`relative h-44 flex-1 rounded-2xl shadow-lg overflow-hidden cursor-pointer group transition-all duration-500 ease-out ${selectedCategory?.id === category.id
-                          ? "ring-4 ring-blue-500 scale-105 shadow-2xl"
-                          : "hover:scale-105 hover:shadow-xl"
+                        ? "ring-4 ring-blue-500 scale-105 shadow-2xl"
+                        : "hover:scale-105 hover:shadow-xl"
                         }`}
                       style={{
-                        backgroundImage: `url(${IMAGE_BASE_URL}/${category.picture})`,
+                        backgroundImage: `url(${getCategoryImageUrl(category.picture)})`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }}
@@ -297,8 +329,8 @@ const Categories = () => {
                   <button
                     key={idx}
                     className={`h-3 rounded-full transition-all duration-500 cursor-pointer ${currentSlide === idx
-                        ? "bg-blue-600 w-8"
-                        : "bg-gray-300 w-3 hover:bg-gray-400 hover:w-4"
+                      ? "bg-blue-600 w-8"
+                      : "bg-gray-300 w-3 hover:bg-gray-400 hover:w-4"
                       }`}
                     onClick={() => setCurrentSlide(idx)}
                   />
@@ -334,11 +366,11 @@ const Categories = () => {
                 >
                   <div className="relative h-40 overflow-hidden">
                     <img
-                      src={`${IMAGE_BASE_URL}/${subCat.picture}`}
+                      src={getCategoryImageUrl(subCat.picture)}
                       alt={subCat.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/300x200?text=Image";
+                        e.target.src = "https://placehold.co/300x200?text=Image";
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>

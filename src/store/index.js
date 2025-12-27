@@ -20,6 +20,7 @@ import CodePromoReducer from './slices/CodePromo';  // ✅ NOUVEAU - Codes promo
 import wishlistReducer from './slices/wishlist';  // ✅ NOUVEAU - Wishlist/Favoris
 import deliveryReducer from './slices/delivery';  // ✅ NOUVEAU - Delivery fee calculation
 import storesReducer from './slices/stores';  // ✅ NOUVEAU - Stores/Relay points
+import complaintsReducer from './slices/complaints';  // ✅ NOUVEAU - Réclamations
 
 
 // Import du middleware d'authentification
@@ -47,6 +48,7 @@ const store = configureStore({
         wishlist: wishlistReducer,  // ✅ NOUVEAU - Wishlist/Favoris
         delivery: deliveryReducer,  // ✅ NOUVEAU - Delivery fee calculation
         stores: storesReducer,  // ✅ NOUVEAU - Stores/Relay points
+        complaints: complaintsReducer,  // ✅ NOUVEAU - Réclamations
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

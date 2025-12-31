@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchCategories } from "../store/slices/categorie";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { FaCheckCircle, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { enrichProductListWithPromotions } from "../utils/promotionHelper";  // ⭐ AJOUTÉ
+import { enrichProductListWithPromotions } from "../utils/promotionHelper";
+import { getImageUrl, handleImageError } from "../utils/imageHelper";  // ⭐ AJOUTÉ
 
 /**
  * Categories Component - Carousel Automatique
@@ -49,11 +50,8 @@ const Categories = () => {
   const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide());
   const [isPaused, setIsPaused] = useState(false);
 
-  const getCategoryImageUrl = (picture) => {
-    if (!picture) return "https://placehold.co/300x200?text=Catégorie";
-    if (picture.startsWith('http')) return picture;
-    return `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${picture}`;
-  };
+  // Image URL Helper is now centralized
+  const getCategoryImageUrl = (cat) => getImageUrl(cat, 'category');
 
   function getItemsPerSlide() {
     if (window.innerWidth < 640) return 2;
@@ -278,7 +276,7 @@ const Categories = () => {
                         : "hover:scale-105 hover:shadow-xl"
                         }`}
                       style={{
-                        backgroundImage: `url(${getCategoryImageUrl(category.picture)})`,
+                        backgroundImage: `url(${getCategoryImageUrl(category)})`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }}
@@ -366,12 +364,10 @@ const Categories = () => {
                 >
                   <div className="relative h-40 overflow-hidden">
                     <img
-                      src={getCategoryImageUrl(subCat.picture)}
+                      src={getCategoryImageUrl(subCat)}
                       alt={subCat.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      onError={(e) => {
-                        e.target.src = "https://placehold.co/300x200?text=Image";
-                      }}
+                      onError={(e) => handleImageError(e, 'category')}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
 

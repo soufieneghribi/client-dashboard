@@ -9,6 +9,7 @@ import FeaturedRecipes from "../components/FeaturedRecipes";
 import Banners from "../components/Banners";
 import Popular from "../components/Popular";
 import { Row, Col } from "react-bootstrap";
+import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
 // 🔹 Images
 import mydealsImg from "../assets/mydealsImg.png";
@@ -82,11 +83,8 @@ const Home = () => {
     return 5;
   }
 
-  const getCategoryImageUrl = (picture) => {
-    if (!picture) return "https://via.placeholder.com/300x200?text=Category";
-    if (picture.startsWith('http')) return picture;
-    return `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${picture}`;
-  };
+  // Image URL Helper is now centralized
+  const getCategoryImageUrl = (cat) => getImageUrl(cat, 'category');
 
   const filteredCategories = categories.filter((category) => {
     if (selectedUniverse === 2) return category.parent_id === 144;
@@ -267,7 +265,7 @@ const Home = () => {
                         key={category.id}
                         className="relative h-36 sm:h-40 lg:h-44 flex-1 min-w-0 rounded-xl shadow-md overflow-hidden cursor-pointer group transform transition-all duration-300 hover:scale-105 hover:shadow-lg"
                         style={{
-                          backgroundImage: `url(${getCategoryImageUrl(category.picture)})`,
+                          backgroundImage: `url(${getCategoryImageUrl(category)})`,
                           backgroundSize: "cover",
                           backgroundPosition: "center",
                         }}

@@ -21,6 +21,7 @@ import wishlistReducer from './slices/wishlist';  // ✅ NOUVEAU - Wishlist/Favo
 import deliveryReducer from './slices/delivery';  // ✅ NOUVEAU - Delivery fee calculation
 import storesReducer from './slices/stores';  // ✅ NOUVEAU - Stores/Relay points
 import complaintsReducer from './slices/complaints';  // ✅ NOUVEAU - Réclamations
+import creditReducer from './slices/credit';  // ✅ NOUVEAU - Crédit
 
 
 // Import du middleware d'authentification
@@ -49,6 +50,7 @@ const store = configureStore({
         delivery: deliveryReducer,  // ✅ NOUVEAU - Delivery fee calculation
         stores: storesReducer,  // ✅ NOUVEAU - Stores/Relay points
         complaints: complaintsReducer,  // ✅ NOUVEAU - Réclamations
+        credit: creditReducer,  // ✅ NOUVEAU - Crédit
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

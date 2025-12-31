@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchCategories } from '../store/slices/categorie';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaSearch } from 'react-icons/fa';
+import { getImageUrl, handleImageError } from '../utils/imageHelper';
 
 const AllCategories = () => {
     const dispatch = useDispatch();
@@ -18,11 +19,7 @@ const AllCategories = () => {
         dispatch(fetchCategories());
     }, [dispatch]);
 
-    const getCategoryImageUrl = (picture) => {
-        if (!picture) return "https://placehold.co/300x200?text=Catégorie";
-        if (picture.startsWith('http')) return picture;
-        return `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${picture}`;
-    };
+    const getCategoryImageUrl = (cat) => getImageUrl(cat, 'category');
 
     // Titre selon l'univers
     const getUniverseTitle = () => {
@@ -140,12 +137,10 @@ const AllCategories = () => {
                                 {/* Image Section */}
                                 <div className="relative h-32 sm:h-40 bg-gray-100">
                                     <img
-                                        src={getCategoryImageUrl(category.picture)}
+                                        src={getCategoryImageUrl(category)}
                                         alt={category.title}
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                        onError={(e) => {
-                                            e.target.src = "https://placehold.co/300x200?text=Image";
-                                        }}
+                                        onError={(e) => handleImageError(e, 'category')}
                                     />
                                     {/* Number Badge */}
                                     <div className="absolute top-2 right-2 w-6 h-6 bg-white rounded-full shadow-md flex items-center justify-center">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
+import { getImageUrl, handleImageError } from "../utils/imageHelper";
 import { fetchCategories } from '../store/slices/categorie';
 
 const SubCategory = () => {
@@ -23,7 +24,7 @@ const SubCategory = () => {
   useEffect(() => {
     if (categories && categories.length > 0 && id) {
       const categoryId = parseInt(id);
-      
+
       // Filtrer les sous-catégories
       const filtered = categories.filter((cat) => cat.parent_id === categoryId);
       setSubCategory(filtered);
@@ -41,6 +42,9 @@ const SubCategory = () => {
       state: { subId, subTitle: title },
     });
   };
+
+  // Image URL Helper is now centralized
+  const getSubCatImageUrl = (s) => getImageUrl(s, 'category');
 
   if (loading) {
     return (
@@ -70,12 +74,10 @@ const SubCategory = () => {
               onClick={() => handleSubCategoryClick(subcategory.id, subcategory.title)}
             >
               <img
-                src={`https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${subcategory.picture}`}
+                src={getSubCatImageUrl(subcategory)}
                 alt={subcategory.title}
                 className="w-full h-32 object-cover rounded-t-lg"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
+                onError={handleImageError}
               />
               <div className="p-4 text-center">
                 <h3 className="text-lg font-semibold">{subcategory.title}</h3>

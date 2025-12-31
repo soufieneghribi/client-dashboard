@@ -1,29 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { createComplaint, clearError } from '../store/slices/complaints';
+import { createComplaint, fetchClaimTypes, clearError } from '../store/slices/complaints';
 import { FaArrowLeft, FaPaperPlane, FaUpload, FaTimes } from 'react-icons/fa';
 
 const ReclamationForm = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, error } = useSelector((state) => state.complaints);
+    const { loading, error, claimTypes, typesLoading } = useSelector((state) => state.complaints);
 
     const [formData, setFormData] = useState({
         subject: '',
-        category: '',
+        claim_type_id: '',
         description: '',
-        attachments: [],
+        priority: 'medium',
+        attachment: null,
     });
 
     const [errors, setErrors] = useState({});
 
-    const categories = [
-        { value: 'product', label: 'Produit', icon: '📦', description: 'Problème avec un produit' },
-        { value: 'delivery', label: 'Livraison', icon: '🚚', description: 'Problème de livraison' },
-        { value: 'service', label: 'Service client', icon: '💬', description: 'Question ou problème avec le service' },
-        { value: 'other', label: 'Autre', icon: '📋', description: 'Autre type de réclamation' },
-    ];
+    // Fetch claim types on mount
+    useEffect(() => {
+        dispatch(fetchClaimTypes());
+    }, [dispatch]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -35,18 +34,23 @@ const ReclamationForm = () => {
     };
 
     const handleFileChange = (e) => {
-        const files = Array.from(e.target.files);
-        setFormData(prev => ({
-            ...prev,
-            attachments: [...prev.attachments, ...files],
-        }));
+        const file = e.target.files[0];
+        if (file) {
+            // Check file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                setErrors(prev => ({ ...prev, attachment: 'Le fichier ne doit pas dépasser 5MB' }));
+                return;
+            }
+            setFormData(prev => ({ ...prev, attachment: file }));
+            setErrors(prev => ({ ...prev, attachment: '' }));
+        }
     };
 
-    const removeFile = (index) => {
-        setFormData(prev => ({
-            ...prev,
-            attachments: prev.attachments.filter((_, i) => i !== index),
-        }));
+    const removeFile = () => {
+        setFormData(prev => ({ ...prev, attachment: null }));
+        // Reset file input
+        const fileInput = document.getElementById('file-upload');
+        if (fileInput) fileInput.value = '';
     };
 
     const validate = () => {
@@ -58,8 +62,8 @@ const ReclamationForm = () => {
             newErrors.subject = 'Le sujet doit contenir au moins 5 caractères';
         }
 
-        if (!formData.category) {
-            newErrors.category = 'Veuillez sélectionner une catégorie';
+        if (!formData.claim_type_id) {
+            newErrors.claim_type_id = 'Veuillez sélectionner un type de réclamation';
         }
 
         if (!formData.description.trim()) {
@@ -80,20 +84,21 @@ const ReclamationForm = () => {
         }
 
         try {
-            // For now, we'll submit without file upload
-            // In production, you'd upload files first and get URLs
-            const complaintData = {
-                subject: formData.subject,
-                category: formData.category,
-                description: formData.description,
-                status: 'pending',
-            };
-
-            await dispatch(createComplaint(complaintData)).unwrap();
+            await dispatch(createComplaint(formData)).unwrap();
             navigate('/reclamations');
         } catch (err) {
             console.error('Error creating complaint:', err);
         }
+    };
+
+    const getClaimTypeIcon = (name) => {
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes('produit') || lowerName.includes('product')) return '📦';
+        if (lowerName.includes('livraison') || lowerName.includes('delivery')) return '🚚';
+        if (lowerName.includes('service') || lowerName.includes('support')) return '💬';
+        if (lowerName.includes('paiement') || lowerName.includes('payment')) return '💳';
+        if (lowerName.includes('compte') || lowerName.includes('account')) return '👤';
+        return '📋';
     };
 
     return (
@@ -152,40 +157,71 @@ const ReclamationForm = () => {
                         )}
                     </div>
 
-                    {/* Category */}
+                    {/* Claim Type */}
                     <div className="mb-6">
                         <label className="block text-gray-700 font-semibold mb-3">
-                            Catégorie *
+                            Type de réclamation *
                         </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {categories.map((cat) => (
-                                <button
-                                    key={cat.value}
-                                    type="button"
-                                    onClick={() => {
-                                        setFormData(prev => ({ ...prev, category: cat.value }));
-                                        if (errors.category) {
-                                            setErrors(prev => ({ ...prev, category: '' }));
-                                        }
-                                    }}
-                                    className={`p-4 rounded-xl border-2 transition-all text-left ${formData.category === cat.value
+                        {typesLoading ? (
+                            <div className="text-center py-4">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                                <p className="text-gray-600 mt-2">Chargement des types...</p>
+                            </div>
+                        ) : claimTypes.length === 0 ? (
+                            <div className="text-center py-4 text-gray-500">
+                                Aucun type de réclamation disponible
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {claimTypes.map((type) => (
+                                    <button
+                                        key={type.id}
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData(prev => ({ ...prev, claim_type_id: type.id }));
+                                            if (errors.claim_type_id) {
+                                                setErrors(prev => ({ ...prev, claim_type_id: '' }));
+                                            }
+                                        }}
+                                        className={`p-4 rounded-xl border-2 transition-all text-left ${formData.claim_type_id === type.id
                                             ? 'border-blue-500 bg-blue-50'
                                             : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <span className="text-2xl">{cat.icon}</span>
-                                        <div>
-                                            <h3 className="font-semibold text-gray-800">{cat.label}</h3>
-                                            <p className="text-sm text-gray-600">{cat.description}</p>
+                                            }`}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <span className="text-2xl">{getClaimTypeIcon(type.name)}</span>
+                                            <div>
+                                                <h3 className="font-semibold text-gray-800">{type.name}</h3>
+                                                {type.description && (
+                                                    <p className="text-sm text-gray-600">{type.description}</p>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                        {errors.category && (
-                            <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+                                    </button>
+                                ))}
+                            </div>
                         )}
+                        {errors.claim_type_id && (
+                            <p className="text-red-500 text-sm mt-1">{errors.claim_type_id}</p>
+                        )}
+                    </div>
+
+                    {/* Priority */}
+                    <div className="mb-6">
+                        <label className="block text-gray-700 font-semibold mb-2">
+                            Priorité
+                        </label>
+                        <select
+                            name="priority"
+                            value={formData.priority}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                        >
+                            <option value="low">Basse</option>
+                            <option value="medium">Moyenne</option>
+                            <option value="high">Haute</option>
+                            <option value="critical">Critique</option>
+                        </select>
                     </div>
 
                     {/* Description */}
@@ -219,14 +255,13 @@ const ReclamationForm = () => {
                     {/* File Upload */}
                     <div className="mb-8">
                         <label className="block text-gray-700 font-semibold mb-2">
-                            Pièces jointes (optionnel)
+                            Pièce jointe (optionnel)
                         </label>
                         <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 transition-all">
                             <input
                                 type="file"
                                 id="file-upload"
-                                multiple
-                                accept="image/*,.pdf"
+                                accept="image/*,.pdf,.doc,.docx"
                                 onChange={handleFileChange}
                                 className="hidden"
                             />
@@ -236,39 +271,37 @@ const ReclamationForm = () => {
                             >
                                 <FaUpload className="text-4xl text-gray-400 mb-2" />
                                 <p className="text-gray-600 font-medium">
-                                    Cliquez pour ajouter des fichiers
+                                    Cliquez pour ajouter un fichier
                                 </p>
                                 <p className="text-gray-500 text-sm mt-1">
-                                    Images ou PDF (max 5MB par fichier)
+                                    Images, PDF ou documents (max 5MB)
                                 </p>
                             </label>
                         </div>
 
-                        {/* File List */}
-                        {formData.attachments.length > 0 && (
-                            <div className="mt-4 space-y-2">
-                                {formData.attachments.map((file, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center justify-between bg-gray-50 p-3 rounded-lg"
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-blue-600">📎</span>
-                                            <span className="text-gray-700 text-sm">{file.name}</span>
-                                            <span className="text-gray-500 text-xs">
-                                                ({(file.size / 1024).toFixed(1)} KB)
-                                            </span>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeFile(index)}
-                                            className="text-red-500 hover:text-red-700 transition-colors"
-                                        >
-                                            <FaTimes />
-                                        </button>
+                        {/* File Display */}
+                        {formData.attachment && (
+                            <div className="mt-4">
+                                <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-blue-600">📎</span>
+                                        <span className="text-gray-700 text-sm">{formData.attachment.name}</span>
+                                        <span className="text-gray-500 text-xs">
+                                            ({(formData.attachment.size / 1024).toFixed(1)} KB)
+                                        </span>
                                     </div>
-                                ))}
+                                    <button
+                                        type="button"
+                                        onClick={removeFile}
+                                        className="text-red-500 hover:text-red-700 transition-colors"
+                                    >
+                                        <FaTimes />
+                                    </button>
+                                </div>
                             </div>
+                        )}
+                        {errors.attachment && (
+                            <p className="text-red-500 text-sm mt-1">{errors.attachment}</p>
                         )}
                     </div>
 

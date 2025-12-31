@@ -48,6 +48,11 @@ import Reclamations from "./pages/Reclamations";
 import ReclamationForm from "./pages/ReclamationForm";
 import ReclamationDetails from "./pages/ReclamationDetails";
 
+// ⬅️ NOUVEAUX IMPORTS - Crédit
+import CreditSimulation from "./pages/Credit/CreditSimulation";
+import CreditDossier from "./pages/Credit/CreditDossier";
+import MesDossiers from "./pages/Credit/MesDossiers";
+
 // ⬅️ NOUVEAU IMPORT - Toutes les catégories
 import AllCategories from "./pages/AllCategories";
 
@@ -199,6 +204,24 @@ const router = createBrowserRouter(
       <Route
         path="/reclamations/:id"
         element={<ProtectedRoute><ReclamationDetails /></ProtectedRoute>}
+      />
+
+      {/* ⬅️ NOUVELLES ROUTES - CRÉDIT (Protégées) */}
+      <Route
+        path="/credit"
+        element={<ProtectedRoute><MesDossiers /></ProtectedRoute>}
+      />
+      <Route
+        path="/credit/simulation"
+        element={<ProtectedRoute><CreditSimulation /></ProtectedRoute>}
+      />
+      <Route
+        path="/credit/dossier"
+        element={<ProtectedRoute><CreditDossier /></ProtectedRoute>}
+      />
+      <Route
+        path="/credit/mes-dossiers"
+        element={<ProtectedRoute><MesDossiers /></ProtectedRoute>}
       />
 
       {/* ==================== 404 FALLBACK ==================== */}

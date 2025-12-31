@@ -15,9 +15,8 @@ const Reclamations = () => {
     const { user } = useSelector((state) => state.auth);
 
     useEffect(() => {
-        const clientId = user?.ID_client || user?.id;
-        dispatch(fetchComplaints(clientId));
-    }, [dispatch, user]);
+        dispatch(fetchComplaints());
+    }, [dispatch]);
 
     useEffect(() => {
         if (success) {

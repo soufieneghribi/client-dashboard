@@ -21,6 +21,7 @@ import { FaTag, FaStar, FaShoppingCart, FaHeart } from "react-icons/fa";
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
 import WishlistButton from "./WishlistButton";
+import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
 const Popular = () => {
   const dispatch = useDispatch();
@@ -36,7 +37,8 @@ const Popular = () => {
     userProfile?.id ||
     localStorage.getItem("client_id");
 
-  const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
+  // Image URL Helper is now centralized
+  const getProductImageUrl = (p) => getImageUrl(p, 'product');
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide());
@@ -68,15 +70,6 @@ const Popular = () => {
     if (window.innerWidth < 1024) return 3;
     return 6;
   }
-
-  const getImageUrl = (product) => {
-    const imageUrl = product.img || product.picture;
-    if (!imageUrl) return null;
-    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-      return imageUrl;
-    }
-    return `${IMAGE_BASE_URL}/${imageUrl}`;
-  };
 
   const handleImageError = (e) => {
     e.target.style.display = "none";
@@ -233,7 +226,7 @@ const Popular = () => {
                         {imageUrl && (
                           <Card.Img
                             variant="top"
-                            src={imageUrl}
+                            src={getProductImageUrl(product)}
                             alt={product.name}
                             style={{
                               height: "150px",

@@ -203,14 +203,26 @@ export const API_ENDPOINTS = {
     VALIDATE: `${API_BASE_URL}/customer/loyalty-card/validate`,
   },
 
-  // ==================== COMPLAINTS / RÉCLAMATIONS ====================
-  COMPLAINTS: {
-    ALL: `${API_BASE_URL}/complaints`,
-    BY_ID: (id) => `${API_BASE_URL}/complaints/${id}`,
-    CREATE: `${API_BASE_URL}/complaints`,
-    UPDATE: (id) => `${API_BASE_URL}/complaints/${id}`,
-    DELETE: (id) => `${API_BASE_URL}/complaints/${id}`,
-    BY_CLIENT: (clientId) => `${API_BASE_URL}/complaints/client/${clientId}`,
+  // ==================== CLAIMS / RÉCLAMATIONS ====================
+  CLAIMS: {
+    ALL: `${API_BASE_URL}/claims`,
+    TYPES: `${API_BASE_URL}/claims/types`,
+    BY_ID: (id) => `${API_BASE_URL}/claims/${id}`,
+    CREATE: `${API_BASE_URL}/claims`,
+    UPDATE: (id) => `${API_BASE_URL}/claims/${id}`,
+    DELETE: (id) => `${API_BASE_URL}/claims/${id}`,
+    MESSAGES: (id) => `${API_BASE_URL}/claims/${id}/messages`,
+    FEEDBACK: (id) => `${API_BASE_URL}/claims/${id}/feedback`,
+  },
+
+  // ==================== CREDIT ====================
+  CREDIT: {
+    RULES: `${API_BASE_URL}/credit/rules`,
+    SIMULATE: `${API_BASE_URL}/credit/simulate`,
+    ELIGIBILITY: `${API_BASE_URL}/credit/eligibility`,
+    CREATE_DOSSIER: `${API_BASE_URL}/credit/dossier`,
+    LIST_DOSSIERS: `${API_BASE_URL}/credit/dossiers`,
+    UPLOAD_DOCUMENT: `${API_BASE_URL}/credit/upload`,
   },
 };
 

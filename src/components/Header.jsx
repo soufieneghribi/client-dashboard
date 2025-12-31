@@ -6,9 +6,10 @@ import { SearchProduct as searchProduct, clearSearch } from "../store/slices/sea
 import { fetchWishlist, selectWishlistCount } from "../store/slices/wishlist";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Company_Logo from "../assets/images/logo_0.png";
-import { Navbar, Nav, Container, Form, Button, Dropdown, Badge, Offcanvas, InputGroup } from 'react-bootstrap';
+import { Navbar, Nav, Container, Form, Button, Dropdown, Badge, Offcanvas, InputGroup, NavDropdown } from 'react-bootstrap';
 import debounce from 'lodash.debounce';
 import Cookies from "js-cookie";
+import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -23,32 +24,13 @@ const Header = () => {
   const { searchResults, loading: searchLoading, error: searchError } = useSelector((state) => state.search);
   const wishlistCount = useSelector(selectWishlistCount);
 
-  // URL de base pour les images
-  const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
-
-  // Fonction pour obtenir l'URL de l'image
-  const getImageUrl = (product) => {
-    let imageUrl = product.img || product.image_url || product.image || product.thumbnail || product.photo;
-
-    if (!imageUrl && product.images && product.images.length > 0) {
-      imageUrl = product.images[0];
-    }
-
-    if (!imageUrl) return null;
-
-    // Si l'URL est déjà complète, la retourner telle quelle
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl;
-    }
-
-    // Sinon, ajouter le préfixe du serveur
-    return `${IMAGE_BASE_URL}/${imageUrl}`;
-  };
+  // Image URL Helper is now centralized
+  const getProductImageUrl = (p) => getImageUrl(p, 'product');
 
   // Composant pour l'image du produit avec fallback
   const ProductImage = ({ product }) => {
     const [imageError, setImageError] = useState(false);
-    const imageUrl = getImageUrl(product);
+    const imageUrl = getProductImageUrl(product);
 
     if (!imageUrl || imageError) {
       return (
@@ -165,6 +147,7 @@ const Header = () => {
     { path: "/recipes", label: "Recettes", icon: "fa-utensils" },
     { path: "/Catalogue", label: "Catalogue", icon: "fa-book" },
     { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" },
+    { path: "/credit/simulation", label: "Crédit", icon: "fa-credit-card" },
     { path: "/contact", label: "Contact", icon: "fa-envelope" },
     { path: "/reclamations", label: "Réclamations", icon: "fa-exclamation-circle" }
 
@@ -217,12 +200,31 @@ const Header = () => {
             <img src={Company_Logo} height="24" width="70" alt="Logo" />
           </Navbar.Brand>
 
-          <Nav className="d-none d-lg-flex me-auto">
-            {navLinks.map((link) => (
-              <Nav.Link key={link.path} as={Link} to={link.path} className="fw-medium px-3 text-dark">
-                {link.label}
-              </Nav.Link>
-            ))}
+          <Nav className="d-none d-lg-flex me-auto align-items-center">
+            {navLinks.map((link) => {
+              if (link.label === "Crédit") {
+                return (
+                  <NavDropdown
+                    title="Crédit"
+                    id="credit-dropdown"
+                    key="credit-dropdown"
+                    className="fw-medium px-2"
+                  >
+                    <NavDropdown.Item as={Link} to="/credit/simulation">
+                      Simulation
+                    </NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/credit">
+                      Voir mes crédits
+                    </NavDropdown.Item>
+                  </NavDropdown>
+                );
+              }
+              return (
+                <Nav.Link key={link.path} as={Link} to={link.path} className="fw-medium px-3 text-dark">
+                  {link.label}
+                </Nav.Link>
+              );
+            })}
           </Nav>
 
           <div className="d-none d-lg-block flex-grow-1 mx-4 position-relative" style={{ maxWidth: '500px' }} ref={searchRef}>
@@ -361,6 +363,7 @@ const Header = () => {
                   <Dropdown.Item as={Link} to="/profile"><i className="fas fa-user me-2"></i> Mon Profil</Dropdown.Item>
                   <Dropdown.Item as={Link} to="/settings"><i className="fas fa-cog me-2"></i> Paramètres</Dropdown.Item>
                   <Dropdown.Item as={Link} to="/Mes-Commandes"><i className="fas fa-shopping-bag me-2"></i> Mes Commandes</Dropdown.Item>
+                  <Dropdown.Item as={Link} to="/credit"><i className="fas fa-credit-card me-2"></i> Voir mes crédits</Dropdown.Item>
                   <Dropdown.Item as={Link} to="/reclamations"><i className="fas fa-exclamation-circle me-2"></i> Réclamations</Dropdown.Item>
                   <Dropdown.Divider />
                   <Dropdown.Item onClick={handleLogout} className="text-danger">
@@ -431,12 +434,32 @@ const Header = () => {
           </Form>
 
           <Nav className="flex-column mb-4">
-            {navLinks.map((link) => (
-              <Nav.Link key={link.path} as={Link} to={link.path} className="py-3 d-flex align-items-center text-dark" onClick={() => setShowMobileMenu(false)}>
-                <i className={`fas ${link.icon} me-3 text-primary`} style={{ width: '20px' }}></i>
-                {link.label}
-              </Nav.Link>
-            ))}
+            {navLinks.map((link) => {
+              if (link.label === "Crédit") {
+                return (
+                  <div key="credit-mobile-group">
+                    <div className="py-3 d-flex align-items-center text-dark fw-bold px-3">
+                      <i className={`fas ${link.icon} me-3 text-primary`} style={{ width: '20px' }}></i>
+                      {link.label}
+                    </div>
+                    <div className="ps-5">
+                      <Nav.Link as={Link} to="/credit/simulation" className="py-2 text-dark" onClick={() => setShowMobileMenu(false)}>
+                        Simulation
+                      </Nav.Link>
+                      <Nav.Link as={Link} to="/credit" className="py-2 text-dark" onClick={() => setShowMobileMenu(false)}>
+                        Voir mes crédits
+                      </Nav.Link>
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <Nav.Link key={link.path} as={Link} to={link.path} className="py-3 d-flex align-items-center text-dark" onClick={() => setShowMobileMenu(false)}>
+                  <i className={`fas ${link.icon} me-3 text-primary`} style={{ width: '20px' }}></i>
+                  {link.label}
+                </Nav.Link>
+              );
+            })}
           </Nav>
 
           <hr />
@@ -452,6 +475,9 @@ const Header = () => {
                 </Nav.Link>
                 <Nav.Link as={Link} to="/Mes-Commandes" className="py-2 text-dark" onClick={() => setShowMobileMenu(false)}>
                   <i className="fas fa-shopping-bag me-3 text-primary" style={{ width: '20px' }}></i> Mes Commandes
+                </Nav.Link>
+                <Nav.Link as={Link} to="/credit" className="py-2 text-dark" onClick={() => setShowMobileMenu(false)}>
+                  <i className="fas fa-credit-card me-3 text-primary" style={{ width: '20px' }}></i> Voir mes crédits
                 </Nav.Link>
                 <Nav.Link as={Link} to="/reclamations" className="py-2 text-dark" onClick={() => setShowMobileMenu(false)}>
                   <i className="fas fa-exclamation-circle me-3 text-primary" style={{ width: '20px' }}></i> Réclamations

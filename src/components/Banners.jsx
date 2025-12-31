@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchBanners } from "../store/slices/banners";
+import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
 const Banners = () => {
   const { banners = [], loading, error } = useSelector((state) => state.banners);
@@ -14,21 +15,8 @@ const Banners = () => {
   // Filter out type 4 banners which are low quality/mobile only
   const visibleBanners = banners.filter(b => b.type !== 4 && b.type_id !== 4);
 
-  // Fonction pour obtenir l'URL de l'image selon le type de bannière
-  const getBannerImageUrl = (banner) => {
-    // Si l'image_path existe et commence par http, c'est une URL complète
-    if (banner.image_path && banner.image_path.startsWith('http')) {
-      return banner.image_path;
-    }
-
-    // Sinon, construire l'URL avec le base URL
-    if (banner.image_path) {
-      return `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${banner.image_path}`;
-    }
-
-    // Fallback: utiliser une image par défaut
-    return 'https://via.placeholder.com/1200x400?text=Banner';
-  };
+  // Image URL Helper is now centralized
+  const getBannerImageUrl = (b) => getImageUrl(b, 'banner');
 
   // Aller à la slide précédente
   const prevSlide = () => {

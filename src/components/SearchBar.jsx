@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl, handleImageError } from "../utils/imageHelper";
 import { SearchProduct } from "../store/slices/search";
 import "../styles/SearchBar.css";
 
@@ -9,10 +10,10 @@ const SearchBar = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const searchRef = useRef(null);
-  
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  
+
   const { searchResults, loading } = useSelector((state) => state.search);
 
   // Debounce search query
@@ -70,11 +71,8 @@ const SearchBar = () => {
     }
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return "https://via.placeholder.com/50";
-    if (imagePath.startsWith("http")) return imagePath;
-    return `https://tn360-lqd25ixbvq-ew.a.run.app/uploads/${imagePath}`;
-  };
+  // Image URL Helper is now centralized
+  const getProductImageUrl = (p) => getImageUrl(p, 'product');
 
   return (
     <div className="search-bar-container" ref={searchRef}>
@@ -95,7 +93,7 @@ const SearchBar = () => {
               <path d="m21 21-4.35-4.35"></path>
             </svg>
           </div>
-          
+
           <input
             type="text"
             className="search-input"
@@ -104,7 +102,7 @@ const SearchBar = () => {
             onChange={handleInputChange}
             onFocus={() => query.trim() && setShowSuggestions(true)}
           />
-          
+
           {query && (
             <button
               type="button"
@@ -145,12 +143,12 @@ const SearchBar = () => {
                     className="suggestion-item"
                     onClick={() => handleProductClick(product)}
                   >
-                    <div className="suggestion-image">
+                    <div className="search-image">
                       <img
-                        src={getImageUrl(product.img)}
+                        src={getProductImageUrl(product)}
                         alt={product.name}
                         onError={(e) => {
-                          e.target.src = "https://via.placeholder.com/50";
+                          e.target.src = "https://placehold.co/50x50?text=";
                         }}
                       />
                     </div>

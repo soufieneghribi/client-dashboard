@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { 
-  fetchRecipeDetails, 
-  selectCurrentRecipe, 
-  selectRecipesLoading 
+import {
+  fetchRecipeDetails,
+  selectCurrentRecipe,
+  selectRecipesLoading
 } from "../store/slices/recipes";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
+import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
 /**
  * RecipeDetails Component - Bootstrap Responsive Version
@@ -21,20 +22,21 @@ const RecipeDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
+
   // ==================== Redux State ====================
   const recipe = useSelector(selectCurrentRecipe);
   const loading = useSelector(selectRecipesLoading);
-  
+
   // ==================== Local State ====================
   const [servings, setServings] = useState(6);
   const [isAdding, setIsAdding] = useState(false);
 
   // ==================== CONFIGURATION ====================
-  const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
+  // Image URL Helper is now centralized
+  const getRecipeImageUrl = (r) => getImageUrl(r, 'product');
 
   // ==================== FIXED UNIT CONVERSION SYSTEM ====================
-  
+
   /**
    * Calculate articles needed based on recipe quantity and unit
    * FIXED VERSION: Proper unit conversion and quantity calculation
@@ -42,18 +44,18 @@ const RecipeDetails = () => {
   const calculateArticleQuantityNeeded = useCallback((adjustedRecipeQuantity, unit, article) => {
     // Normalize unit to lowercase
     const normalizedUnit = (unit || '').toLowerCase().trim();
-    
+
     // ✅ FIXED: Use correct field name from API - quantity_per_unit
     if (article.quantity_per_unit && parseFloat(article.quantity_per_unit) > 0) {
       const quantityPerUnit = parseFloat(article.quantity_per_unit);
-      
+
       // Calculate how many articles are needed
       const articlesNeeded = adjustedRecipeQuantity / quantityPerUnit;
       const result = Math.ceil(articlesNeeded);
-      
+
       return result;
     }
-    
+
     // ✅ FIXED: Handle unit conversions properly
     switch (normalizedUnit) {
       case 'l':
@@ -61,13 +63,13 @@ const RecipeDetails = () => {
       case 'litres':
         // Convert liters to ml
         return Math.ceil(adjustedRecipeQuantity * 1000);
-        
+
       case 'kg':
       case 'kilogramme':
       case 'kilogrammes':
         // Convert kg to g
         return Math.ceil(adjustedRecipeQuantity * 1000);
-        
+
       case 'ml':
       case 'millilitre':
       case 'millilitres':
@@ -76,7 +78,7 @@ const RecipeDetails = () => {
       case 'grammes':
         // Direct quantity (already in base unit)
         return Math.ceil(adjustedRecipeQuantity);
-        
+
       case 'piece':
       case 'pièce':
       case 'pièces':
@@ -86,7 +88,7 @@ const RecipeDetails = () => {
       case 'units':
         // Already in units
         return Math.ceil(adjustedRecipeQuantity);
-        
+
       default:
         // Default: round up the quantity
         return Math.ceil(adjustedRecipeQuantity);
@@ -105,23 +107,11 @@ const RecipeDetails = () => {
   }, []);
 
   // ==================== IMAGE FUNCTIONS ====================
-  
-  const getImageUrl = (imageUrl) => {
-    if (!imageUrl) return null;
-    
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl;
-    }
-    
-    return `${IMAGE_BASE_URL}/${imageUrl}`;
-  };
 
-  const handleImageError = (e) => {
-    e.target.style.display = 'none';
-  };
+  // handleImageError is now imported from imageHelper
 
   // ==================== Effects ====================
-  
+
   // ✅ FIXED: Scroll to top when component mounts or ID changes
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -141,18 +131,18 @@ const RecipeDetails = () => {
   }, [recipe]);
 
   // ==================== FIXED CALCULATION FUNCTIONS ====================
-  
+
   /**
    * Calculate adjusted recipe quantity based on selected servings
    */
   const getAdjustedRecipeQuantity = useCallback((article) => {
     const recipeServings = recipe?.recipe?.servings || recipe?.servings;
     if (!recipeServings) return 0;
-    
+
     const adjustmentFactor = servings / recipeServings;
     // ✅ USE pivot.quantity (recipe quantity)
     const originalQuantity = parseFloat(article.pivot?.quantity || article.quantity || 0);
-    
+
     return originalQuantity * adjustmentFactor;
   }, [recipe, servings]);
 
@@ -163,9 +153,9 @@ const RecipeDetails = () => {
     const adjustedRecipeQuantity = getAdjustedRecipeQuantity(article);
     // ✅ USE pivot.unit for recipe unit
     const unit = article.pivot?.unit || article.unit;
-    
+
     const result = calculateArticleQuantityNeeded(adjustedRecipeQuantity, unit, article);
-    
+
     return result;
   }, [getAdjustedRecipeQuantity, calculateArticleQuantityNeeded]);
 
@@ -175,18 +165,18 @@ const RecipeDetails = () => {
   const calculateTotalPrice = useMemo(() => {
     const articles = recipe?.recipe?.articles || recipe?.articles;
     if (!articles) return "0.00";
-    
+
     const total = articles.reduce((sum, article) => {
       const articlesNeeded = getArticlesNeeded(article);
       const price = parseFloat(article.price || 0);
       return sum + (articlesNeeded * price);
     }, 0);
-    
+
     return total.toFixed(2);
   }, [recipe, getArticlesNeeded]);
 
   // ==================== Handlers ====================
-  
+
   const addRecipeToCart = useCallback(() => {
     const articles = recipe?.recipe?.articles || recipe?.articles;
     if (!articles?.length) {
@@ -197,10 +187,10 @@ const RecipeDetails = () => {
     setIsAdding(true);
 
     try {
-      const cart = Cookies.get("cart") 
-        ? JSON.parse(Cookies.get("cart")) 
+      const cart = Cookies.get("cart")
+        ? JSON.parse(Cookies.get("cart"))
         : [];
-      
+
       let addedCount = 0;
 
       articles.forEach((article) => {
@@ -230,13 +220,13 @@ const RecipeDetails = () => {
         } else {
           cart.push(newItem);
         }
-        
+
         addedCount++;
       });
 
       Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
       toast.success(`${addedCount} ingrédient(s) ajouté(s) au panier !`);
-      
+
       setTimeout(() => {
         setIsAdding(false);
         navigate("/cart-shopping");
@@ -257,7 +247,7 @@ const RecipeDetails = () => {
   }, []);
 
   // ==================== Rendering States ====================
-  
+
   if (loading) {
     return (
       <div className="container-fluid min-vh-100 d-flex justify-content-center align-items-center">
@@ -277,7 +267,7 @@ const RecipeDetails = () => {
   }
 
   // ==================== Data Preparation ====================
-  const recipeImageUrl = getImageUrl(recipe.img || recipe.recipe?.img);
+  const recipeImageUrl = getRecipeImageUrl(recipe.recipe || recipe);
   const totalPrice = calculateTotalPrice;
   const recipeName = recipe.recipe?.name || recipe.name;
   const recipeDescription = recipe.recipe?.description || recipe.description;
@@ -293,7 +283,7 @@ const RecipeDetails = () => {
         <div className="row justify-content-center">
           <div className="col-12 col-xl-10">
             <div className="card shadow-lg border-0 rounded-3">
-              
+
               {/* Hero Image Section */}
               <div className="position-relative" style={{ height: '250px' }}>
                 {recipeImageUrl && (
@@ -305,7 +295,7 @@ const RecipeDetails = () => {
                     style={{ objectFit: 'cover' }}
                   />
                 )}
-                
+
                 <button
                   onClick={() => navigate(-1)}
                   className="btn btn-light rounded-circle position-absolute top-0 start-0 m-3 shadow"
@@ -335,11 +325,11 @@ const RecipeDetails = () => {
 
               {/* Content Section */}
               <div className="card-body p-3 p-md-4 p-lg-5">
-                
+
                 <h1 className="display-5 fw-bold text-dark mb-3 mb-md-4">
                   {recipeName}
                 </h1>
-                
+
                 <div className="d-flex flex-column flex-sm-row flex-wrap gap-3 mb-4 text-secondary">
                   <div className="d-flex align-items-center gap-2">
                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -366,7 +356,7 @@ const RecipeDetails = () => {
                         Ajuster les portions
                       </h2>
                     </div>
-                    
+
                     <div className="d-flex align-items-center justify-content-center gap-3 flex-wrap">
                       <p className="small text-secondary mb-0">Nombre de portions:</p>
                       <div className="d-flex align-items-center gap-3">
@@ -390,8 +380,8 @@ const RecipeDetails = () => {
                         </button>
                       </div>
                     </div>
-                    
-                    
+
+
                   </div>
                 </div>
 
@@ -432,12 +422,12 @@ const RecipeDetails = () => {
                                         <span className="text-primary fw-bold small">{index + 1}</span>
                                       </div>
                                     </div>
-                                    
+
                                     {/* Image */}
                                     {imageUrl && (
                                       <div className="col-auto">
                                         <img
-                                          src={imageUrl}
+                                          src={getRecipeImageUrl(article)}
                                           alt={article.name}
                                           className="rounded"
                                           style={{ width: '60px', height: '60px', objectFit: 'cover' }}
@@ -491,9 +481,8 @@ const RecipeDetails = () => {
                   <button
                     onClick={addRecipeToCart}
                     disabled={isAdding || !recipeArticles || recipeArticles.length === 0}
-                    className={`btn w-100 py-2 rounded-2 fw-semibold d-flex align-items-center justify-content-center gap-2 ${
-                      isAdding ? "btn-success" : "btn-primary"
-                    }`}
+                    className={`btn w-100 py-2 rounded-2 fw-semibold d-flex align-items-center justify-content-center gap-2 ${isAdding ? "btn-success" : "btn-primary"
+                      }`}
                     style={!isAdding ? { background: 'linear-gradient(to right, #2563eb, #7c3aed)', border: 'none' } : {}}
                   >
                     <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">

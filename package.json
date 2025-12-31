@@ -37,6 +37,7 @@
     "react-barcode": "^1.6.1",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^18.3.1",
+    "react-dropzone": "^14.3.8",
     "react-google-recaptcha": "^3.1.0",
     "react-hot-toast": "^2.6.0",
     "react-i18next": "^15.4.0",

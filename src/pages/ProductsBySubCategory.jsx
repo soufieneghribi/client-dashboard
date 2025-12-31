@@ -5,6 +5,7 @@ import { fetchProduct } from '../store/slices/product';
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
 import { Container, Row, Col, Card, Button, Breadcrumb, Badge, Pagination } from 'react-bootstrap';
+import { getImageUrl, handleImageError } from '../utils/imageHelper';
 
 const ProductsBySubCategory = () => {
   const location = useLocation();
@@ -28,19 +29,8 @@ const ProductsBySubCategory = () => {
     return categories.find(cat => cat.id === currentCat.parent_id);
   }, [subId, categories]);
 
-  const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
-
-  const getImageUrl = (imageUrl) => {
-    if (!imageUrl) return null;
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl;
-    }
-    return `${IMAGE_BASE_URL}/${imageUrl}`;
-  };
-
-  const handleImageError = (e) => {
-    e.target.style.display = 'none';
-  };
+  // Image URL Helper is now centralized
+  const getProductImageUrl = (p) => getImageUrl(p, 'product');
 
   useEffect(() => {
     if (subId) {
@@ -161,7 +151,7 @@ const ProductsBySubCategory = () => {
                   {imageUrl && (
                     <Card.Img
                       variant="top"
-                      src={imageUrl}
+                      src={getProductImageUrl(product)}
                       alt={product.name}
                       style={{ height: '150px', objectFit: 'contain' }}
                       onError={handleImageError}

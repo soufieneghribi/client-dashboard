@@ -13,6 +13,7 @@ import {
 } from "react-icons/fa";
 import { Breadcrumb, Container } from 'react-bootstrap';
 import { enrichProductWithPromotion } from "../utils/promotionHelper";
+import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
 const ProductDetails = () => {
   const location = useLocation();
@@ -33,13 +34,8 @@ const ProductDetails = () => {
   const [enrichedProduct, setEnrichedProduct] = useState(null);
   const [promotionLoading, setPromotionLoading] = useState(true);
 
-  const IMAGE_BASE_URL = "https://tn360-lqd25ixbvq-ew.a.run.app/uploads";
-
-  const getImageUrl = (imageUrl) => {
-    if (!imageUrl) return null;
-    if (imageUrl.startsWith('http')) return imageUrl;
-    return `${IMAGE_BASE_URL}/${imageUrl}`;
-  };
+  // Image URL Helper is now centralized
+  const getProductImageUrl = (p) => getImageUrl(p, 'product');
 
   const handleImageError = (e) => {
     e.target.style.display = 'none';
@@ -162,7 +158,7 @@ const ProductDetails = () => {
             </button>
 
             <div className="bg-gray-50 rounded-lg aspect-square flex items-center justify-center">
-              <img src={getImageUrl(displayProduct.img)} alt={displayProduct.name} className="w-full h-full object-contain p-8" onError={handleImageError} />
+              <img src={getProductImageUrl(displayProduct)} alt={displayProduct.name} className="w-full h-full object-contain p-8" onError={handleImageError} />
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import toast from "react-hot-toast";
+
 import { API_ENDPOINTS } from "../../services/api";
 
 // ===================================
@@ -35,38 +35,38 @@ export const SearchProduct = createAsyncThunk(
           }
         }
       );
-      
+
       // ✅ CORRECTION: Gérer la structure de réponse du backend
       // Le backend retourne { status, total_size, products }
       if (response.data && response.data.products) {
         return response.data.products;
       }
-      
+
       // Si la réponse est directement un tableau
       if (Array.isArray(response.data)) {
         return response.data;
       }
-      
+
       return [];
-      
+
     } catch (error) {
-      console.error("Search error:", error);
-      
+
+
       // Gestion des erreurs spécifiques
       if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-        toast.error("Délai d'attente dépassé. Veuillez réessayer.");
+        // 
       } else if (error.response?.status === 404) {
         // Pas de résultats trouvés - ne pas afficher d'erreur
         return [];
       } else if (error.response?.status === 429) {
-        toast.error("Trop de recherches. Veuillez patienter un moment.");
+        // 
       } else if (error.response?.status === 500) {
-        toast.error("Erreur serveur lors de la recherche.");
+        // 
       } else if (!error.response) {
         // Erreur réseau
-        toast.error("Problème de connexion. Vérifiez votre réseau.");
+        // 
       }
-      
+
       return rejectWithValue(
         error.response?.data?.message || "Échec de la recherche"
       );
@@ -101,25 +101,25 @@ export const SearchProductWithFilters = createAsyncThunk(
           }
         }
       );
-      
+
       // ✅ CORRECTION: Gérer la structure de réponse du backend
       if (response.data && response.data.products) {
         return response.data.products;
       }
-      
+
       if (Array.isArray(response.data)) {
         return response.data;
       }
-      
+
       return [];
-      
+
     } catch (error) {
-      console.error("Search with filters error:", error);
-      
+
+
       if (error.response?.status !== 404) {
-        toast.error("Échec de la recherche avec filtres");
+        // 
       }
-      
+
       return rejectWithValue(
         error.response?.data?.message || "Échec de la recherche"
       );
@@ -152,21 +152,21 @@ const searchSlice = createSlice({
       state.filters = {};
       state.hasSearched = false;
     },
-    
+
     /**
      * Clear error
      */
     clearError: (state) => {
       state.error = null;
     },
-    
+
     /**
      * Set search filters
      */
     setFilters: (state, action) => {
       state.filters = action.payload;
     },
-    
+
     /**
      * Update last query
      */
@@ -195,7 +195,7 @@ const searchSlice = createSlice({
         state.error = action.payload || "Une erreur s'est produite lors de la recherche";
         state.searchResults = [];
       })
-      
+
       // ===================================
       // SEARCH PRODUCT WITH FILTERS
       // ===================================
@@ -223,11 +223,11 @@ const searchSlice = createSlice({
 // EXPORTS
 // ===================================
 
-export const { 
-  clearSearch, 
-  clearError, 
-  setFilters, 
-  setLastQuery 
+export const {
+  clearSearch,
+  clearError,
+  setFilters,
+  setLastQuery
 } = searchSlice.actions;
 
 // Selectors
@@ -239,3 +239,5 @@ export const selectFilters = (state) => state.search.filters;
 export const selectHasSearched = (state) => state.search.hasSearched;
 
 export default searchSlice.reducer;
+
+

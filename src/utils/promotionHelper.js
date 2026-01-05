@@ -59,7 +59,7 @@ export const fetchClientPromotions = async (clientId) => {
     );
 
     const promotions = response.data?.data || response.data?.promotions || [];
-    
+
     // Mettre à jour le cache
     promotionsCache = {
       data: promotions,
@@ -69,7 +69,7 @@ export const fetchClientPromotions = async (clientId) => {
 
     return promotions;
   } catch (error) {
-    console.error("Erreur lors de la récupération des promotions:", error);
+
     return [];
   }
 };
@@ -81,7 +81,7 @@ export const fetchClientPromotions = async (clientId) => {
 export const checkProductPromotion = async (productId, clientId) => {
   try {
     const promotions = await fetchClientPromotions(clientId);
-    
+
     if (!promotions || promotions.length === 0) {
       return null;
     }
@@ -114,7 +114,7 @@ export const checkProductPromotion = async (productId, clientId) => {
 
     return null;
   } catch (error) {
-    console.error("Erreur lors de la vérification de la promotion:", error);
+
     return null;
   }
 };
@@ -153,7 +153,7 @@ export const enrichProductWithPromotion = async (product, clientId) => {
       isPromotion: false
     };
   } catch (error) {
-    console.error("Erreur lors de l'enrichissement du produit:", error);
+
     return product;
   }
 };
@@ -169,7 +169,7 @@ export const calculateProductPrice = async (product, clientId) => {
     if (enrichedProduct.isPromotion && enrichedProduct.pivot) {
       const originalPrice = parseFloat(enrichedProduct.pivot.original_price);
       const promoPrice = parseFloat(enrichedProduct.pivot.promo_price);
-      
+
       return {
         price: promoPrice,
         originalPrice: originalPrice,
@@ -194,7 +194,7 @@ export const calculateProductPrice = async (product, clientId) => {
       promotionInfo: null
     };
   } catch (error) {
-    console.error("Erreur lors du calcul du prix:", error);
+
     const basePrice = parseFloat(product.price || 0);
     return {
       price: basePrice,
@@ -233,8 +233,8 @@ export const prepareProductForCart = async (product, quantity, clientId) => {
       priceData
     };
   } catch (error) {
-    console.error("Erreur lors de la préparation du produit pour le panier:", error);
-    
+
+
     // Fallback: retourner le produit sans promotion
     const basePrice = parseFloat(product.price || 0);
     return {
@@ -285,14 +285,14 @@ export const enrichProductListWithPromotions = async (products, clientId) => {
     }
 
     const promotions = await fetchClientPromotions(clientId);
-    
+
     if (!promotions || promotions.length === 0) {
       return products.map(p => ({ ...p, isPromotion: false }));
     }
 
     // Créer un map des produits en promotion pour un accès rapide
     const promotionMap = new Map();
-    
+
     promotions.forEach(promo => {
       if (promo.articles && Array.isArray(promo.articles)) {
         promo.articles.forEach(article => {
@@ -314,7 +314,7 @@ export const enrichProductListWithPromotions = async (products, clientId) => {
     // Enrichir chaque produit
     return products.map(product => {
       const promoData = promotionMap.get(parseInt(product.id));
-      
+
       if (promoData) {
         return {
           ...product,
@@ -338,7 +338,7 @@ export const enrichProductListWithPromotions = async (products, clientId) => {
       };
     });
   } catch (error) {
-    console.error("Erreur lors de l'enrichissement de la liste:", error);
+
     return products.map(p => ({ ...p, isPromotion: false }));
   }
 };

@@ -87,7 +87,7 @@ const ReclamationForm = () => {
             await dispatch(createComplaint(formData)).unwrap();
             navigate('/reclamations');
         } catch (err) {
-            console.error('Error creating complaint:', err);
+
         }
     };
 

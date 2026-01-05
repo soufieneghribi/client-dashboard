@@ -1,0 +1,268 @@
+.profile-container {
+    min-height: 100vh;
+    padding-top: 1.5rem;
+    padding-bottom: 3rem;
+    background-color: #f8fafc;
+}
+
+.profile-loading-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-header-card {
+    background: white;
+    border-radius: 20px;
+    border: none;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+
+.profile-header-card-body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem;
+    color: white;
+}
+
+.profile-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #667eea;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.profile-main-card {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    background: white;
+    margin-bottom: 1.5rem;
+}
+
+.profile-main-card-body {
+    padding: 2.5rem;
+}
+
+/* Loyalty Card */
+.loyalty-card {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    background: white;
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.loyalty-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+}
+
+.loyalty-card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 1.25rem;
+    color: white;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.loyalty-card-body {
+    padding: 1.5rem;
+}
+
+.loyalty-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.loyalty-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.loyalty-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.loyalty-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #212529;
+    font-family: monospace;
+    letter-spacing: 0.5px;
+}
+
+.loyalty-balance {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+/* Actions */
+.actions-card {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    background: white;
+    margin-bottom: 1.5rem;
+}
+
+.action-button {
+    border-radius: 16px;
+    border: none;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: "100%";
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: white;
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.action-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.profile-button {
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 0.75rem 1.75rem;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.primary-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.header-primary-button {
+    background: white;
+    color: #667eea;
+    border: none;
+    padding: 0.6rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.header-outline-button {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 0.6rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.profile-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.profile-form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.profile-form-control {
+    border-radius: 12px;
+    border: 1.5px solid #e0e0e0;
+    padding: 0.85rem 1.2rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.profile-info-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.profile-info-value {
+    font-size: 1.05rem;
+    color: #212529;
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
+.wallet-balance-value {
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 0;
+}

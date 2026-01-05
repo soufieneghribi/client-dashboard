@@ -46,7 +46,7 @@ const TodaysOffers = () => {
           setTodaysOffers(products.slice(0, 4));
         }
       } catch (error) {
-        console.error("Erreur Offres:", error);
+
       } finally {
         setLoading(false);
       }

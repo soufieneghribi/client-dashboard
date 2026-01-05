@@ -11,7 +11,7 @@ import {
   FaShare,
   FaCopy,
 } from "react-icons/fa";
-import { toast } from "react-hot-toast";
+
 import { QRCodeSVG } from "qrcode.react";
 
 const GratuiteSuccess = () => {
@@ -40,9 +40,8 @@ const GratuiteSuccess = () => {
   const getModeInstructions = (mode) => {
     switch (mode) {
       case "pickup":
-        return `Présentez ce code en caisse dans le magasin ${
-          storeName || "sélectionné"
-        } avant la date d'expiration pour récupérer votre produit gratuit.`;
+        return `Présentez ce code en caisse dans le magasin ${storeName || "sélectionné"
+          } avant la date d'expiration pour récupérer votre produit gratuit.`;
       case "delivery":
         return "Conservez ce code. Il pourra vous être demandé lors de la livraison de votre commande.";
       case "digital":
@@ -54,7 +53,7 @@ const GratuiteSuccess = () => {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(pickupCode);
-    toast.success("Code copié dans le presse-papiers!");
+    // 
   };
 
   const shareCode = async () => {
@@ -65,7 +64,7 @@ const GratuiteSuccess = () => {
           text: `Mon code de réservation pour ${offer.title}: ${pickupCode}`,
         });
       } catch (error) {
-        console.error("Erreur partage:", error);
+
       }
     } else {
       copyToClipboard();
@@ -241,3 +240,5 @@ const GratuiteSuccess = () => {
 };
 
 export default GratuiteSuccess;
+
+

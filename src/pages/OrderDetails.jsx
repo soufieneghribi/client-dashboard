@@ -18,7 +18,7 @@ import {
   FaHistory
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "react-hot-toast";
+
 import axios from "axios";
 import { API_ENDPOINTS, getAuthHeaders, getAuthHeadersBinary } from "../services/api";
 import PdfService from "../services/PdfService";
@@ -55,7 +55,7 @@ const OrderDetails = () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      toast.error("Veuillez vous connecter");
+      // 
       navigate("/login");
       return;
     }
@@ -78,22 +78,22 @@ const OrderDetails = () => {
 
       if (!foundOrder) {
         setError("Commande introuvable");
-        toast.error("Commande non trouvée");
+        // 
         return;
       }
 
       setOrder(foundOrder);
-      console.log("✅ Détails de la commande chargés:", foundOrder);
+
     } catch (err) {
-      console.error("❌ Erreur chargement détails:", err);
+
 
       if (err.response?.status === 401 || err.response?.status === 403) {
-        toast.error("Session expirée");
+        // 
         localStorage.removeItem("token");
         navigate("/login");
       } else {
         setError("Erreur de chargement");
-        toast.error("Impossible de charger la commande");
+        // 
       }
     } finally {
       setLoading(false);
@@ -105,11 +105,11 @@ const OrderDetails = () => {
    */
   const handleDownloadPDF = async () => {
     if (!order) {
-      toast.error("Données de commande non chargées.");
+      // 
       return;
     }
 
-    toast.loading("Génération de la facture PDF locale...", { id: 'pdf-toast' });
+    // 
 
     try {
       // ✅ Génération locale (découplée du serveur)
@@ -122,10 +122,10 @@ const OrderDetails = () => {
 
       PdfService.generateOrderPdf(fullOrderData);
 
-      toast.success("Facture générée avec succès !", { id: 'pdf-toast' });
+      // 
     } catch (err) {
-      console.error("❌ Échec de la génération PDF locale:", err);
-      toast.error("Impossible de générer le PDF localement.", { id: 'pdf-toast' });
+
+      // 
     }
   };
 
@@ -159,15 +159,13 @@ const OrderDetails = () => {
         { headers: getAuthHeaders(token) }
       );
 
-      toast.success("Commande annulée avec succès");
+      // 
 
       // Recharger les détails
       await fetchOrderDetails();
     } catch (err) {
-      console.error("❌ Erreur annulation:", err);
-      toast.error(
-        err.response?.data?.message || "Impossible d'annuler la commande"
-      );
+
+
     } finally {
       setCancelling(false);
     }
@@ -688,3 +686,5 @@ const OrderDetails = () => {
 };
 
 export default OrderDetails;
+
+

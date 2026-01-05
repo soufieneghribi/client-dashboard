@@ -93,18 +93,11 @@ export const getImageUrl = (imageUrl, fallbackType = 'product') => {
  * />
  */
 export const handleImageError = (
-  event, 
-  itemName, 
-  fallbackType = 'product', 
+  event,
+  itemName,
+  fallbackType = 'product',
   logError = true
 ) => {
-  if (logError) {
-    console.warn(`Failed to load image for ${itemName}`, {
-      attempted: event.target.src,
-      timestamp: new Date().toISOString()
-    });
-  }
-  
   event.target.src = FALLBACK_IMAGES[fallbackType] || FALLBACK_IMAGES.product;
 };
 
@@ -138,20 +131,20 @@ export const preloadImage = (url) => {
  */
 export const isValidImageUrl = (url) => {
   if (!url || typeof url !== 'string') return false;
-  
+
   try {
     // Check if it's a data URL
     if (url.startsWith('data:image/')) return true;
-    
+
     // Try to parse as URL
     const urlObj = new URL(url, window.location.origin);
-    
+
     // Check if it has common image extensions
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
-    const hasImageExtension = imageExtensions.some(ext => 
+    const hasImageExtension = imageExtensions.some(ext =>
       urlObj.pathname.toLowerCase().endsWith(ext)
     );
-    
+
     return hasImageExtension || urlObj.pathname.includes('image');
   } catch {
     return false;
@@ -171,22 +164,22 @@ export const isValidImageUrl = (url) => {
  */
 export const getArticleImageUrl = (imagePath) => {
   if (!imagePath) return FALLBACK_IMAGES.product;
-  
+
   // If it's already a full URL, return it
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
     return imagePath;
   }
-  
+
   // If it's in the storage bucket format
   if (imagePath.includes('storage.googleapis.com')) {
     return imagePath;
   }
-  
+
   // If it starts with "images/" or "uploads/", construct the full URL
   if (imagePath.startsWith('images/') || imagePath.startsWith('uploads/')) {
     return `${CONFIG.API_BASE_URL}/${imagePath}`;
   }
-  
+
   // Otherwise, assume it's in the articles folder of the storage bucket
   return `${CONFIG.STORAGE_BASE_URL}/articles/${imagePath}`;
 };
@@ -204,7 +197,7 @@ export const getArticleImageUrl = (imagePath) => {
  */
 export const normalizeImageUrls = (items, imageKey = 'img') => {
   if (!Array.isArray(items)) return items;
-  
+
   return items.map(item => ({
     ...item,
     [imageKey]: normalizeImageUrl(item[imageKey])

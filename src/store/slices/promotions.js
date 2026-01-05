@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { toast } from "react-hot-toast";
+
 import { API_ENDPOINTS, getAuthHeaders, handleApiError } from "../../services/api";
 
 // ==================== CONSTANTS ====================
@@ -11,12 +11,12 @@ let lastRequestTime = 0;
 const waitForRateLimit = async () => {
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
-  
+
   if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
     const waitTime = RATE_LIMIT_DELAY - timeSinceLastRequest;
     await new Promise(resolve => setTimeout(resolve, waitTime));
   }
-  
+
   lastRequestTime = Date.now();
 };
 
@@ -38,7 +38,7 @@ export const fetchPromotionsByClient = createAsyncThunk(
   async (clientId, { rejectWithValue }) => {
     try {
       const token = getAuthToken();
-      
+
       if (!token) {
         throw new Error("Token d'authentification manquant");
       }
@@ -62,11 +62,11 @@ export const fetchPromotionsByClient = createAsyncThunk(
       return data.data || data.promotions || data || [];
     } catch (error) {
       const errorMessage = handleApiError(error);
-      
+
       if (error.message !== "Rate limit exceeded") {
-        toast.error(errorMessage);
+        // 
       }
-      
+
       return rejectWithValue(errorMessage);
     }
   }
@@ -80,7 +80,7 @@ export const fetchAllPromotions = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const token = getAuthToken();
-      
+
       if (!token) {
         throw new Error("Token d'authentification manquant");
       }
@@ -104,11 +104,11 @@ export const fetchAllPromotions = createAsyncThunk(
       return data.data || data.promotions || data || [];
     } catch (error) {
       const errorMessage = handleApiError(error);
-      
+
       if (error.message !== "Rate limit exceeded") {
-        toast.error(errorMessage);
+        // 
       }
-      
+
       return rejectWithValue(errorMessage);
     }
   }
@@ -124,7 +124,7 @@ export const fetchGifts = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const token = getAuthToken();
-      
+
       if (!token) {
         throw new Error("Token d'authentification manquant");
       }
@@ -148,11 +148,11 @@ export const fetchGifts = createAsyncThunk(
       return data.data || data.gifts || data || [];
     } catch (error) {
       const errorMessage = handleApiError(error);
-      
+
       if (error.message !== "Rate limit exceeded") {
-        console.error("Error fetching gifts:", errorMessage);
+
       }
-      
+
       return rejectWithValue(errorMessage);
     }
   }
@@ -166,7 +166,7 @@ export const exchangeGift = createAsyncThunk(
   async ({ giftId, clientId }, { rejectWithValue, dispatch }) => {
     try {
       const token = getAuthToken();
-      
+
       if (!token) {
         throw new Error("Token d'authentification manquant");
       }
@@ -191,20 +191,20 @@ export const exchangeGift = createAsyncThunk(
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
-        toast.success("🎁 Cadeau échangé avec succès !");
-        
+        // 
+
         // Rafraîchir la liste des cadeaux après l'échange
         dispatch(fetchGifts());
-        
+
         return data.data || data;
       } else {
         throw new Error(data.message || "Erreur lors de l'échange du cadeau");
       }
     } catch (error) {
       const errorMessage = handleApiError(error);
-      toast.error(errorMessage);
+      // 
       return rejectWithValue(errorMessage);
     }
   }
@@ -218,7 +218,7 @@ export const fetchGiftHistory = createAsyncThunk(
   async (clientId, { rejectWithValue }) => {
     try {
       const token = getAuthToken();
-      
+
       if (!token) {
         throw new Error("Token d'authentification manquant");
       }
@@ -242,11 +242,11 @@ export const fetchGiftHistory = createAsyncThunk(
       return data.data || data.history || data || [];
     } catch (error) {
       const errorMessage = handleApiError(error);
-      
+
       if (error.message !== "Rate limit exceeded") {
-        console.error("Error fetching gift history:", errorMessage);
+
       }
-      
+
       return rejectWithValue(errorMessage);
     }
   }
@@ -261,18 +261,18 @@ const initialState = {
   loading: false,
   error: null,
   lastFetch: null,
-  
+
   // Gifts
   gifts: [],
   giftsLoading: false,
   giftsError: null,
   selectedGift: null,
-  
+
   // Gift History
   giftHistory: [],
   giftHistoryLoading: false,
   giftHistoryError: null,
-  
+
   // Exchange
   exchangeLoading: false,
   exchangeError: null,
@@ -294,7 +294,7 @@ const promotionsSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
-    
+
     // Gifts reducers
     clearGifts: (state) => {
       state.gifts = [];
@@ -306,7 +306,7 @@ const promotionsSlice = createSlice({
     clearGiftsError: (state) => {
       state.giftsError = null;
     },
-    
+
     // Exchange reducers
     clearExchangeError: (state) => {
       state.exchangeError = null;
@@ -314,7 +314,7 @@ const promotionsSlice = createSlice({
     clearLastExchangeResult: (state) => {
       state.lastExchangeResult = null;
     },
-    
+
     // Clear all
     clearAllPromotionsData: (state) => {
       return initialState;
@@ -322,7 +322,7 @@ const promotionsSlice = createSlice({
   },
   extraReducers: (builder) => {
     // ==================== PROMOTIONS ====================
-    
+
     // Fetch promotions by client
     builder
       .addCase(fetchPromotionsByClient.pending, (state) => {
@@ -358,7 +358,7 @@ const promotionsSlice = createSlice({
       });
 
     // ==================== GIFTS ====================
-    
+
     // Fetch gifts
     builder
       .addCase(fetchGifts.pending, (state) => {
@@ -413,9 +413,9 @@ const promotionsSlice = createSlice({
 // ==================== EXPORTS ====================
 
 // Actions
-export const { 
-  clearPromotions, 
-  setCurrentPromotion, 
+export const {
+  clearPromotions,
+  setCurrentPromotion,
   clearError,
   clearGifts,
   setSelectedGift,
@@ -452,3 +452,5 @@ export const selectGiftHistoryError = (state) => state.promotions.giftHistoryErr
 export const selectExchangeLoading = (state) => state.promotions.exchangeLoading;
 export const selectExchangeError = (state) => state.promotions.exchangeError;
 export const selectLastExchangeResult = (state) => state.promotions.lastExchangeResult;
+
+

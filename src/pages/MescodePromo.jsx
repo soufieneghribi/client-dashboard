@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-hot-toast";
+
 import {
   FaSpinner,
   FaArrowLeft,
@@ -40,7 +40,7 @@ const MesCodePromo = () => {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    toast.success("Code copié !");
+    // 
   };
 
   const getStatusBadge = (status) => {
@@ -236,3 +236,5 @@ const MesCodePromo = () => {
 };
 
 export default MesCodePromo;
+
+

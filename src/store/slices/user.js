@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { toast } from "react-hot-toast";
+
 import store from "../index";
 import { logout, updateUser as updateAuthUser } from "./authSlice";
 import { API_ENDPOINTS, getAuthHeaders } from "../../services/api";
@@ -72,7 +72,7 @@ const testTokenValidity = async (token) => {
     }
 
     if (error.response?.status === 429) {
-      console.warn("Rate limit hit during token validation");
+
       return true;
     }
 
@@ -92,19 +92,19 @@ export const forgetPassword = createAsyncThunk(
         API_ENDPOINTS.AUTH.FORGOT_PASSWORD,
         { email }
       );
-      toast.success("Un lien de réinitialisation a été envoyé à votre e-mail.");
+      // 
       return data;
     } catch (error) {
       if (error.response?.status === 429) {
-        toast.error("Trop de tentatives. Veuillez réessayer dans quelques instants.");
+        // 
         return rejectWithValue("Rate limit exceeded");
       }
 
       if (error.response) {
-        toast.error(error.response.data.message || "Une erreur est survenue.");
+        // 
         return rejectWithValue(error.response.data.message || "Une erreur est survenue.");
       } else {
-        toast.error("Problème de connexion. Veuillez réessayer.");
+        // 
         return rejectWithValue("Problème de connexion. Veuillez réessayer.");
       }
     }
@@ -122,17 +122,30 @@ export const signUp = createAsyncThunk(
         user
       );
 
-      toast.success("Compte créé. Veuillez vérifier votre e-mail pour activer votre compte.");
+      // 
       return data;
     } catch (error) {
       if (error.response?.status === 429) {
-        toast.error("Trop de tentatives. Veuillez réessayer dans quelques instants.");
+        // 
         throw new Error("Rate limit exceeded");
       }
 
       const errorMessage = error.response?.data?.message || "Compte déjà existant.";
-      toast.error(errorMessage);
+      // 
       throw error;
+    }
+  }
+);
+
+export const fetchEnseignes = createAsyncThunk(
+  "user/fetchEnseignes",
+  async (_, { rejectWithValue }) => {
+    try {
+      await waitForRateLimit();
+      const { data } = await axios.get(API_ENDPOINTS.ENSEIGNES.ALL);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Erreur lors de la récupération des enseignes");
     }
   }
 );
@@ -153,7 +166,7 @@ export const fetchUserProfile = createAsyncThunk(
       const fiveMinutes = 5 * 60 * 1000;
 
       // Cache: si profil existe et < 5min, le retourner
-      if (lastFetch && (now - lastFetch) < fiveMinutes && state.user.Userprofile) {
+      if (!options?.force && lastFetch && (now - lastFetch) < fiveMinutes && state.user.Userprofile) {
         return state.user.Userprofile;
       }
 
@@ -180,12 +193,12 @@ export const fetchUserProfile = createAsyncThunk(
 
       return data;
     } catch (error) {
-      console.error("❌ Erreur fetchUserProfile:", error.response?.status, error.message);
+
 
       // Rate limit
       if (error.response?.status === 429) {
         if (!silent) {
-          toast.error("Trop de requêtes. Veuillez patienter un moment.");
+          // 
         }
         return rejectWithValue("Rate limit exceeded");
       }
@@ -198,7 +211,7 @@ export const fetchUserProfile = createAsyncThunk(
 
         // ✅ Si silent, ne pas afficher de toast ni rediriger
         if (!silent) {
-          toast.error("Session expirée. Veuillez vous reconnecter.");
+          // 
           dispatch(logout());
           setTimeout(() => {
             window.location.href = '/login';
@@ -218,12 +231,12 @@ export const fetchUserProfile = createAsyncThunk(
       // Timeout
       if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
         if (!silent) {
-          toast.error("Délai d'attente dépassé. Veuillez réessayer.");
+          // 
         }
       }
       // Autres erreurs
       else if (error.message !== "Rate limit exceeded" && !silent) {
-        toast.error(errorMessage);
+        // 
       }
 
       return rejectWithValue(errorMessage);
@@ -290,11 +303,11 @@ export const updateUserProfile = createAsyncThunk(
 
       const updatedData = { ...currentProfile, ...profileData, ...data };
 
-      toast.success("Profil mis à jour avec succès");
+      // 
       return updatedData;
     } catch (error) {
       if (error.response?.status === 429) {
-        toast.error("Trop de requêtes. Veuillez patienter un moment.");
+        // 
         return rejectWithValue("Rate limit exceeded");
       }
 
@@ -310,7 +323,7 @@ export const updateUserProfile = createAsyncThunk(
         errorMessage = error.response.data.message;
       }
 
-      toast.error(errorMessage);
+      // 
       return rejectWithValue(errorMessage);
     }
   }
@@ -338,7 +351,7 @@ export const updateCagnotteInDB = createAsyncThunk(
       return data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || "Erreur lors de la mise à jour de la cagnotte";
-      toast.error(errorMessage);
+      // 
       return rejectWithValue(errorMessage);
     }
   }
@@ -363,15 +376,15 @@ export const changePassword = createAsyncThunk(
         }
       );
 
-      toast.success("Mot de passe modifié avec succès");
+      // 
       return data;
     } catch (error) {
       const errorMessage = error.response?.data?.message || "Erreur lors du changement de mot de passe";
 
       if (error.response?.status === 401 || error.response?.status === 403) {
-        toast.error("Mot de passe actuel incorrect");
+        // 
       } else {
-        toast.error(errorMessage);
+        // 
       }
 
       return rejectWithValue(errorMessage);
@@ -389,16 +402,16 @@ export const googleLogin = createAsyncThunk(
         API_ENDPOINTS.AUTH.GOOGLE_LOGIN,
         { token }
       );
-      toast.success("Connexion Google réussie");
+      // 
       return data;
     } catch (error) {
       if (error.response?.status === 429) {
-        toast.error("Trop de requêtes. Veuillez patienter un moment.");
+        // 
         return rejectWithValue("Rate limit exceeded");
       }
 
       const errorMessage = error.response?.data?.message || "Erreur lors de la connexion Google";
-      toast.error(errorMessage);
+      // 
       return rejectWithValue(errorMessage);
     }
   }
@@ -414,20 +427,20 @@ export const googleRegister = createAsyncThunk(
         API_ENDPOINTS.AUTH.GOOGLE_REGISTER,
         { token }
       );
-      toast.success("Inscription Google réussie");
+      // 
       return data;
     } catch (error) {
       if (error.response?.status === 429) {
-        toast.error("Trop de requêtes. Veuillez patienter un moment.");
+        // 
         return rejectWithValue("Rate limit exceeded");
       }
 
       const errorMessage = error.response?.data?.message || "Erreur lors de l'inscription Google";
 
       if (error.response?.status === 409) {
-        toast.error("Cet email est déjà utilisé. Veuillez vous connecter.");
+        // 
       } else {
-        toast.error(errorMessage);
+        // 
       }
 
       return rejectWithValue(errorMessage);
@@ -453,6 +466,7 @@ const UserSlice = createSlice({
     loading: false,
     error: null,
     lastFetch: null,
+    enseignes: [],
   },
   reducers: {
     clearError: (state) => {
@@ -613,6 +627,10 @@ const UserSlice = createSlice({
       .addCase(googleRegister.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      .addCase(fetchEnseignes.fulfilled, (state, action) => {
+        state.enseignes = action.payload;
       });
   },
 });
@@ -634,3 +652,5 @@ export const selectUserError = (state) => state.user.error;
 export const selectLastFetch = (state) => state.user.lastFetch;
 
 export default UserSlice.reducer;
+
+

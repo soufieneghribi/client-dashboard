@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-hot-toast";
+
 import {
   FaSpinner,
   FaArrowLeft,
@@ -53,13 +53,13 @@ const CodePromoDetails = () => {
   useEffect(() => {
     if (lastReservation) {
       setShowCodeModal(true);
-      toast.success("Code obtenu avec succès !");
+      // 
     }
   }, [lastReservation]);
 
   useEffect(() => {
     if (reservationError) {
-      toast.error(reservationError);
+      // 
     }
   }, [reservationError]);
 
@@ -74,7 +74,7 @@ const CodePromoDetails = () => {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    toast.success("Code copié dans le presse-papiers !");
+    // 
   };
 
   const getOfferTypeLabel = (type) => {
@@ -414,3 +414,5 @@ const CodePromoDetails = () => {
 };
 
 export default CodePromoDetails;
+
+

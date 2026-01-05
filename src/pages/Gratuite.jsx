@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS, getAuthHeaders } from "../services/api";
-import { toast } from "react-hot-toast";
-import { 
-  FaSpinner, 
-  FaGift, 
-  FaStore, 
-  FaTruck, 
+
+import {
+  FaSpinner,
+  FaGift,
+  FaStore,
+  FaTruck,
   FaMobileAlt,
   FaSearch,
   FaHistory,
@@ -60,23 +60,23 @@ const Gratuite = () => {
       );
 
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         const newOffers = result.data || [];
         setOffers(refresh ? newOffers : [...offers, ...newOffers]);
-        
+
         const pagination = result.pagination;
         if (pagination) {
           setHasMore(pagination.current_page < pagination.last_page);
         }
       } else {
-        toast.error(result.message || "Erreur lors du chargement des offres");
+        // 
       }
     } catch (error) {
-      console.error("Erreur chargement offres:", error);
-      toast.error("Erreur lors du chargement des offres");
+
+      // 
     } finally {
       setLoading(false);
     }
@@ -315,14 +315,13 @@ const Gratuite = () => {
                         alt={offer.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      
+
                       {/* Badge statut */}
-                      <div className={`absolute top-4 right-4 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm ${
-                        status.color === "green" ? "bg-green-500/90 text-white" :
-                        status.color === "red" ? "bg-red-500/90 text-white" :
-                        status.color === "orange" ? "bg-orange-500/90 text-white" :
-                        "bg-gray-500/90 text-white"
-                      }`}>
+                      <div className={`absolute top-4 right-4 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm ${status.color === "green" ? "bg-green-500/90 text-white" :
+                          status.color === "red" ? "bg-red-500/90 text-white" :
+                            status.color === "orange" ? "bg-orange-500/90 text-white" :
+                              "bg-gray-500/90 text-white"
+                        }`}>
                         {status.text}
                       </div>
 
@@ -417,11 +416,10 @@ const Gratuite = () => {
 
                       {/* Bouton d'action */}
                       <button
-                        className={`w-full py-2.5 rounded-xl font-semibold transition-all ${
-                          isAvailable
+                        className={`w-full py-2.5 rounded-xl font-semibold transition-all ${isAvailable
                             ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
                             : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        }`}
+                          }`}
                         disabled={!isAvailable}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -465,3 +463,5 @@ const Gratuite = () => {
 };
 
 export default Gratuite;
+
+

@@ -60,7 +60,7 @@ const Cagnotte = () => {
         setDealHistory(dealData.data || []);
       }
     } catch (error) {
-      console.error('Error fetching histories:', error);
+
     } finally {
       setHistoryLoading(false);
     }

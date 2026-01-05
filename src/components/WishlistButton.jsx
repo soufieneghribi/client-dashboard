@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleWishlist, fetchWishlist, selectIsInWishlist } from "../store/slices/wishlist";
 import { selectIsLoggedIn } from "../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+
 import "../styles/WishlistButton.css";
 
 const WishlistButton = ({ productId, size = "medium", className = "" }) => {
@@ -19,7 +19,7 @@ const WishlistButton = ({ productId, size = "medium", className = "" }) => {
         e.stopPropagation();
 
         if (!isLoggedIn) {
-            toast.error("Veuillez vous connecter pour ajouter aux favoris");
+            // 
             setTimeout(() => navigate("/login"), 1000);
             return;
         }
@@ -35,7 +35,7 @@ const WishlistButton = ({ productId, size = "medium", className = "" }) => {
             // This is important when adding items to get full product details
             await dispatch(fetchWishlist());
         } catch (error) {
-            console.error("Toggle wishlist error:", error);
+
         } finally {
             setIsLoading(false);
             setTimeout(() => setIsAnimating(false), 600);
@@ -81,3 +81,5 @@ const WishlistButton = ({ productId, size = "medium", className = "" }) => {
 };
 
 export default WishlistButton;
+
+

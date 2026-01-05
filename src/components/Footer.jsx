@@ -1,4 +1,5 @@
 import React from 'react';
+import COMPANY_LOGO from "../assets/images/logo_0.png";
 
 const Footer = () => {
   return (
@@ -10,9 +11,7 @@ const Footer = () => {
           {/* Logo et description */}
           <div className="md:col-span-1">
             <div className="flex items-center mb-4">
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                TN360
-              </span>
+              <img src={COMPANY_LOGO} alt="TN360" className="h-14 w-auto object-contain bg-white rounded-xl px-4 py-2 shadow-sm" />
             </div>
             <p className="text-gray-300 text-sm leading-relaxed">
               Votre destination shopping préférée. Des produits de qualité, un service exceptionnel.

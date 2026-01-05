@@ -59,7 +59,7 @@ const Contact = () => {
         sujet: formData.sujet,
         message: formData.message
       };
-      
+
       await emailjs.send(
         EMAILJS_CONFIG.SERVICE_ID,
         EMAILJS_CONFIG.TEMPLATE_ID,
@@ -70,7 +70,7 @@ const Contact = () => {
       setFormData({ nom: "", email: "", telephone: "", sujet: "", message: "" });
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
-      console.error(err);
+
       alert("Erreur lors de l'envoi du message, veuillez réessayer.");
     } finally {
       setLoading(false);
@@ -297,7 +297,7 @@ const Contact = () => {
                   <i className="fas fa-map-marker-alt"></i>
                 </div>
                 <h5>Adresse</h5>
-                <p>Rue du lac leman, MakCrown<br/>Tunis 1053</p>
+                <p>Rue du lac leman, MakCrown<br />Tunis 1053</p>
               </div>
 
               <div className="info-card">
@@ -305,7 +305,7 @@ const Contact = () => {
                   <i className="fas fa-clock"></i>
                 </div>
                 <h5>Horaires d'ouverture</h5>
-                <p>Lundi - Vendredi: 9h - 18h<br/>Samedi: 9h - 13h</p>
+                <p>Lundi - Vendredi: 9h - 18h<br />Samedi: 9h - 13h</p>
               </div>
             </div>
 

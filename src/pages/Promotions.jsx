@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { API_ENDPOINTS, getAuthHeaders, handleApiError } from "../services/api";
-import { toast } from "react-hot-toast";
+
 import { 
   FaArrowLeft, 
   FaSpinner, 
@@ -34,7 +34,7 @@ const Promotions = () => {
       const clientId = storedUser?.ID_client;
 
       if (!token || !clientId) {
-        toast.error("Veuillez vous connecter pour voir vos promotions");
+        // 
         navigate("/login");
         return;
       }
@@ -63,7 +63,7 @@ const Promotions = () => {
         }
       } catch (error) {
         const errorMessage = handleApiError(error);
-        toast.error(errorMessage);
+        // 
       } finally {
         setLoading(false);
       }
@@ -77,7 +77,7 @@ const Promotions = () => {
   const addToCart = (article, promotion) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("Veuillez vous connecter pour ajouter au panier");
+      // 
       navigate("/login");
       return;
     }
@@ -101,7 +101,7 @@ const Promotions = () => {
         currentCart[existingItemIndex].quantity
       ).toFixed(2);
       
-      toast.success("Ajouté au panier avec succès");
+      // 
     } else {
       // Nouvel article à ajouter
       const cartItem = {
@@ -119,7 +119,7 @@ const Promotions = () => {
       };
       
       currentCart.push(cartItem);
-      toast.success("Article ajouté au panier");
+      // 
     }
     
     // Sauvegarder le panier mis à jour
@@ -351,3 +351,5 @@ const Promotions = () => {
 };
 
 export default Promotions;
+
+

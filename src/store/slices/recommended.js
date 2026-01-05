@@ -3,46 +3,36 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 // Détection automatique de l'environnement
-const API_BASE_URL = import.meta.env.DEV 
+const API_BASE_URL = import.meta.env.DEV
   ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000')
   : (import.meta.env.VITE_API_BASE_URL_PROD || 'https://tn360-back-office-122923924979.europe-west1.run.app');
 
-    const BASE_URL =  "https://tn360-back-office-122923924979.europe-west1.run.app";
+const BASE_URL = "https://tn360-back-office-122923924979.europe-west1.run.app";
 
 
 const API_URL = `${BASE_URL}/api/v1`;
 
 export const fetchRecommendedProduct = createAsyncThunk(
-  "recommended/fetchRecommendedProduct", 
+  "recommended/fetchRecommendedProduct",
   async (_, { rejectWithValue }) => {
     try {
-      
+
       const response = await axios.get(`${API_URL}/products/recommended`);
-      
-      
+
+
       // S'assurer que la réponse est un tableau
       const recommendedData = response.data || [];
-      
+
       if (!Array.isArray(recommendedData)) {
-        console.warn("⚠️ Recommended API response is not an array:", recommendedData);
+
         return [];
       }
-      
+
       return recommendedData;
-      
+
     } catch (error) {
-      console.error("❌ Error fetching recommended products:", error);
-      
-      if (error.response) {
-        console.error("📡 Error response data:", error.response.data);
-        console.error("📡 Error response status:", error.response.status);
-        console.error("📡 Error response headers:", error.response.headers);
-      } else if (error.request) {
-        console.error("📡 No response received:", error.request);
-      } else {
-        console.error("📡 Error setting up request:", error.message);
-      }
-      
+
+
       return rejectWithValue(error.response?.data || error.message);
     }
   }

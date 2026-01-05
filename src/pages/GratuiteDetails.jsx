@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_ENDPOINTS, getAuthHeaders } from "../services/api";
-import { toast } from "react-hot-toast";
+
 import {
   FaSpinner,
   FaStore,
@@ -63,12 +63,12 @@ const GratuiteDetails = () => {
           }
         }
       } else {
-        toast.error(result.message || "Erreur lors du chargement de l'offre");
+        // 
         navigate("/gratuite");
       }
     } catch (error) {
-      console.error("Erreur chargement offre:", error);
-      toast.error("Erreur lors du chargement de l'offre");
+
+      // 
       navigate("/gratuite");
     } finally {
       setLoading(false);
@@ -95,7 +95,7 @@ const GratuiteDetails = () => {
         }
       }
     } catch (error) {
-      console.error("Erreur chargement réservations:", error);
+
     }
   };
 
@@ -175,7 +175,7 @@ const GratuiteDetails = () => {
     if (!offer || !selectedMode) return;
 
     if (selectedMode === "pickup" && !selectedStoreId) {
-      toast.error("Veuillez sélectionner un magasin");
+      // 
       return;
     }
 
@@ -199,9 +199,7 @@ const GratuiteDetails = () => {
 
       if (result.success) {
         const pickupCode = result.data?.pickup_code;
-        toast.success(
-          result.message || "Produit gratuit réservé avec succès!"
-        );
+
 
         // Navigate to success page
         navigate("/gratuite/success", {
@@ -216,13 +214,11 @@ const GratuiteDetails = () => {
           },
         });
       } else {
-        toast.error(
-          result.message || "Erreur lors de la réservation du produit"
-        );
+
       }
     } catch (error) {
-      console.error("Erreur réservation:", error);
-      toast.error("Une erreur est survenue lors de la réservation");
+
+      // 
     } finally {
       setReserving(false);
     }
@@ -363,11 +359,10 @@ const GratuiteDetails = () => {
             {/* User Usage Info */}
             {offer.max_per_client && offer.max_per_client > 0 && (
               <div
-                className={`mb-6 p-4 rounded-xl ${
-                  reachedLimit
+                className={`mb-6 p-4 rounded-xl ${reachedLimit
                     ? "bg-red-50 border border-red-200"
                     : "bg-blue-50 border border-blue-200"
-                }`}
+                  }`}
               >
                 <p className="text-sm text-gray-700">
                   {reachedLimit ? (
@@ -452,11 +447,10 @@ const GratuiteDetails = () => {
                         setSelectedStoreId(null);
                       }
                     }}
-                    className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
-                      selectedMode === mode
+                    className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${selectedMode === mode
                         ? "bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-md"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
+                      }`}
                   >
                     {getModeIcon(mode)}
                     <span className="font-medium">{getModeLabel(mode)}</span>
@@ -506,11 +500,10 @@ const GratuiteDetails = () => {
             <button
               onClick={handleReserve}
               disabled={!canReserve || reserving}
-              className={`w-full py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 ${
-                canReserve
+              className={`w-full py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 ${canReserve
                   ? "bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600 shadow-lg hover:shadow-xl"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
+                }`}
             >
               {reserving ? (
                 <>
@@ -536,3 +529,5 @@ const GratuiteDetails = () => {
 };
 
 export default GratuiteDetails;
+
+

@@ -26,10 +26,10 @@ const Search = () => {
 
   // Debug: Affichez les résultats dans la console
   useEffect(() => {
-    console.log("Search Component - Results:", searchResults);
-    console.log("Search Component - Loading:", searchLoading);
-    console.log("Search Component - Error:", searchError);
-    console.log("Search Component - Has Searched:", hasSearched);
+    
+    
+    
+    
   }, [searchResults, searchLoading, searchError, hasSearched]);
 
   // Fermer les résultats quand on clique ailleurs - SEULEMENT si on est sur la page de recherche

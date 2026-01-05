@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { fetchProduct } from '../store/slices/product';
-import toast from "react-hot-toast";
+
 import Cookies from "js-cookie";
 import { Container, Row, Col, Card, Button, Breadcrumb, Badge, Pagination } from 'react-bootstrap';
 import { getImageUrl, handleImageError } from '../utils/imageHelper';
@@ -98,7 +98,7 @@ const ProductsBySubCategory = () => {
     }
 
     Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
-    toast.success("Produit ajouté au panier !");
+    // 
   };
 
   if (loading) return (
@@ -240,3 +240,5 @@ const ProductsBySubCategory = () => {
 };
 
 export default ProductsBySubCategory;
+
+

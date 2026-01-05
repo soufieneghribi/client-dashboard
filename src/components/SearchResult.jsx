@@ -9,7 +9,7 @@ import {
   selectSearchLoading,
   selectSearchError
 } from "../store/slices/search";
-import toast from "react-hot-toast";
+
 import Cookies from "js-cookie";
 import { Container, Row, Col, Card, Button, Breadcrumb, Badge, Pagination, Spinner } from 'react-bootstrap';
 
@@ -94,7 +94,7 @@ const SearchResultsPage = () => {
     }
 
     Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
-    toast.success("Produit ajouté au panier !");
+    // 
   };
 
   if (!query) {
@@ -250,3 +250,5 @@ const SearchResultsPage = () => {
 };
 
 export default SearchResultsPage;
+
+

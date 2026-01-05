@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { API_ENDPOINTS, getAuthHeaders } from "../services/api";
-import { toast } from "react-hot-toast";
+
 import { fetchUserProfile } from "../store/slices/user";
 import {
   FaSpinner,
@@ -73,7 +73,7 @@ const Catalogue = () => {
           setPromotions([]);
         }
       } catch (error) {
-        console.error('Erreur chargement promotions:', error);
+
       } finally {
         setLoadingPromotions(false);
       }
@@ -105,7 +105,7 @@ const Catalogue = () => {
           setCadeaux([]);
         }
       } catch (error) {
-        console.error("Erreur chargement cadeaux:", error);
+
       } finally {
         setLoadingCadeaux(false);
       }
@@ -141,7 +141,7 @@ const Catalogue = () => {
           setProduitsGratuits([]);
         }
       } catch (error) {
-        console.error("Erreur chargement produits gratuits:", error);
+
       } finally {
         setLoadingGratuits(false);
       }
@@ -205,7 +205,7 @@ const Catalogue = () => {
           }
         }
       } catch (error) {
-        console.error("Erreur codes promo:", error);
+
         setCodesPromo([]);
       } finally {
         setLoadingCodesPromo(false);
@@ -441,3 +441,4 @@ const Catalogue = () => {
 };
 
 export default Catalogue;
+

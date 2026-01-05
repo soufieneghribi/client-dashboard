@@ -10,7 +10,7 @@ export const fetchFeaturedRecipes = createAsyncThunk(
       const { data } = await axios.get(API_ENDPOINTS.RECIPES.FEATURED);
       return data;
     } catch (error) {
-      console.error("Error fetching featured recipes:", error);
+
       return rejectWithValue(
         error.response?.data?.message || "Erreur lors du chargement des recettes"
       );
@@ -26,7 +26,7 @@ export const fetchAllRecipes = createAsyncThunk(
       const { data } = await axios.get(API_ENDPOINTS.RECIPES.ALL);
       return data;
     } catch (error) {
-      console.error("Error fetching all recipes:", error);
+
       return rejectWithValue(
         error.response?.data?.message || "Erreur lors du chargement des recettes"
       );
@@ -42,7 +42,7 @@ export const fetchRecipeDetails = createAsyncThunk(
       const { data } = await axios.get(API_ENDPOINTS.RECIPES.BY_ID(recipeId));
       return data;
     } catch (error) {
-      console.error("Error fetching recipe details:", error);
+
       return rejectWithValue(
         error.response?.data?.message || "Erreur lors du chargement de la recette"
       );

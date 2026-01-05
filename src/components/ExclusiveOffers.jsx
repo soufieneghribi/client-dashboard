@@ -2,7 +2,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { selectIsLoggedIn } from "../store/slices/authSlice";
-import toast from "react-hot-toast";
+
 import "../styles/ExclusiveOffers.css";
 
 // Import images
@@ -14,10 +14,7 @@ const ExclusiveOffers = () => {
     const isLoggedIn = useSelector(selectIsLoggedIn);
 
     const showLoginPrompt = () => {
-        toast.error("Connectez-vous pour débloquer des avantages exclusifs", {
-            duration: 3000,
-            icon: "🔒",
-        });
+        
         setTimeout(() => {
             navigate("/login");
         }, 1000);
@@ -133,3 +130,4 @@ const ExclusiveOffers = () => {
 };
 
 export default ExclusiveOffers;
+

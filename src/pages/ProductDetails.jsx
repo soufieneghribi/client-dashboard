@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useParams, Link } from "react-router-dom";
 import { fetchProductById } from "../store/slices/product";
-import toast from "react-hot-toast";
+
 import Cookies from "js-cookie";
 import {
   FaPlus,
@@ -100,16 +100,16 @@ const ProductDetails = () => {
       } else cart.push(newItem);
       Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
       setIsAdded(true);
-      toast.success("Produit ajouté !");
+      // 
       setTimeout(() => navigate("/cart-shopping"), 1500);
     } catch (err) {
-      toast.error("Erreur panier");
+      // 
     }
   };
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
-    toast.success(isFavorite ? "Retiré des favoris" : "Ajouté aux favoris");
+    // 
   };
 
   if (loading || promotionLoading) return (
@@ -205,3 +205,5 @@ const ProductDetails = () => {
 };
 
 export default ProductDetails;
+
+

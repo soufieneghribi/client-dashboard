@@ -3,13 +3,13 @@ import axios from "axios";
 import { API_ENDPOINTS } from "../../services/api";
 
 export const fetchCategories = createAsyncThunk(
-  "categorie/fetchCategories", 
+  "categorie/fetchCategories",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(API_ENDPOINTS.CATEGORIES.ALL);
-      return response.data; 
+      return response.data;
     } catch (error) {
-      console.error("Error fetching categories:", error);
+
       return rejectWithValue(error.response?.data || error.message);
     }
   }

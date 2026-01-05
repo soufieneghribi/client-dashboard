@@ -3,39 +3,39 @@ import axios from "axios";
 import { API_ENDPOINTS } from "../../services/api";
 
 export const fetchProduct = createAsyncThunk(
-  "product/fetchProduct", 
+  "product/fetchProduct",
   async (id_type, { rejectWithValue }) => {
     try {
       const response = await axios.get(API_ENDPOINTS.PRODUCTS.BY_TYPE(id_type));
-      return response.data; 
+      return response.data;
     } catch (error) {
-      console.error("Error fetching products:", error);
+
       return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
 
 export const fetchProductById = createAsyncThunk(
-  "product/fetchProductById", 
+  "product/fetchProductById",
   async (idProduct, { rejectWithValue }) => {
     try {
       const response = await axios.get(API_ENDPOINTS.PRODUCTS.BY_ID(idProduct));
-      return response.data; 
+      return response.data;
     } catch (error) {
-      console.error("Error fetching products:", error);
+
       return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
 
 export const fetchAllProduct = createAsyncThunk(
-  "product/fetchAllProduct", 
+  "product/fetchAllProduct",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(API_ENDPOINTS.PRODUCTS.ALL);
-      return response.data; 
+      return response.data;
     } catch (error) {
-      console.error("Error fetching products:", error);
+
       return rejectWithValue(error.response?.data || error.message);
     }
   }
@@ -43,7 +43,7 @@ export const fetchAllProduct = createAsyncThunk(
 
 const productSlice = createSlice({
   name: "product",
-  initialState: { 
+  initialState: {
     product: [],
     loading: null,
     error: null,

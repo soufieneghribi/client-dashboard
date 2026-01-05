@@ -1,0 +1,219 @@
+.deals-container {
+    min-height: 100vh;
+    padding-bottom: 5rem;
+    background-color: #f8fafc;
+}
+
+.deals-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    padding: 3rem 1rem 4rem;
+    color: white;
+    margin-bottom: -2.5rem;
+    text-align: center;
+}
+
+.deals-header h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.025em;
+}
+
+.deals-header p {
+    font-size: 0.9375rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.deals-summary-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 10;
+}
+
+.deals-summary-item {
+    padding: 1rem;
+    border-radius: 16px;
+    transition: transform 0.2s ease;
+}
+
+.deals-summary-item:hover {
+    transform: translateY(-2px);
+}
+
+.deal-card-wrapper {
+    background: white;
+    border-radius: 20px;
+    padding: 0;
+    height: 100%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid #f1f5f9;
+}
+
+.deal-card-wrapper:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.deal-card-inner {
+    padding: 1.5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.deal-type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+}
+
+.deal-card-logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    background: #f1f5f9;
+}
+
+.deal-card-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.01em;
+}
+
+.deal-card-desc {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.deal-objective-track {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.deal-objective-step {
+    padding: 0.5rem;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 0.75rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.deal-objective-step.completed {
+    background: #fdf2f8;
+    border-color: #fce7f3;
+}
+
+.deal-progress-container {
+    margin-bottom: 1.5rem;
+}
+
+.deal-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #64748b;
+}
+
+.deal-progress-bar {
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.deal-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 9999px;
+    transition: width 1s ease-out;
+}
+
+.deal-reward-box {
+    margin-top: auto;
+    background: #f0fdf4;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #166534;
+}
+
+.victory-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: 2px solid #fbbf24;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.victory-card::before {
+    content: '🎉';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 4rem;
+    opacity: 0.1;
+    transform: rotate(15deg);
+}
+
+.victory-card-gain {
+    background: #fffbeb;
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    border: 1px dashed #fcd34d;
+}
+
+.victory-button {
+    width: 100%;
+    padding: 0.875rem;
+    border-radius: 12px;
+    font-weight: 700;
+    background: #fbbf24;
+    color: #78350f;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.victory-button:hover:not(:disabled) {
+    background: #f59e0b;
+    transform: scale(1.02);
+}
+
+.victory-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

@@ -7,7 +7,7 @@ import {
   selectRecipesLoading
 } from "../store/slices/recipes";
 import Cookies from "js-cookie";
-import toast from "react-hot-toast";
+
 import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
 /**
@@ -180,7 +180,7 @@ const RecipeDetails = () => {
   const addRecipeToCart = useCallback(() => {
     const articles = recipe?.recipe?.articles || recipe?.articles;
     if (!articles?.length) {
-      toast.error("Aucun ingrédient disponible pour cette recette");
+      // 
       return;
     }
 
@@ -225,7 +225,7 @@ const RecipeDetails = () => {
       });
 
       Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
-      toast.success(`${addedCount} ingrédient(s) ajouté(s) au panier !`);
+      // ajouté(s) au panier !`);
 
       setTimeout(() => {
         setIsAdding(false);
@@ -233,8 +233,8 @@ const RecipeDetails = () => {
       }, 1500);
 
     } catch (error) {
-      console.error("Error adding to cart:", error);
-      toast.error("Une erreur est survenue. Veuillez réessayer.");
+
+      // 
       setIsAdding(false);
     }
   }, [recipe, getArticlesNeeded, id, navigate]);
@@ -520,3 +520,5 @@ const RecipeDetails = () => {
 };
 
 export default RecipeDetails;
+
+

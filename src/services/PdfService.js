@@ -11,7 +11,7 @@ class PdfService {
      * @param {Object} orderData - Données complètes de la commande
      */
     static generateOrderPdf(orderData) {
-        console.log("PDF Generation started with data:", orderData);
+
 
         if (!orderData || !orderData.id) {
             throw new Error("Données de commande manquantes ou invalides");
@@ -164,9 +164,9 @@ class PdfService {
 
             // Sauvegarde
             doc.save(`Facture_${orderId}.pdf`);
-            console.log("PDF Generation successful");
+
         } catch (error) {
-            console.error("Error inside PdfService.generateOrderPdf:", error);
+
             throw error;
         }
     }

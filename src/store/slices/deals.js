@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import { toast } from "react-hot-toast";
+
 import { fetchUserProfileForce } from "./user";
 import { API_ENDPOINTS, getAuthHeaders } from "../../services/api";
 
@@ -17,7 +17,7 @@ const isDealFullyCompleted = (deal) => {
     const objectif = parseFloat(deal.objectif_frequence) || 5;
     return visites >= objectif;
   }
-  
+
   const objectives = [
     { value: parseFloat(deal.objectif_1) || 0, gain: parseFloat(deal.gain_objectif_1) || 0 },
     { value: parseFloat(deal.objectif_2) || 0, gain: parseFloat(deal.gain_objectif_2) || 0 },
@@ -29,12 +29,12 @@ const isDealFullyCompleted = (deal) => {
   if (objectives.length === 0) return false;
 
   // ✅ Vérifier plusieurs champs possibles pour le compteur
-  const current = parseFloat(deal.compteur_objectif) || 
-                  parseFloat(deal.montant_achats) || 
-                  parseFloat(deal.total_achats) ||
-                  parseFloat(deal.current_amount) || 0;
+  const current = parseFloat(deal.compteur_objectif) ||
+    parseFloat(deal.montant_achats) ||
+    parseFloat(deal.total_achats) ||
+    parseFloat(deal.current_amount) || 0;
   const highestObjective = objectives[objectives.length - 1];
-  
+
   return current >= highestObjective.value;
 };
 
@@ -45,11 +45,11 @@ const isDealFullyCompleted = (deal) => {
 const transformDealsData = (deals) => {
   return deals.map(deal => {
     // ✅ Chercher le compteur dans plusieurs champs possibles
-    const compteur = parseFloat(deal.compteur_objectif) || 
-                     parseFloat(deal.montant_achats) || 
-                     parseFloat(deal.total_achats) ||
-                     parseFloat(deal.current_amount) || 0;
-    
+    const compteur = parseFloat(deal.compteur_objectif) ||
+      parseFloat(deal.montant_achats) ||
+      parseFloat(deal.total_achats) ||
+      parseFloat(deal.current_amount) || 0;
+
     return {
       ID: deal.ID_deal_depense || deal.ID_deal_anniversaire || deal.ID,
       ID_client: deal.ID_client,
@@ -79,14 +79,14 @@ const transformDealsData = (deals) => {
 const transformMarqueDealsData = (deals) => {
   return deals.map(deal => {
     // ✅ Chercher le compteur dans plusieurs champs possibles
-    const compteur = parseFloat(deal.compteur_objectif) || 
-                     parseFloat(deal.montant_achats) || 
-                     parseFloat(deal.total_achats) ||
-                     parseFloat(deal.current_amount) ||
-                     parseFloat(deal.montant_marque) || 0;
-    
-    console.log(`📊 Deal Marque ${deal.marque?.nom_marque || deal.nom_marque}: compteur=${compteur}`, deal);
-    
+    const compteur = parseFloat(deal.compteur_objectif) ||
+      parseFloat(deal.montant_achats) ||
+      parseFloat(deal.total_achats) ||
+      parseFloat(deal.current_amount) ||
+      parseFloat(deal.montant_marque) || 0;
+
+
+
     return {
       ID: deal.ID_deal_marque,
       ID_client: deal.ID_client,
@@ -141,7 +141,7 @@ const calculateTotals = (allDeals) => {
   allDeals.forEach(deal => {
     const amountEarned = parseFloat(deal.amount_earned) || 0;
     totalEarned += amountEarned;
-    
+
     if (deal.type === "frequence") {
       const visites = Math.floor(parseFloat(deal.compteur_frequence) || 0);
       const objectif = parseFloat(deal.objectif_frequence) || 5;
@@ -157,12 +157,12 @@ const calculateTotals = (allDeals) => {
         { value: parseFloat(deal.objectif_4) || 0, gain: parseFloat(deal.gain_objectif_4) || 0 },
         { value: parseFloat(deal.objectif_5) || 0, gain: parseFloat(deal.gain_objectif_5) || 0 },
       ].filter(obj => obj.value > 0);
-      
+
       if (objectives.length > 0) {
         // ✅ Utiliser le même compteur que dans le transformer
-        const current = parseFloat(deal.compteur_objectif) || 
-                        parseFloat(deal.montant_achats) || 0;
-        
+        const current = parseFloat(deal.compteur_objectif) ||
+          parseFloat(deal.montant_achats) || 0;
+
         let nextObjectiveGain = 0;
         for (let i = 0; i < objectives.length; i++) {
           if (current < objectives[i].value) {
@@ -202,7 +202,7 @@ export const fetchClientDeals = createAsyncThunk(
       ]);
 
       // ✅ Log pour debug
-      console.log("📦 Raw marque deals:", marqueRes.data?.data);
+
 
       const depenseDeals = transformDealsData(depenseRes.data?.data || []).map(d => ({ ...d, type: 'depense' }));
       const marqueDeals = transformMarqueDealsData(marqueRes.data?.data || []).map(d => ({ ...d, type: 'marque' }));
@@ -210,11 +210,11 @@ export const fetchClientDeals = createAsyncThunk(
       const anniversaireDeals = transformDealsData(anniversaireRes.data?.data || []).map(d => ({ ...d, type: 'anniversaire' }));
 
       // ✅ Log pour debug
-      console.log("✅ Transformed marque deals:", marqueDeals);
+
 
       return { depense: depenseDeals, marque: marqueDeals, frequence: frequenceDeals, anniversaire: anniversaireDeals };
     } catch (error) {
-      console.error("Error fetching client deals:", error);
+
       return rejectWithValue(error.response?.data?.message || "Failed to fetch deals");
     }
   }
@@ -230,7 +230,7 @@ export const transferDealToCagnotte = createAsyncThunk(
       const state = getState();
       const dealArray = state.deals[dealType];
       const deal = dealArray?.find(d => d.ID === dealId);
-      
+
       if (!deal) return rejectWithValue("Deal non trouvé");
       if (!isDealFullyCompleted(deal)) return rejectWithValue("Le deal n'est pas encore complètement terminé");
 
@@ -251,7 +251,7 @@ export const transferDealToCagnotte = createAsyncThunk(
 
       return { dealType, dealId, amount, success: true, message: `${amount} DT transférés avec succès vers votre cagnotte!` };
     } catch (error) {
-      console.error(`Transfer failed:`, error);
+
       return rejectWithValue(error.response?.data?.message || "Échec du transfert");
     }
   }
@@ -314,12 +314,12 @@ const dealsSlice = createSlice({
       .addCase(transferDealToCagnotte.fulfilled, (state, action) => {
         state.transferLoading = false;
         state.transferredDeals.push(`${action.payload.dealType}_${action.payload.dealId}`);
-        toast.success(action.payload.message);
+        // 
       })
       .addCase(transferDealToCagnotte.rejected, (state, action) => {
         state.transferLoading = false;
         state.transferError = action.payload;
-        toast.error(action.payload || "Échec du transfert");
+        // 
       });
   }
 });
@@ -327,3 +327,5 @@ const dealsSlice = createSlice({
 export const { setActiveDeal, clearError, updateDealProgress, clearDeals, markDealAsTransferred } = dealsSlice.actions;
 export { isDealFullyCompleted };
 export default dealsSlice.reducer;
+
+

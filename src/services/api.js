@@ -52,6 +52,12 @@ export const API_ENDPOINTS = {
     BY_ID: (id) => `${API_BASE_URL}/categories/${id}`,
   },
 
+  // ==================== ENSEIGNES ====================
+  ENSEIGNES: {
+    ALL: `${API_BASE_URL}/enseignes`,
+    DEFAULT: `${API_BASE_URL}/enseignes/default`,
+  },
+
   // ==================== DEALS ====================
   DEALS: {
     DEPENSE: {
@@ -238,11 +244,11 @@ export const getFullAuthToken = () => {
 
     const token = localToken || cookieToken || null;
     if (!token) {
-      console.warn('🔑 getFullAuthToken: No token found in localStorage or Cookies');
+
     }
     return token;
   } catch (e) {
-    console.error('🔑 getFullAuthToken Error:', e);
+
     return null;
   }
 };
@@ -251,7 +257,7 @@ export const getAuthHeaders = (token = null) => {
   const authToken = token || getFullAuthToken();
 
   if (!authToken) {
-    console.error('🔑 getAuthHeaders: No auth token available!');
+
   }
 
   return {
@@ -279,7 +285,7 @@ export const getAuthHeadersMultipart = (token = null) => {
 };
 
 export const handleApiError = (error) => {
-  console.error('API Error:', error);
+
 
   if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
     return 'Délai d\'attente dépassé. Veuillez réessayer.';

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+
 import { refreshAuth } from "../store/slices/authSlice";
 
 const getAuthToken = () => {
@@ -14,7 +14,7 @@ const getAuthToken = () => {
     const localToken = localStorage.getItem("token");
     return cookieToken || localToken;
   } catch (error) {
-    console.error("Error getting auth token:", error);
+
     return null;
   }
 };
@@ -32,7 +32,7 @@ const ProtectedRoute = ({ children }) => {
       const hasToken = isLoggedIn || token || storedToken;
 
       if (!hasToken) {
-        toast.error("Veuillez vous connecter pour accéder à cette page.");
+        // 
         sessionStorage.setItem('redirectAfterLogin', location.pathname);
         navigate("/login", { replace: true });
         return;
@@ -67,3 +67,5 @@ const ProtectedRoute = ({ children }) => {
 };
 
 export default ProtectedRoute;
+
+

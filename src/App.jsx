@@ -2,8 +2,7 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { Outlet } from "react-router-dom";
 import { fetchCategories } from "./store/slices/categorie";
-import { Toaster } from "react-hot-toast";
-import Header from "./components/Header";
+import Header from "./components/Header/Header";
 import Footer from "./components/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./styles/styles.css";
@@ -20,47 +19,21 @@ function App() {
   /**
    * Load categories on application startup
    */
-useEffect(() => {
-  Modal.setAppElement('#root'); // ← AJOUTEZ CETTE LIGNE
-  dispatch(fetchCategories());
-}, [dispatch]);
+  useEffect(() => {
+    Modal.setAppElement('#root');
+    dispatch(fetchCategories());
+  }, [dispatch]);
 
   return (
     <div>
-      {/* Toast notifications container */}
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: '#4ade80',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            duration: 4000,
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
-        }}
-      />
-      
       {/* Global Header */}
-      <Header/>
-      
+      <Header />
+
       {/* Route Content */}
-      <Outlet/>
-      
+      <Outlet />
+
       {/* Global Footer */}
-      <Footer/>
+      <Footer />
     </div>
   );
 }

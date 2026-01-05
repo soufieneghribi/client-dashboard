@@ -3,27 +3,28 @@ import { Provider } from "react-redux";
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom';
 import store from "./store";
 import App from "./App";
-import Home from "./pages/Home";
+import Home from "./pages/Home/Home";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Register from "./pages/Register/Register";
 import EmailVerification from "./pages/EmailVerification";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
-import MesDeals from "./pages/MesDeals";
+import MesDeals from "./pages/Deals/Deals";
 import Categories from "./pages/Categories";
 import Products from "./pages/ProductsBySubCategory";
 import ProductDetails from "./pages/ProductDetails";
 import SubCategory from "./components/SubCategory";
 import Catalogue from "./pages/Catalogue";
 import Promotions from "./pages/Promotions";
-import Cadeaux from "./pages/Cadeaux";
-import MesCadeaux from "./pages/MesCadeaux";
-import CartShopping from "./pages/CartShopping";
-import Favoris from "./pages/Favoris";
-import Profile from "./pages/Profile";
-import Loyality from "./pages/Loyality";
-import OrderConfirmation from "./pages/OrderConfirmation";
+import Cadeaux from "./pages/Gifts/GiftsCatalogue";
+import GiftDetailsPage from "./pages/Gifts/GiftDetailsPage";
+import MesCadeaux from "./pages/Gifts/MyGifts";
+import CartShopping from "./pages/Cart/Cart";
+import Favoris from "./pages/Favorites/Favorites";
+import Profile from "./pages/Profile/Profile";
+import Loyality from "./pages/Loyalty/Loyalty";
+import OrderConfirmation from "./pages/OrderConfirmation/OrderConfirmation";
 import Orders from "./pages/Commandes";
 import SearchResult from "./components/SearchResult";
 import ProtectedRoute from "./pages/ProtectedRoute";
@@ -46,7 +47,7 @@ import MescodePromo from "./pages/MescodePromo";
 // ⬅️ NOUVEAUX IMPORTS - Réclamations
 import Reclamations from "./pages/Reclamations";
 import ReclamationForm from "./pages/ReclamationForm";
-import ReclamationDetails from "./pages/ReclamationDetails";
+import ReclamationDetails from "./pages/ReclamationDetails/ReclamationDetails";
 
 // ⬅️ NOUVEAUX IMPORTS - Crédit
 import CreditSimulation from "./pages/Credit/CreditSimulation";
@@ -102,6 +103,7 @@ const router = createBrowserRouter(
       <Route path="/catalogue" element={<Catalogue />} />
       <Route path="/promotions" element={<Promotions />} />
       <Route path="/cadeaux" element={<Cadeaux />} />
+      <Route path="/cadeaux/:id" element={<GiftDetailsPage />} />
 
       {/* ⬅️ NOUVELLES ROUTES - CODES PROMO (Publiques) */}
       <Route path="/code-promo" element={<Codepromo />} />

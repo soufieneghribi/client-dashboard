@@ -1,0 +1,32 @@
+import React from "react";
+
+const UniverseSelector = ({ selectedUniverse, setSelectedUniverse }) => {
+    const universes = [
+        { id: null, label: "Tous", desc: "Toutes les catégories", emoji: "🏪", colorClass: "purple" },
+        { id: 1, label: "Épicerie", desc: "Alimentation & Maison", emoji: "🛒", colorClass: "green" },
+        { id: 2, label: "Électronique", desc: "High-Tech & Électroménager", emoji: "📱", colorClass: "blue" },
+    ];
+
+    return (
+        <section className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-8 px-4">
+            {universes.map((uni) => (
+                <button
+                    key={uni.id}
+                    onClick={() => setSelectedUniverse(uni.id)}
+                    className={`flex-1 max-w-xs font-bold py-4 sm:py-6 px-6 sm:px-8 rounded-2xl shadow-xl transform transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 sm:gap-4 ${selectedUniverse === uni.id
+                            ? `bg-gradient-to-r from-${uni.colorClass}-500 to-${uni.colorClass}-600 text-white`
+                            : "bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200"
+                        }`}
+                >
+                    <span className="text-3xl sm:text-4xl">{uni.emoji}</span>
+                    <div className="text-left">
+                        <div className="text-lg sm:text-xl font-bold">{uni.label}</div>
+                        <div className="text-xs sm:text-sm opacity-90">{uni.desc}</div>
+                    </div>
+                </button>
+            ))}
+        </section>
+    );
+};
+
+export default UniverseSelector;

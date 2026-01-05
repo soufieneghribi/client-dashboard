@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStores, selectAllStores, selectStoresLoading, selectStore } from '../store/slices/stores';
-
 import axios from 'axios';
 import { API_ENDPOINTS, getAuthHeaders } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,9 +8,7 @@ import { FaMapMarkerAlt, FaStore, FaClock, FaCheck, FaTruck } from 'react-icons/
 
 /**
  * RelayPointSelector - Component for selecting a relay point/store
- * ✅ CORRIGÉ: Gestion d'erreur silencieuse pour éviter les toasts multiples
  * Displays list of stores with calculated delivery fees
- * Matches mobile app functionality
  */
 const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartItems, deliveryModes }) => {
     const dispatch = useDispatch();
@@ -21,35 +18,16 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
     const [selectedId, setSelectedId] = useState(selectedStoreId);
     const [storeFees, setStoreFees] = useState({});
     const [loadingFees, setLoadingFees] = useState({});
-    const [authError, setAuthError] = useState(false); // ✅ NOUVEAU: Détecter erreur auth
+    const [authError, setAuthError] = useState(false);
 
     // Fetch stores on mount
     useEffect(() => {
         dispatch(fetchStores());
     }, [dispatch]);
 
-    // Calculate fees for all stores when they load or dependencies change
-    useEffect(() => {
-        // ✅ Ne pas calculer si erreur d'authentification détectée
-        if (authError) {
-            console.log("⚠️ Auth error detected, skipping fee calculation");
-            return;
-        }
-
-        if (stores.length > 0 && deliveryModes && deliveryModes.length > 0 && cartTotal > 0) {
-            stores.forEach(store => {
-                // Optimisation : ne recalculer que si le prix n'est pas déjà connu
-                if (storeFees[store.id] === undefined && !loadingFees[store.id]) {
-                    calculateFeeForStore(store);
-                }
-            });
-        }
-    }, [stores, deliveryModes, cartTotal, cartItems, authError]);
-
+    // Calculate fees for a specific store
     const calculateFeeForStore = async (store) => {
-        if (!cartTotal || !cartItems || cartItems.length === 0) return;
-
-        console.log(`🔍 Calculating fee for store ${store.id} (${store.name})...`);
+        if (!cartTotal || !cartItems || cartItems.length === 0 || !deliveryModes) return;
 
         // Find Point Relais mode ID
         const relayMode = deliveryModes?.find(m =>
@@ -87,8 +65,6 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                 { headers: getAuthHeaders() }
             );
 
-            console.log(`✅ Fee for store ${store.id}:`, response.data.frais_livraison);
-
             const fee = response.data.frais_livraison !== undefined
                 ? response.data.frais_livraison
                 : (response.data.delivery_fee !== undefined ? response.data.delivery_fee : null);
@@ -98,16 +74,9 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                 [store.id]: fee
             }));
         } catch (error) {
-            console.error(`❌ Error calculating fee for store ${store.id}:`, error.response?.status, error.message);
-
-            // ✅ CORRECTION CRITIQUE: Gestion silencieuse des erreurs 401/403
             if (error.response?.status === 401 || error.response?.status === 403) {
-                console.error("🚨 AUTH ERROR during fee calculation - Setting authError flag");
                 setAuthError(true);
-                // ✅ NE PAS afficher de toast ici - c'est géré par OrderConfirmation
-                // Le parent (OrderConfirmation) gère déjà la validation du token
             }
-
             setStoreFees(prev => ({
                 ...prev,
                 [store.id]: null
@@ -116,6 +85,19 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
             setLoadingFees(prev => ({ ...prev, [store.id]: false }));
         }
     };
+
+    // Calculate fees for all stores
+    useEffect(() => {
+        if (authError) return;
+
+        if (stores.length > 0 && deliveryModes && deliveryModes.length > 0 && cartTotal > 0) {
+            stores.forEach(store => {
+                if (storeFees[store.id] === undefined && !loadingFees[store.id]) {
+                    calculateFeeForStore(store);
+                }
+            });
+        }
+    }, [stores, deliveryModes, cartTotal, cartItems, authError]);
 
     const handleStoreSelect = (store) => {
         setSelectedId(store.id);
@@ -127,9 +109,7 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center py-12 px-4 space-y-4">
-                <div className="relative">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                </div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                 <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] animate-pulse">Chargement des points relais...</p>
             </div>
         );
@@ -140,18 +120,17 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
             <div className="bg-slate-50 rounded-[2rem] p-10 text-center border-2 border-dashed border-slate-200">
                 <div className="text-4xl mb-4 opacity-20">📍</div>
                 <p className="text-slate-500 font-bold uppercase tracking-tight">Aucun point relais disponible</p>
-                <p className="text-slate-400 text-xs mt-1">Revenez plus tard ou choisissez un autre mode.</p>
+                <p className="text-slate-400 text-xs mt-1">Revenez plus tard.</p>
             </div>
         );
     }
 
-    // ✅ NOUVEAU: Afficher un message si erreur d'auth détectée
     if (authError) {
         return (
             <div className="bg-orange-50 rounded-[2rem] p-10 text-center border-2 border-orange-200">
                 <div className="text-4xl mb-4">⚠️</div>
                 <p className="text-orange-700 font-bold uppercase tracking-tight">Session expirée</p>
-                <p className="text-orange-500 text-xs mt-1">Veuillez vous reconnecter pour voir les frais de livraison.</p>
+                <p className="text-orange-500 text-xs mt-1">Veuillez vous reconnecter.</p>
             </div>
         );
     }
@@ -163,8 +142,7 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                     <FaTruck size={14} />
                 </div>
                 <div>
-                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">Points de retrait disponibles</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sélectionnez le point le plus proche</p>
+                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">Points de retrait</h3>
                 </div>
             </div>
 
@@ -184,43 +162,35 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                                 transition={{ delay: index * 0.05 }}
                                 onClick={() => handleStoreSelect(store)}
                                 className={`relative group p-5 rounded-[1.75rem] cursor-pointer transition-all border-2 overflow-hidden ${isSelected
-                                    ? 'border-blue-500 bg-white shadow-xl shadow-blue-900/5 ring-4 ring-blue-50'
-                                    : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'
+                                        ? 'border-blue-500 bg-white shadow-xl shadow-blue-900/5 ring-4 ring-blue-50'
+                                        : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'
                                     }`}
                             >
                                 <div className="flex items-center gap-4 relative z-10">
-                                    {/* Store Icon */}
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-white shadow-sm'
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'
                                         }`}>
                                         <FaStore />
                                     </div>
 
-                                    {/* Store Info */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                             <p className={`font-black tracking-tight truncate ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>
                                                 {store.name}
                                             </p>
-                                            {isSelected && (
-                                                <span className="bg-blue-600 text-[8px] font-black text-white px-2 py-0.5 rounded-full uppercase tracking-widest leading-normal">Sélectionné</span>
-                                            )}
                                         </div>
                                         <div className="flex items-center gap-1.5 mt-0.5">
                                             <FaMapMarkerAlt className="text-slate-300 text-[10px]" />
-                                            <p className="text-[11px] text-slate-400 font-medium truncate uppercase tracking-tighter">
+                                            <p className="text-[11px] text-slate-400 font-medium truncate uppercase">
                                                 {[store.address, store.city].filter(Boolean).join(', ')}
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* Price / Status */}
                                     <div className="flex flex-col items-end gap-2">
                                         {isLoadingFee ? (
                                             <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
                                         ) : (fee !== undefined && fee !== null) ? (
-                                            <div className={`px-4 py-1.5 rounded-2xl text-[10px] font-black tracking-widest uppercase shadow-sm border ${isFree
-                                                ? 'bg-green-50 text-green-600 border-green-100'
-                                                : 'bg-blue-50 text-blue-600 border-blue-100'
+                                            <div className={`px-4 py-1.5 rounded-2xl text-[10px] font-black tracking-widest uppercase border ${isFree ? 'bg-green-50 text-green-600 border-green-100' : 'bg-blue-50 text-blue-600 border-blue-100'
                                                 }`}>
                                                 {isFree ? 'Gratuit' : `${Number(fee).toFixed(2)} DT`}
                                             </div>
@@ -228,37 +198,17 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                                             <div className="text-[10px] text-slate-300 font-bold italic">Frais non disp.</div>
                                         )}
 
-                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${isSelected ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-500/30' : 'border-slate-200 bg-white'
+                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${isSelected ? 'bg-blue-600 border-blue-600' : 'border-slate-200'
                                             }`}>
                                             {isSelected && <FaCheck className="text-white text-[10px]" />}
                                         </div>
                                     </div>
                                 </div>
-
-                                {isSelected && (
-                                    <motion.div
-                                        layoutId="selection-glow"
-                                        className="absolute -left-10 -bottom-10 w-32 h-32 bg-blue-500/5 blur-[40px] rounded-full"
-                                    />
-                                )}
                             </motion.div>
                         );
                     })}
                 </AnimatePresence>
             </div>
-
-            <style jsx>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #e2e8f0;
-                    border-radius: 10px;
-                }
-            `}</style>
         </div>
     );
 };

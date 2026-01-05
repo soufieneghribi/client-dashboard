@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-hot-toast";
+
 import {
   FaSpinner,
   FaSearch,
@@ -40,32 +40,32 @@ const CodePromo = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    console.log("Chargement initial des codes promo");
+    
     dispatch(fetchCodePromos({ page: 1 }));
   }, [dispatch]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    console.log("Recherche:", searchQuery);
+    
     dispatch(setSearch(searchQuery || null));
     dispatch(fetchCodePromos({ page: 1, filters: { ...filters, search: searchQuery || null } }));
   };
 
   const handleLoadMore = () => {
     if (!isLoading && hasMore) {
-      console.log("Chargement page suivante:", currentPage + 1);
+      
       dispatch(fetchCodePromos({ page: currentPage + 1, filters }));
     }
   };
 
   const handleFilterChange = (filterType, value) => {
-    console.log("Filtre changé:", filterType, value);
+    
     dispatch(setFilters({ [filterType]: value }));
     dispatch(fetchCodePromos({ page: 1, filters: { ...filters, [filterType]: value } }));
   };
 
   const handleClearFilters = () => {
-    console.log("Réinitialisation des filtres");
+    
     setSearchQuery("");
     dispatch(clearFilters());
     dispatch(fetchCodePromos({ page: 1 }));
@@ -457,3 +457,4 @@ const CodePromo = () => {
 };
 
 export default CodePromo;
+

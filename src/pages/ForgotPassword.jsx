@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../services/api';
-import toast from 'react-hot-toast';
+
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
-  
+
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,20 +24,20 @@ const ForgotPassword = () => {
       setError('Email requis');
       return false;
     }
-    
+
     if (!/\S+@\S+\.\S+/.test(email)) {
       setError('Email invalide');
       return false;
     }
-    
+
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validate()) return;
-    
+
     setIsLoading(true);
 
     try {
@@ -53,37 +53,34 @@ const ForgotPassword = () => {
       );
 
       setEmailSent(true);
-      toast.success('✅ Email de réinitialisation envoyé avec succès!', {
-        duration: 5000,
-        icon: '📧',
-      });
-      
+
+
       setIsLoading(false);
-      
+
     } catch (error) {
-      console.error('Erreur lors de l\'envoi:', error.response?.data);
-      
+
+
       if (error.response?.status === 404) {
-        toast.error('❌ Aucun compte trouvé avec cette adresse email');
+        // 
         setError('Aucun compte trouvé avec cette adresse email');
       } else if (error.response?.status === 422) {
         const errors = error.response?.data?.errors;
         if (errors && errors.email) {
           const errorMsg = Array.isArray(errors.email) ? errors.email[0] : errors.email;
-          toast.error(errorMsg);
+          // 
           setError(errorMsg);
         } else {
-          toast.error('Erreur de validation');
+          // 
           setError('Erreur de validation');
         }
       } else if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
+        // 
         setError(error.response.data.message);
       } else {
-        toast.error('Erreur lors de l\'envoi de l\'email');
+        // 
         setError('Erreur lors de l\'envoi de l\'email');
       }
-      
+
       setIsLoading(false);
     }
   };
@@ -331,13 +328,13 @@ const ForgotPassword = () => {
                       <div className="info-box">
                         <i className="bi bi-info-circle me-2"></i>
                         <p>
-                          <strong>Conseil :</strong> Si vous ne recevez pas l'email dans les prochaines minutes, 
+                          <strong>Conseil :</strong> Si vous ne recevez pas l'email dans les prochaines minutes,
                           vérifiez votre dossier spam ou courrier indésirable.
                         </p>
                       </div>
 
                       <div className="d-grid gap-2">
-                        <button 
+                        <button
                           type="button"
                           className="btn btn-outline-primary"
                           onClick={handleResend}
@@ -345,7 +342,7 @@ const ForgotPassword = () => {
                           <i className="bi bi-arrow-clockwise me-2"></i>
                           Renvoyer l'email
                         </button>
-                        
+
                         <Link to="/login" className="btn btn-primary">
                           <i className="bi bi-box-arrow-in-right me-2"></i>
                           Retour à la connexion
@@ -394,8 +391,8 @@ const ForgotPassword = () => {
                         </div>
 
                         <div className="d-grid gap-2 mb-3">
-                          <button 
-                            type="submit" 
+                          <button
+                            type="submit"
                             className="btn btn-primary"
                             disabled={isLoading}
                           >
@@ -433,3 +430,5 @@ const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
+
+

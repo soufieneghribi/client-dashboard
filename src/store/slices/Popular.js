@@ -1,7 +1,7 @@
 // src/store/slices/Popular.js
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import toast from "react-hot-toast";
+
 import { API_ENDPOINTS, getAuthHeaders } from "../../services/api";
 
 // ===================================
@@ -50,8 +50,8 @@ export const fetchPopularWithPromotions = createAsyncThunk(
           if (promoResponse.data && promoResponse.data.success && promoResponse.data.data) {
             // ✅ FILTRER LES PROMOTIONS ACTIVES ET VALIDES
             const validPromotions = promoResponse.data.data.filter(promo => {
-              const isActive = new Date(promo.start_date) <= new Date() && 
-                             new Date(promo.end_date) >= new Date();
+              const isActive = new Date(promo.start_date) <= new Date() &&
+                new Date(promo.end_date) >= new Date();
               const hasValidArticles = promo.articles && Array.isArray(promo.articles) && promo.articles.length > 0;
               return isActive && hasValidArticles;
             });
@@ -93,7 +93,7 @@ export const fetchPopularWithPromotions = createAsyncThunk(
 
         if (allProductsResponse.data && allProductsResponse.data.products) {
           const allProducts = allProductsResponse.data.products;
-          
+
           // Mélanger et prendre 6 produits aléatoires
           const shuffled = [...allProducts].sort(() => 0.5 - Math.random());
           articles = shuffled.slice(0, 6).map(product => ({
@@ -112,21 +112,21 @@ export const fetchPopularWithPromotions = createAsyncThunk(
 
     } catch (error) {
       // Gestion des erreurs existante...
-    
+
 
       // Gestion des erreurs spécifiques
       if (error.code === 'ECONNABORTED') {
-        toast.error("Délai d'attente dépassé. Veuillez réessayer.");
+        // 
         return rejectWithValue("Timeout");
       } else if (error.response) {
         const message = error.response.data?.message || "Erreur serveur";
-        toast.error(message);
+        // 
         return rejectWithValue(message);
       } else if (error.request) {
-        toast.error("Problème de connexion réseau");
+        // 
         return rejectWithValue("Network error");
       } else {
-        toast.error("Une erreur est survenue");
+        // 
         return rejectWithValue(error.message);
       }
     }
@@ -157,17 +157,17 @@ export const fetchPopular = createAsyncThunk(
     } catch (error) {
 
       if (error.code === 'ECONNABORTED') {
-        toast.error("Délai d'attente dépassé. Veuillez réessayer.");
+        // 
         return rejectWithValue("Timeout");
       } else if (error.response) {
         const message = error.response.data?.message || "Erreur serveur";
-        toast.error(message);
+        // 
         return rejectWithValue(message);
       } else if (error.request) {
-        toast.error("Problème de connexion réseau");
+        // 
         return rejectWithValue("Network error");
       } else {
-        toast.error("Une erreur est survenue");
+        // 
         return rejectWithValue(error.message);
       }
     }
@@ -195,24 +195,24 @@ const popularSlice = createSlice({
   name: "popular",
   initialState: {
     // Données
-    popular: [],              
-    products: [],             
-    
+    popular: [],
+    products: [],
+
     // Promotions
     hasPromotions: false,     // Indique si les produits affichés sont des promotions
     promotionsData: null,     // Données complètes des promotions
     clientId: null,           // ID du client actuel
-    
+
     // États de chargement
-    loading: false,           
-    isLoaded: false,          
-    
+    loading: false,
+    isLoaded: false,
+
     // Erreurs
-    error: null,              
-    
+    error: null,
+
     // Métadonnées
-    lastFetch: null,          
-    totalCount: 0,            
+    lastFetch: null,
+    totalCount: 0,
   },
 
   reducers: {
@@ -265,20 +265,19 @@ const popularSlice = createSlice({
         state.totalCount = state.products.length;
         state.lastFetch = new Date().toISOString();
         state.error = null;
-        
-        console.log("✅ Produits chargés:", {
-        });
+
+
       })
       .addCase(fetchPopularWithPromotions.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Échec du chargement";
         state.isLoaded = false;
-        
+
       })
 
-    // ===================================
-    // FETCH POPULAR (ancienne méthode)
-    // ===================================
+      // ===================================
+      // FETCH POPULAR (ancienne méthode)
+      // ===================================
       .addCase(fetchPopular.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -292,23 +291,22 @@ const popularSlice = createSlice({
         state.totalCount = state.products.length;
         state.lastFetch = new Date().toISOString();
         state.error = null;
-        
-        console.log("✅ Produits populaires chargés:", {
-        });
+
+
       })
       .addCase(fetchPopular.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Échec du chargement";
         state.isLoaded = false;
-        
+
       })
 
-    // ===================================
-    // REFRESH POPULAR
-    // ===================================
+      // ===================================
+      // REFRESH POPULAR
+      // ===================================
       .addCase(refreshPopular.pending, (state) => {
         state.loading = true;
-        console.log("🔄 Rafraîchissement des produits...");
+
       });
   },
 });
@@ -318,10 +316,10 @@ const popularSlice = createSlice({
 // ===================================
 
 // Actions
-export const { 
-  clearPopular, 
-  clearError, 
-  setLoading 
+export const {
+  clearPopular,
+  clearError,
+  setLoading
 } = popularSlice.actions;
 
 // Selectors
@@ -364,11 +362,13 @@ export default popularSlice.reducer;
 export const shouldRefreshPopular = (state) => {
   if (!state.popular.isLoaded) return true;
   if (!state.popular.lastFetch) return true;
-  
+
   const lastFetch = new Date(state.popular.lastFetch);
   const now = new Date();
   const diffMinutes = (now - lastFetch) / 1000 / 60;
-  
+
   // Recharger si plus de 30 minutes
   return diffMinutes > 30;
 };
+
+

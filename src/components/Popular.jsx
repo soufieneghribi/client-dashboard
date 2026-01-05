@@ -18,7 +18,7 @@ import {
   Spinner,
 } from "react-bootstrap";
 import { FaTag, FaStar, FaShoppingCart, FaHeart } from "react-icons/fa";
-import toast from "react-hot-toast";
+
 import Cookies from "js-cookie";
 import WishlistButton from "./WishlistButton";
 import { getImageUrl, handleImageError } from "../utils/imageHelper";
@@ -124,16 +124,6 @@ const Popular = () => {
     }
 
     Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
-
-    if (product.isPromotion && product.pivot) {
-      toast.success(
-        `Produit en promotion ajouté ! Économisez ${formatPrice(
-          price - finalPrice
-        )} DT`
-      );
-    } else {
-      toast.success("Produit ajouté au panier !");
-    }
   };
 
   const slides = products.reduce((acc, product, i) => {
@@ -371,3 +361,5 @@ const Popular = () => {
 };
 
 export default Popular;
+
+

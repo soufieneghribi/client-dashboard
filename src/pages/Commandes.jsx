@@ -15,7 +15,7 @@ import {
 import { fetchOrder } from "../store/slices/order";
 import { fetchUserProfile } from "../store/slices/user";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-hot-toast";
+
 
 /**
  * Commandes Component - Simple, User-Friendly with Pagination
@@ -69,7 +69,7 @@ const Commandes = () => {
 
   useEffect(() => {
     if (!auth_token) {
-      toast.error("Veuillez vous connecter");
+      // 
       navigate("/login");
       return;
     }
@@ -469,3 +469,5 @@ const getStatusConfig = (status) => {
 };
 
 export default Commandes;
+
+

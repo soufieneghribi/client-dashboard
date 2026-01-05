@@ -1,5 +1,5 @@
 // components/Layout.jsx
-import Header from "./Header";
+import Header from "./Header/Header";
 import Footer from "./Footer";
 import { Toaster } from "react-hot-toast";
 

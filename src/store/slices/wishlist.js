@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import toast from "react-hot-toast";
+
 import { API_ENDPOINTS, getAuthHeaders } from "../../services/api";
 
 // ===================================
@@ -20,7 +20,7 @@ export const fetchWishlist = createAsyncThunk(
                     headers: getAuthHeaders(),
                 }
             );
-            console.log("✅ Wishlist response:", response.data);
+
 
             // Extract data from API response
             let wishlistData = response.data.data || response.data.wishlist || response.data || [];
@@ -39,11 +39,10 @@ export const fetchWishlist = createAsyncThunk(
                 updated_at: item.updated_at,
             })) : [];
 
-            console.log("✅ Mapped wishlist data:", mappedData);
+
             return mappedData;
         } catch (error) {
-            console.error("❌ Fetch wishlist error:", error);
-            console.error("❌ Response:", error.response?.data);
+
             return rejectWithValue(
                 error.response?.data?.message || "Échec du chargement des favoris"
             );
@@ -65,12 +64,12 @@ export const addToWishlist = createAsyncThunk(
                     headers: getAuthHeaders(),
                 }
             );
-            console.log("✅ Add to wishlist response:", response.data);
-            toast.success("Ajouté aux favoris");
+
+            // 
             return response.data;
         } catch (error) {
-            console.error("❌ Add to wishlist error:", error);
-            toast.error("Échec de l'ajout aux favoris");
+
+            // 
             return rejectWithValue(
                 error.response?.data?.message || "Échec de l'ajout aux favoris"
             );
@@ -92,12 +91,12 @@ export const removeFromWishlist = createAsyncThunk(
                     headers: getAuthHeaders(),
                 }
             );
-            console.log("✅ Remove from wishlist response:", response.data);
-            toast.success("Retiré des favoris");
+
+            // 
             return productId;
         } catch (error) {
-            console.error("❌ Remove from wishlist error:", error);
-            toast.error("Échec de la suppression");
+
+            // 
             return rejectWithValue(
                 error.response?.data?.message || "Échec de la suppression"
             );
@@ -120,10 +119,10 @@ export const toggleWishlist = createAsyncThunk(
                 }
             );
 
-            console.log("✅ Toggle wishlist response:", response.data);
+
 
             const isAdded = response.data.action === 'added';
-            toast.success(isAdded ? "Ajouté aux favoris" : "Retiré des favoris");
+            // 
 
             return {
                 productId,
@@ -131,8 +130,8 @@ export const toggleWishlist = createAsyncThunk(
                 wishlist: response.data.wishlist || response.data.data || []
             };
         } catch (error) {
-            console.error("❌ Toggle wishlist error:", error);
-            toast.error("Erreur lors de la modification");
+
+            // 
             return rejectWithValue(
                 error.response?.data?.message || "Erreur lors de la modification"
             );
@@ -158,7 +157,7 @@ export const checkWishlist = createAsyncThunk(
                 isInWishlist: response.data.in_wishlist || false
             };
         } catch (error) {
-            console.error("❌ Check wishlist error:", error);
+
             return rejectWithValue(
                 error.response?.data?.message || "Échec de la vérification"
             );
@@ -182,7 +181,7 @@ export const batchCheckWishlist = createAsyncThunk(
             );
             return response.data.results || {};
         } catch (error) {
-            console.error("❌ Batch check wishlist error:", error);
+
             return rejectWithValue(
                 error.response?.data?.message || "Échec de la vérification"
             );
@@ -204,11 +203,11 @@ export const clearWishlist = createAsyncThunk(
                     headers: getAuthHeaders(),
                 }
             );
-            toast.success("Favoris vidés");
+            // 
             return [];
         } catch (error) {
-            console.error("❌ Clear wishlist error:", error);
-            toast.error("Échec du vidage des favoris");
+
+            // 
             return rejectWithValue(
                 error.response?.data?.message || "Échec du vidage des favoris"
             );
@@ -231,7 +230,7 @@ export const getWishlistCount = createAsyncThunk(
             );
             return response.data.count || 0;
         } catch (error) {
-            console.error("❌ Get wishlist count error:", error);
+
             return rejectWithValue(
                 error.response?.data?.message || "Échec du comptage"
             );
@@ -271,12 +270,12 @@ const wishlistSlice = createSlice({
                 state.loading = false;
                 state.items = action.payload;
                 state.count = action.payload.length;
-                console.log("✅ Wishlist items loaded:", action.payload.length);
+
             })
             .addCase(fetchWishlist.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
-                console.error("❌ Wishlist load failed:", action.payload);
+
             })
 
             // Add to Wishlist
@@ -307,7 +306,7 @@ const wishlistSlice = createSlice({
                 );
                 state.count = state.items.length;
                 delete state.checkedProducts[action.payload];
-                console.log("✅ Product removed from wishlist:", action.payload);
+
             })
             .addCase(removeFromWishlist.rejected, (state, action) => {
                 state.loading = false;
@@ -332,7 +331,7 @@ const wishlistSlice = createSlice({
                     state.count = state.items.length;
                 }
 
-                console.log(`✅ Wishlist toggled for product ${productId}: ${isAdded ? 'added' : 'removed'}`);
+
             })
             .addCase(toggleWishlist.rejected, (state, action) => {
                 state.loading = false;
@@ -386,3 +385,5 @@ export const selectIsInWishlist = (productId) => (state) =>
     state.wishlist.checkedProducts[productId] || false;
 
 export default wishlistSlice.reducer;
+
+

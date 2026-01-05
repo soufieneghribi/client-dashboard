@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { toast } from "react-hot-toast";
+
 import { API_ENDPOINTS } from "../../services/api";
 
 // Async thunk for fetching Offre
@@ -11,7 +11,7 @@ export const fetchOffre = createAsyncThunk(
       const response = await axios.get(API_ENDPOINTS.OFFERS.ALL);
       return response.data;
     } catch (err) {
-      toast.error("Erreur lors du chargement des offres.");
+      // 
       return rejectWithValue(err.response ? err.response.data : err.message);
     }
   }
@@ -24,7 +24,7 @@ export const fetchOffreById = createAsyncThunk(
       const response = await axios.get(API_ENDPOINTS.OFFERS.BY_ID(id));
       return response.data;
     } catch (err) {
-      toast.error("Erreur lors du chargement de l'offre.");
+      // 
       return rejectWithValue(err.response ? err.response.data : err.message);
     }
   }
@@ -69,3 +69,5 @@ const offreSlice = createSlice({
 });
 
 export default offreSlice.reducer;
+
+

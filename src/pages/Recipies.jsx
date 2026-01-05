@@ -40,15 +40,10 @@ const Recipes = () => {
   // Debug: Afficher la structure des données
   useEffect(() => {
     if (recipes.length > 0) {
-      console.log("=== DEBUG RECETTES ===");
-      console.log("Nombre de recettes:", recipes.length);
-      console.log("Première recette complète:", recipes[0]);
-      console.log("Propriétés d'image disponibles:", {
-        img: recipes[0].img,
-        image: recipes[0].image,
-        picture: recipes[0].picture,
-        thumbnail: recipes[0].thumbnail
-      });
+
+
+
+
     }
   }, [recipes]);
 
@@ -71,19 +66,19 @@ const Recipes = () => {
   };
 
   // Fonction améliorée pour récupérer l'URL de l'image
- const getImageUrl = (recipe) => {
-  const imagePath = recipe.img || recipe.image || recipe.picture || recipe.thumbnail || recipe.photo;
-  
-  if (!imagePath) return "https://via.placeholder.com/400x300?text=Recette";
-  if (imagePath.startsWith('http')) return imagePath;
-  
-  return `https://storage.googleapis.com/tn360-asset/recipes/${imagePath}`;
-};
+  const getImageUrl = (recipe) => {
+    const imagePath = recipe.img || recipe.image || recipe.picture || recipe.thumbnail || recipe.photo;
+
+    if (!imagePath) return "https://via.placeholder.com/400x300?text=Recette";
+    if (imagePath.startsWith('http')) return imagePath;
+
+    return `https://storage.googleapis.com/tn360-asset/recipes/${imagePath}`;
+  };
 
   // Filtrage des recettes
   const filteredRecipes = recipes.filter(recipe => {
     const matchesSearch = recipe.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         recipe.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      recipe.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDifficulty = difficultyFilter === "all" || recipe.difficulty === difficultyFilter;
     return matchesSearch && matchesDifficulty;
   });
@@ -134,7 +129,7 @@ const Recipes = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        
+
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center mb-4">
@@ -163,10 +158,10 @@ const Recipes = () => {
                 }}
                 className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:outline-none transition-colors"
               />
-              <svg 
+              <svg
                 className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
-                fill="none" 
-                stroke="currentColor" 
+                fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -203,8 +198,8 @@ const Recipes = () => {
               Aucune recette trouvée
             </h3>
             <p className="text-gray-500">
-              {recipes.length === 0 
-                ? "Aucune recette n'est disponible pour le moment" 
+              {recipes.length === 0
+                ? "Aucune recette n'est disponible pour le moment"
                 : "Essayez de modifier vos critères de recherche"}
             </p>
           </div>
@@ -224,48 +219,44 @@ const Recipes = () => {
                       alt={recipe.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       onError={(e) => {
-                        console.error(`❌ Erreur de chargement pour "${recipe.name}":`, {
-                          tentative: e.target.src,
-                          recette: recipe
-                        });
                         e.target.src = "https://via.placeholder.com/400x300?text=Recette";
                       }}
                       onLoad={() => {
-                        console.log(`✅ Image chargée: "${recipe.name}"`);
+
                       }}
                     />
-                    
+
                     {/* Badge difficulté */}
                     <div className={`absolute top-3 right-3 ${getDifficultyColor(recipe.difficulty)} text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg`}>
                       {getDifficultyLabel(recipe.difficulty)}
                     </div>
 
-                   {/* Image avec overlay */}
-<div className="relative h-48 bg-gray-200 overflow-hidden">
-  {/* Image principale */}
-  <img
-    src={getImageUrl(recipe)}
-    alt={recipe.name}
-    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-    onError={(e) => {
-      e.target.src = "https://via.placeholder.com/400x300?text=Recette";
-    }}
-  />
-  
-  {/* Badge difficulté */}
-  <div className={`absolute top-3 right-3 ${getDifficultyColor(recipe.difficulty)} text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10`}>
-    {getDifficultyLabel(recipe.difficulty)}
-  </div>
+                    {/* Image avec overlay */}
+                    <div className="relative h-48 bg-gray-200 overflow-hidden">
+                      {/* Image principale */}
+                      <img
+                        src={getImageUrl(recipe)}
+                        alt={recipe.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                          e.target.src = "https://via.placeholder.com/400x300?text=Recette";
+                        }}
+                      />
 
-  {/* Overlay semi-transparent + bouton */}
-  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
-    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-4 group-hover:translate-y-0">
-      <button className="bg-white text-indigo-600 px-4 py-2 rounded-lg font-semibold">
-        Voir la recette
-      </button>
-    </div>
-  </div>
-</div>
+                      {/* Badge difficulté */}
+                      <div className={`absolute top-3 right-3 ${getDifficultyColor(recipe.difficulty)} text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10`}>
+                        {getDifficultyLabel(recipe.difficulty)}
+                      </div>
+
+                      {/* Overlay semi-transparent + bouton */}
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-4 group-hover:translate-y-0">
+                          <button className="bg-white text-indigo-600 px-4 py-2 rounded-lg font-semibold">
+                            Voir la recette
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Contenu */}
@@ -305,11 +296,10 @@ const Recipes = () => {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    currentPage === 1
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-indigo-600 hover:bg-indigo-50 shadow-md'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-indigo-600 hover:bg-indigo-50 shadow-md'
+                    }`}
                 >
                   Précédent
                 </button>
@@ -326,11 +316,10 @@ const Recipes = () => {
                         <button
                           key={page}
                           onClick={() => handlePageChange(page)}
-                          className={`w-10 h-10 rounded-lg font-medium transition-colors ${
-                            currentPage === page
-                              ? 'bg-indigo-600 text-white shadow-lg'
-                              : 'bg-white text-gray-700 hover:bg-gray-100 shadow-md'
-                          }`}
+                          className={`w-10 h-10 rounded-lg font-medium transition-colors ${currentPage === page
+                            ? 'bg-indigo-600 text-white shadow-lg'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 shadow-md'
+                            }`}
                         >
                           {page}
                         </button>
@@ -348,11 +337,10 @@ const Recipes = () => {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    currentPage === totalPages
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-indigo-600 hover:bg-indigo-50 shadow-md'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${currentPage === totalPages
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-indigo-600 hover:bg-indigo-50 shadow-md'
+                    }`}
                 >
                   Suivant
                 </button>

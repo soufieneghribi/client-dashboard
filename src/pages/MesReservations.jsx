@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_ENDPOINTS, getAuthHeaders } from "../services/api";
-import { toast } from "react-hot-toast";
+
 import {
   FaSpinner,
   FaQrcode,
@@ -64,13 +64,11 @@ const MesReservations = () => {
         const data = result.data?.data || result.data || [];
         setReservations(data);
       } else {
-        toast.error(
-          result.message || "Erreur lors du chargement des réservations"
-        );
+
       }
     } catch (error) {
-      console.error("Erreur chargement réservations:", error);
-      toast.error("Erreur lors du chargement des réservations");
+
+      // 
     } finally {
       setLoading(false);
     }
@@ -157,7 +155,7 @@ const MesReservations = () => {
 
   const copyToClipboard = (code) => {
     navigator.clipboard.writeText(code);
-    toast.success("Code copié dans le presse-papiers!");
+    // 
   };
 
   const toggleExpand = (id) => {
@@ -211,42 +209,38 @@ const MesReservations = () => {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilterStatus(null)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                filterStatus === null
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${filterStatus === null
                   ? "bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-md"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Toutes ({reservations.length})
             </button>
             <button
               onClick={() => setFilterStatus("pending")}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                filterStatus === "pending"
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${filterStatus === "pending"
                   ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-md"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
             >
               En attente (
               {reservations.filter((r) => r.status === "pending").length})
             </button>
             <button
               onClick={() => setFilterStatus("ready")}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                filterStatus === "ready"
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${filterStatus === "ready"
                   ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Prêt ({reservations.filter((r) => r.status === "ready").length})
             </button>
             <button
               onClick={() => setFilterStatus("completed")}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                filterStatus === "completed"
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${filterStatus === "completed"
                   ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Retiré (
               {reservations.filter((r) => r.status === "completed").length})
@@ -288,9 +282,8 @@ const MesReservations = () => {
               return (
                 <div
                   key={reservation.id}
-                  className={`bg-white rounded-2xl shadow-md overflow-hidden transition-all hover:shadow-lg ${
-                    statusInfo.borderColor
-                  } border-2`}
+                  className={`bg-white rounded-2xl shadow-md overflow-hidden transition-all hover:shadow-lg ${statusInfo.borderColor
+                    } border-2`}
                 >
                   {/* Main Content */}
                   <div
@@ -371,9 +364,8 @@ const MesReservations = () => {
                       </div>
                       {reservation.expires_at && (
                         <div
-                          className={`flex items-center gap-2 ${
-                            isExpiredReservation ? "text-red-600" : ""
-                          }`}
+                          className={`flex items-center gap-2 ${isExpiredReservation ? "text-red-600" : ""
+                            }`}
                         >
                           <FaClock />
                           <span>
@@ -478,3 +470,5 @@ const MesReservations = () => {
 };
 
 export default MesReservations;
+
+

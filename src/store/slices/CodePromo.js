@@ -51,7 +51,7 @@ export const fetchCodePromos = createAsyncThunk(
       }
 
       const result = await response.json();
-      
+
       // ✅ Gérer les différents formats de réponse
       let codesData = [];
       if (result.success && result.data) {
@@ -68,16 +68,16 @@ export const fetchCodePromos = createAsyncThunk(
         const filteredData = codesData.filter(code => {
           // Vérifier is_active au lieu de is_published
           if (!code.is_active) return false;
-          
+
           // Vérifier valid_to au lieu de valid_until
           const notExpired = !code.valid_to || new Date(code.valid_to) >= now;
-          
+
           // Vérifier valid_from
           const notUpcoming = !code.valid_from || new Date(code.valid_from) <= now;
-          
+
           // Vérifier stock_remaining au lieu de remaining_quantity
           const inStock = !code.is_limited || (code.stock_remaining && code.stock_remaining > 0);
-          
+
           return notExpired && notUpcoming && inStock;
         });
 
@@ -104,7 +104,7 @@ export const fetchCodePromos = createAsyncThunk(
         };
       }
     } catch (error) {
-      console.error("Erreur fetchCodePromos:", error);
+
       return rejectWithValue(error.message);
     }
   }
@@ -142,7 +142,7 @@ export const fetchCodePromoDetails = createAsyncThunk(
         return rejectWithValue("Format de réponse invalide");
       }
     } catch (error) {
-      console.error("Erreur fetchCodePromoDetails:", error);
+
       return rejectWithValue(error.message);
     }
   }
@@ -181,7 +181,7 @@ export const reserveCodePromo = createAsyncThunk(
         return rejectWithValue(result.message || "Erreur de réservation");
       }
     } catch (error) {
-      console.error("Erreur reserveCodePromo:", error);
+
       return rejectWithValue(error.message);
     }
   }
@@ -205,7 +205,7 @@ export const fetchMyCodePromos = createAsyncThunk(
         params.append("status", status);
       }
 
-      console.log("🔄 Chargement de mes codes promo:", API_ENDPOINTS.CODE_PROMO.MY_CODES);
+
 
       const response = await fetch(
         `${API_ENDPOINTS.CODE_PROMO.MY_CODES}?${params.toString()}`,
@@ -217,12 +217,12 @@ export const fetchMyCodePromos = createAsyncThunk(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("❌ Erreur API:", response.status, errorData);
+
         throw new Error(errorData.message || `HTTP ${response.status}`);
       }
 
       const result = await response.json();
-      console.log("📦 Réponse mes codes:", result);
+
 
       // Gérer les différents formats
       let myCodesData = [];
@@ -234,14 +234,14 @@ export const fetchMyCodePromos = createAsyncThunk(
         myCodesData = result.data;
       }
 
-      console.log(`✅ ${myCodesData.length} codes réservés`);
+
 
       return {
         data: myCodesData,
         status,
       };
     } catch (error) {
-      console.error("❌ Erreur fetchMyCodePromos:", error);
+
       return rejectWithValue(error.message);
     }
   }

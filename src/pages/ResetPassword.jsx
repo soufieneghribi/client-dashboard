@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../services/api';
-import toast from 'react-hot-toast';
+
 
 const ResetPassword = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
+
   const [formData, setFormData] = useState({
     email: '',
     token: '',
@@ -27,7 +27,7 @@ const ResetPassword = () => {
 
     if (!email || !token) {
       setTokenValid(false);
-      toast.error('❌ Lien de réinitialisation invalide');
+      // 
     } else {
       setFormData(prev => ({
         ...prev,
@@ -40,7 +40,7 @@ const ResetPassword = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -48,28 +48,28 @@ const ResetPassword = () => {
 
   const validate = () => {
     const newErrors = {};
-    
+
     if (!formData.password) {
       newErrors.password = 'Mot de passe requis';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
     }
-    
+
     if (!formData.password_confirmation) {
       newErrors.password_confirmation = 'Confirmation requise';
     } else if (formData.password !== formData.password_confirmation) {
       newErrors.password_confirmation = 'Les mots de passe ne correspondent pas';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validate()) return;
-    
+
     setIsLoading(true);
 
     try {
@@ -89,18 +89,15 @@ const ResetPassword = () => {
         }
       );
 
-      toast.success('✅ Mot de passe réinitialisé avec succès!', {
-        duration: 4000,
-        icon: '🎉',
-      });
-      
+
+
       setTimeout(() => {
         navigate('/login');
       }, 2000);
-      
+
     } catch (error) {
-      console.error('Erreur lors de la réinitialisation:', error.response?.data);
-      
+
+
       if (error.response?.status === 422) {
         const errors = error.response?.data?.errors;
         if (errors) {
@@ -109,19 +106,19 @@ const ResetPassword = () => {
             newErrors[key] = Array.isArray(errors[key]) ? errors[key][0] : errors[key];
           });
           setErrors(newErrors);
-          
+
           const firstError = Object.values(errors)[0];
-          toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+          // ? firstError[0] : firstError);
         }
       } else if (error.response?.status === 400 || error.response?.status === 404) {
-        toast.error('❌ Token invalide ou expiré. Veuillez demander un nouveau lien.');
+        // 
         setTokenValid(false);
       } else if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
+        // 
       } else {
-        toast.error('Erreur lors de la réinitialisation du mot de passe');
+        // 
       }
-      
+
       setIsLoading(false);
     }
   };
@@ -190,27 +187,27 @@ const ResetPassword = () => {
                   <div className="error-icon">
                     <i className="bi bi-x-circle"></i>
                   </div>
-                  
+
                   <h2 style={{ color: '#2d3748', fontSize: '1.5rem', fontWeight: '700', marginBottom: '15px' }}>
                     Lien invalide ou expiré
                   </h2>
-                  
+
                   <p style={{ color: '#718096', fontSize: '0.95rem', marginBottom: '30px' }}>
-                    Ce lien de réinitialisation n'est plus valide. 
+                    Ce lien de réinitialisation n'est plus valide.
                     Veuillez demander un nouveau lien de réinitialisation.
                   </p>
-                  
+
                   <div className="d-grid gap-2">
                     <Link to="/forgot-password" className="btn btn-primary">
                       <i className="bi bi-arrow-clockwise me-2"></i>
                       Demander un nouveau lien
                     </Link>
-                    
-                    <Link 
-                      to="/login" 
-                      style={{ 
-                        color: '#667eea', 
-                        textDecoration: 'none', 
+
+                    <Link
+                      to="/login"
+                      style={{
+                        color: '#667eea',
+                        textDecoration: 'none',
                         fontWeight: '500',
                         marginTop: '10px'
                       }}
@@ -526,8 +523,8 @@ const ResetPassword = () => {
 
                     {/* Bouton de réinitialisation */}
                     <div className="d-grid gap-2 mb-3">
-                      <button 
-                        type="submit" 
+                      <button
+                        type="submit"
                         className="btn btn-primary"
                         disabled={isLoading}
                       >
@@ -546,12 +543,12 @@ const ResetPassword = () => {
                     </div>
 
                     <div className="text-center">
-                      <Link 
-                        to="/login" 
-                        style={{ 
-                          color: '#667eea', 
-                          textDecoration: 'none', 
-                          fontWeight: '500' 
+                      <Link
+                        to="/login"
+                        style={{
+                          color: '#667eea',
+                          textDecoration: 'none',
+                          fontWeight: '500'
                         }}
                       >
                         <i className="bi bi-arrow-left me-2"></i>
@@ -570,3 +567,5 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
+
+

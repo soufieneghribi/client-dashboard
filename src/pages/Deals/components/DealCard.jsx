@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { getBrandColor, getDealProgress } from "../dealUtils";
 import { FiBarChart2, FiTag, FiCheckCircle, FiMessageSquare, FiClock } from "react-icons/fi";
+import { FaGift, FaStar } from "react-icons/fa";
+import frequencesImg from "../../../assets/images/frequencesImg.png";
 
 const DealCard = ({ deal, isFullyCompleted }) => {
     const [imageError, setImageError] = useState(false);
@@ -54,8 +56,106 @@ const DealCard = ({ deal, isFullyCompleted }) => {
         }
     };
 
+    const frequencyStepColors = [
+        'linear-gradient(135deg, #facc15 0%, #eab308 100%)', // Yellow
+        'linear-gradient(135deg, #a3e635 0%, #65a30d 100%)', // Lime
+        'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', // Cyan
+        '#f3f4f6',
+        '#f3f4f6'
+    ];
+
     if (isFullyCompleted) return null;
 
+    // -------------------------------------------
+    // FREQUENCY CARD DESIGN
+    // -------------------------------------------
+    if (deal.type === 'frequence') {
+        return (
+            <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 relative overflow-hidden mb-4">
+                {/* Badge */}
+                <span className="inline-block px-4 py-1.5 rounded-xl bg-[#8b5cf6] text-white font-bold text-sm mb-4 shadow-md shadow-purple-200">
+                    Fréquence
+                </span>
+
+                {/* Main Content Row */}
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="w-24 h-24 shrink-0 flex items-center justify-center">
+                        <img src={frequencesImg} alt="Deal Fréquence" className="w-full h-full object-contain drop-shadow-lg" />
+                    </div>
+                    <div>
+                        <div className="text-right">
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Gagné</p>
+                            <h3 className="text-xl font-black text-[#ef4444] leading-none">
+                                {deal.gain} <span className="text-sm text-slate-400 font-bold">dt</span>
+                            </h3>
+                            <p className="text-[10px] text-slate-400 font-semibold leading-tight mt-1">
+                                si vous atteignez l'objectif
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Title & Desc */}
+                <div className="mb-5">
+                    <h2 className="text-lg font-black text-slate-800 mb-1">Deal Fréquence</h2>
+                    <p className="text-sm font-medium text-slate-500 leading-relaxed">
+                        Commande régulièrement et gagnez jusqu'à {deal.gain} DT
+                    </p>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="h-3 bg-slate-100 rounded-full overflow-hidden mb-6 relative">
+                    <div
+                        className="h-full rounded-full transition-all duration-500 ease-out relative"
+                        style={{
+                            width: `${Math.min(100, (progress.current / deal.objectif_frequence) * 100)}%`,
+                            background: 'linear-gradient(90deg, #06b6d4, #3b82f6)'
+                        }}
+                    >
+                    </div>
+                </div>
+
+                {/* Visit Steps (Mocking general steps visually if specific data isn't step-based like marque deals) */}
+                <div className="flex gap-2 mb-5 overflow-x-auto pb-2 scrollbar-hide">
+                    {[1, 2, 3, 4, 5].map((step, idx) => {
+                        const isCompleted = progress.current >= (deal.objectif_frequence / 5) * step; // Approximation logic
+                        const bgStyle = frequencyStepColors[idx % frequencyStepColors.length];
+                        const isGradient = bgStyle.includes('gradient');
+
+                        return (
+                            <div
+                                key={step}
+                                className="flex-1 min-w-[60px] h-[70px] rounded-2xl flex flex-col items-center justify-center relative p-1 transition-transform active:scale-95"
+                                style={{
+                                    background: isCompleted ? bgStyle : '#f8fafc',
+                                    boxShadow: isCompleted ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+                                    color: isCompleted ? 'white' : '#94a3b8'
+                                }}
+                            >
+                                <span className="text-[10px] font-bold opacity-80">{step}ère</span>
+                                <span className="text-sm font-black mt-0.5">10 DT</span>
+                                {isCompleted && (
+                                    <div className="absolute -bottom-2 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                        <FiCheckCircle className="text-green-500 text-xs" />
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center gap-2 text-[#ef4444] font-bold text-sm bg-red-50 px-4 py-3 rounded-xl border border-red-100">
+                    <FaGift className="text-lg" />
+                    <span>Mes visites : {progress.current}</span>
+                </div>
+            </div>
+        );
+    }
+
+    // -------------------------------------------
+    // DEFAULT / OTHER CARDS DESIGN
+    // -------------------------------------------
     return (
         <div className="deal-card-mobile">
             {/* Local "Global Style" Timer Block */}
@@ -86,7 +186,8 @@ const DealCard = ({ deal, isFullyCompleted }) => {
 
             <div className="deal-card-header">
                 <span className={`mobile-badge ${deal.type}`} style={{ backgroundColor: brandColor }}>
-                    {deal.type === 'depense' ? 'Dépense' : 'Marque'}
+                    {deal.type === 'depense' ? 'Dépense' :
+                        deal.type === 'marque' ? 'Marque' : 'Anniversaire'}
                 </span>
             </div>
 
@@ -95,7 +196,9 @@ const DealCard = ({ deal, isFullyCompleted }) => {
                     {deal.image_url || deal.marque_logo ? (
                         <img src={deal.image_url || deal.marque_logo} alt={deal.marque_name} onError={() => setImageError(true)} />
                     ) : (
-                        deal.type === 'depense' ? <FiBarChart2 className="graph-icon" style={{ color: brandColor }} /> : <FiTag className="tag-icon" style={{ color: brandColor }} />
+                        deal.type === 'depense' ? <FiBarChart2 className="graph-icon" style={{ color: brandColor }} /> :
+                            deal.type === 'anniversaire' ? <FaGift className="tag-icon" style={{ color: brandColor }} /> :
+                                <FiTag className="tag-icon" style={{ color: brandColor }} />
                     )}
                 </div>
             </div>
@@ -107,15 +210,26 @@ const DealCard = ({ deal, isFullyCompleted }) => {
             </div>
 
             <div className="deal-title-section">
-                <h2>Deal {deal.type === 'depense' ? 'Dépense' : `Marque ${deal.marque_name || ''}`}</h2>
-                <p className="description-text">{deal.description || `Dépensez et gagnez jusqu'à ${highestGain} DT`}</p>
+                <h2>
+                    {deal.type === 'depense' ? 'Deal Dépense' :
+                        deal.type === 'anniversaire' ? 'Deal Anniversaire' :
+                            `Marque ${deal.marque_name || ''}`}
+                </h2>
+                <p className="description-text">
+                    {deal.description || (
+                        deal.type === 'anniversaire' ? "C'est votre anniversaire ! Profitez de ce deal spécial." :
+                            `Dépensez et gagnez jusqu'à ${highestGain} DT`
+                    )}
+                </p>
             </div>
 
             <div className="deal-meter-container">
                 <div className="deal-meter-bar">
                     <div
                         className="deal-meter-fill"
-                        style={{ width: `${Math.min(100, (progress.current / (parseFloat(deal.objectif_5) || 100)) * 100)}%` }}
+                        style={{
+                            width: `${Math.min(100, (progress.current / (parseFloat(deal.objectif_5) || 100)) * 100)}%`
+                        }}
                     ></div>
                 </div>
             </div>

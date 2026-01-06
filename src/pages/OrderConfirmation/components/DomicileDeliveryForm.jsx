@@ -46,27 +46,6 @@ const DomicileDeliveryForm = ({
                 </div>
             </div>
 
-            {/* Mode Selector */}
-            {deliveryModes.length > 0 && (
-                <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700 ml-1">Vitesse de livraison *</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {deliveryModes.map((mode) => (
-                            <button
-                                key={mode.mode_livraison_id}
-                                type="button"
-                                onClick={() => setSelectedMode(mode.mode_livraison_id)}
-                                className={`p-4 rounded-2xl text-left border-2 transition-all font-bold ${selectedMode === mode.mode_livraison_id.toString() || selectedMode === mode.mode_livraison_id
-                                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                    : 'border-slate-50 bg-slate-50 text-slate-500'
-                                    }`}
-                            >
-                                {mode.nom || mode.mode_livraison_id}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
 
             {/* Address Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">

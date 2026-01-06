@@ -376,6 +376,39 @@ const FeatureCarousel = () => {
                                 </div>
                             </div>
                         ))}
+
+                        {/* 7. 🔹 DYNAMIC DEALS (Frequency & Birthday) */}
+                        {isLoggedIn && [...frequence, ...anniversaire].map((deal, idx) => {
+                            const isFrequence = frequence.includes(deal);
+                            return (
+                                <div
+                                    key={`dynamic-${idx}`}
+                                    className="feature-card group"
+                                    onClick={() => navigate('/MesDeals')}
+                                    style={{
+                                        background: isFrequence
+                                            ? 'linear-gradient(135deg, #059669, #10b981)'
+                                            : 'linear-gradient(135deg, #db2777, #f472b6)',
+                                    }}
+                                >
+                                    <div className="feature-card-content">
+                                        <div className="feature-glass-badge">
+                                            {isFrequence ? <FaStar className="text-yellow-400" /> : <FaGift className="text-pink-300" />}
+                                            <span>{isFrequence ? 'DEAL FRÉQUENCE' : 'DEAL ANNIVERSAIRE'}</span>
+                                        </div>
+                                        <h3 className="text-white font-black text-xl leading-tight mb-1">
+                                            {deal.titre || (isFrequence ? "Points de fidélité" : "Cadeau d'anniversaire")}
+                                        </h3>
+                                        <p className="text-white/90 text-sm font-medium">
+                                            {isFrequence ? `Plus que ${deal.objectif_frequence - deal.compteur_frequence} visites !` : "Une surprise vous attend !"}
+                                        </p>
+                                        <button className="feature-action-btn self-start w-full">
+                                            En profiter
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

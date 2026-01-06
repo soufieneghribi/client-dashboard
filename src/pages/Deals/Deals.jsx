@@ -43,6 +43,8 @@ const Deals = () => {
     const allDeals = [
         ...depense.map((d) => ({ ...d, type: "depense" })),
         ...marque.map((d) => ({ ...d, type: "marque" })),
+        ...frequence.map((d) => ({ ...d, type: "frequence" })),
+        ...anniversaire.map((d) => ({ ...d, type: "anniversaire" })),
     ];
 
     useEffect(() => {

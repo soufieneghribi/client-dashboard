@@ -23,7 +23,6 @@ const NAV_LINKS = [
     { path: "/recipes", label: "Recettes", icon: "fa-utensils" },
     { path: "/promotions", label: "Catalogue", icon: "fa-book" },
     { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" },
-    { path: "/contact", label: "Contact", icon: "fa-envelope" },
     { path: "/reclamations", label: "Réclamations", icon: "fa-exclamation-circle" }
 ];
 

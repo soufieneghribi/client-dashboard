@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaTruck, FaMapMarkerAlt, FaStore, FaCheckCircle } from "react-icons/fa";
+import { FaTruck, FaMapMarkerAlt, FaStore, FaCheckCircle, FaHome } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import RelayPointSelector from "../../../components/RelayPointSelector";
 import StorePickupSelector from "../../../components/StorePickupSelector";
@@ -27,6 +27,43 @@ const DeliveryModeSection = ({
     setSelectedPickupStore,
     setPickupStoreFee
 }) => {
+
+    const modes = [
+        { id: 'delivery', label: 'Domicile', icon: FaHome, subtitle: 'Voir prix' },
+        { id: 'pickup', label: 'Retrait', icon: FaStore, subtitle: 'Gratuit' },
+        { id: 'relay_point', label: 'Point Relais', icon: FaMapMarkerAlt, subtitle: 'Voir prix' }
+    ];
+
+    const handleModeChange = (modeId) => {
+        handleInputChange({ target: { name: 'order_type', value: modeId } });
+
+        // Auto-select the corresponding API mode ID if available
+        if (deliveryModes && deliveryModes.length > 0) {
+            let targetMode = null;
+            if (modeId === 'relay_point') {
+                targetMode = deliveryModes.find(m =>
+                    m.code === 'POINT_RELAIS' ||
+                    ['point relais', 'point-relais', 'relais'].includes(m.nom?.toLowerCase())
+                );
+            } else if (modeId === 'pickup') {
+                targetMode = deliveryModes.find(m =>
+                    m.code === 'RETRAIT' ||
+                    ['retrait', 'magasin', 'boutique'].includes(m.nom?.toLowerCase())
+                );
+            } else {
+                // Default to Domicile/Standard
+                targetMode = deliveryModes.find(m =>
+                    !m.code?.includes('POINT_RELAIS') &&
+                    !['point relais', 'retrait'].includes(m.nom?.toLowerCase())
+                );
+            }
+
+            if (targetMode) {
+                setSelectedMode(targetMode.mode_livraison_id);
+            }
+        }
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -45,82 +82,39 @@ const DeliveryModeSection = ({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[
-                        { id: 'delivery', label: 'Domicile', icon: <FaTruck />, color: 'blue', desc: 'Livraison express' },
-                        { id: 'relay_point', label: 'Point Relais', icon: <FaMapMarkerAlt />, color: 'purple', desc: 'Proche de vous' },
-                        { id: 'pickup', label: 'Magasin', icon: <FaStore />, color: 'green', desc: 'Retrait gratuit' }
-                    ].map((mode) => (
-                        <button
-                            key={mode.id}
-                            type="button"
-                            onClick={() => handleInputChange({ target: { name: 'order_type', value: mode.id } })}
-                            className={`relative group p-6 rounded-[2rem] border-2 transition-all flex flex-col items-center text-center gap-3 ${formData.order_type === mode.id
-                                ? `border-${mode.color}-500 bg-${mode.color}-50 ring-4 ring-${mode.color}-50`
-                                : 'border-slate-100 hover:border-slate-200 bg-slate-50'
-                                }`}
-                        >
-                            <div className={`text-3xl mb-1 ${formData.order_type === mode.id ? `text-${mode.color}-500` : 'text-slate-400'}`}>
-                                {mode.icon}
-                            </div>
-                            <div>
-                                <div className="font-bold text-slate-900">{mode.label}</div>
-                                <div className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 mt-0.5">{mode.desc}</div>
-                            </div>
-
-                            {formData.order_type === mode.id && (
-                                <div className="absolute top-4 right-4 text-blue-500">
-                                    <FaCheckCircle size={18} />
-                                </div>
-                            )}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Content Section (Delivery / Relay / Pickup) */}
-                <div className="mt-8 pt-8 border-t border-slate-50">
-                    <AnimatePresence mode="wait">
-                        {formData.order_type === 'relay_point' ? (
-                            <motion.div
-                                key="relay"
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20 }}
+                {/* Mode Selector Cards */}
+                <div className="grid grid-cols-3 gap-3 mb-8">
+                    {modes.map((mode) => {
+                        const isSelected = formData.order_type === mode.id;
+                        const Icon = mode.icon;
+                        return (
+                            <button
+                                key={mode.id}
+                                onClick={() => handleModeChange(mode.id)}
+                                className={`relative flex flex-col items-center justify-center p-4 rounded-3xl transition-all duration-200 border-2 ${isSelected
+                                    ? 'border-slate-900 bg-slate-900 text-white shadow-lg shadow-slate-900/20'
+                                    : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:bg-slate-50'
+                                    }`}
                             >
-                                <RelayPointSelector
-                                    onStoreSelected={(store, fee) => {
-                                        setSelectedRelayPoint(store);
-                                        setRelayPointFee(fee || 0);
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            delivery_fee: fee || 0,
-                                            address: `Point relais: ${store.name}, ${store.address || ''}, ${store.city || ''}`,
-                                            ville: store.city || prev.ville,
-                                            gouvernorat: store.gouvernorat || prev.gouvernorat,
-                                            code_postal: String(store.code_postal || prev.code_postal || ""),
-                                        }));
-                                    }}
-                                    selectedStoreId={selectedRelayPoint?.id}
-                                    cartTotal={subtotal}
-                                    cartItems={orderDetails}
-                                    deliveryModes={deliveryModes}
-                                />
-                                {selectedRelayPoint && (
-                                    <div className="mt-6 p-6 bg-green-50 rounded-[1.5rem] border border-green-100 flex items-start gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white flex-shrink-0">
-                                            <FaCheckCircle />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-green-800 tracking-tight">{selectedRelayPoint.name}</p>
-                                            <p className="text-sm text-green-600 font-medium">{selectedRelayPoint.address}, {selectedRelayPoint.city}</p>
-                                            <div className="mt-2 inline-flex items-center gap-1 bg-white px-3 py-1 rounded-full text-xs font-black text-green-700 border border-green-100">
-                                                FRAIS: {relayPointFee === 0 ? 'GRATUIT' : `${relayPointFee.toFixed(2)} DT`}
-                                            </div>
-                                        </div>
+                                {isSelected && (
+                                    <div className="absolute top-3 right-3 text-white">
+                                        <FaCheckCircle size={16} />
                                     </div>
                                 )}
-                            </motion.div>
-                        ) : formData.order_type === 'delivery' ? (
+                                <Icon size={24} className={`mb-3 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                                <span className="font-bold text-sm mb-1">{mode.label}</span>
+                                <span className={`text-[10px] uppercase font-bold tracking-wider ${isSelected ? 'text-slate-300' : 'text-blue-500'}`}>
+                                    {mode.subtitle}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Content Section */}
+                <div className="mt-2">
+                    <AnimatePresence mode="wait">
+                        {formData.order_type === 'delivery' && (
                             <motion.div
                                 key="delivery"
                                 initial={{ opacity: 0, x: -20 }}
@@ -140,57 +134,58 @@ const DeliveryModeSection = ({
                                     DEFAULT_LOCATION={DEFAULT_LOCATION}
                                 />
                             </motion.div>
-                        ) : (
+                        )}
+                        {formData.order_type === 'relay_point' && (
+                            <motion.div
+                                key="relay"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                            >
+                                {(() => {
+                                    // Recalculate subtotal from orderDetails to match backend calculation
+                                    const calculatedSubtotal = orderDetails.reduce((t, i) => t + (parseFloat(i.price) * parseInt(i.quantity)), 0);
+                                    console.log("🔍 RelayPointSelector Props:");
+                                    console.log("   cartTotal (calculated from orderDetails):", calculatedSubtotal);
+                                    console.log("   cartTotal (from location.state):", subtotal);
+                                    console.log("   cartItems:", orderDetails);
+                                    console.log("   deliveryModes:", deliveryModes);
+                                    return null;
+                                })()}
+                                <RelayPointSelector
+                                    onStoreSelected={(store, fee) => {
+                                        console.log("🏪 Relay Point Selected:", store.name);
+                                        console.log("💵 Relay Point Fee:", fee);
+                                        setSelectedRelayPoint(store);
+                                        setRelayPointFee(fee);
+                                        setFormData(prev => {
+                                            console.log("📝 Updating formData.delivery_fee to:", fee);
+                                            return { ...prev, delivery_fee: fee };
+                                        });
+                                    }}
+                                    selectedStoreId={selectedRelayPoint?.id}
+                                    cartTotal={orderDetails.reduce((t, i) => t + (parseFloat(i.price) * parseInt(i.quantity)), 0)}
+                                    cartItems={orderDetails}
+                                    deliveryModes={deliveryModes}
+                                />
+                            </motion.div>
+                        )}
+
+                        {(formData.order_type === 'pickup' || formData.order_type === 'store_pickup') && (
                             <motion.div
                                 key="pickup"
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: 20 }}
-                                className="space-y-8"
                             >
                                 <StorePickupSelector
-                                    onStoreSelected={(store, fee) => {
+                                    onStoreSelected={(store) => {
                                         setSelectedPickupStore(store);
-                                        setPickupStoreFee(fee || 0);
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            delivery_fee: fee || 0,
-                                            address: `Retrait magasin: ${store.name}, ${store.address || ''}, ${store.city || ''}`,
-                                            ville: store.city || prev.ville,
-                                            gouvernorat: store.gouvernorat || prev.gouvernorat,
-                                            code_postal: String(store.code_postal || prev.code_postal || ""),
-                                        }));
+                                        setPickupStoreFee(0);
+                                        setFormData(prev => ({ ...prev, delivery_fee: 0 }));
                                     }}
                                     selectedStoreId={selectedPickupStore?.id}
                                 />
-
-                                {selectedPickupStore ? (
-                                    <div className="p-6 bg-green-50 rounded-[1.5rem] border border-green-100 flex items-start gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white flex-shrink-0">
-                                            <FaStore />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-green-800 tracking-tight">{selectedPickupStore.name}</p>
-                                            <p className="text-sm text-green-600 font-medium">{selectedPickupStore.address}, {selectedPickupStore.city}</p>
-                                            <div className="mt-2 inline-flex items-center gap-1 bg-white px-3 py-1 rounded-full text-xs font-black text-green-700 border border-green-100">
-                                                HORAIRES: Lun-Sam 09:00 - 19:00
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-10 space-y-6">
-                                        <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center text-green-500 mx-auto">
-                                            <FaStore size={40} />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-2xl font-black text-slate-800 tracking-tight">Emporté en magasin</h3>
-                                            <p className="text-slate-500 font-medium">Veuillez sélectionner un point de retrait</p>
-                                        </div>
-                                        <div className="bg-white px-8 py-3 rounded-full inline-flex items-center gap-2 border-2 border-green-500 text-green-600 font-black">
-                                            <FaCheckCircle /> FRAIS DE LIVRAISON GRATUIT
-                                        </div>
-                                    </div>
-                                )}
                             </motion.div>
                         )}
                     </AnimatePresence>

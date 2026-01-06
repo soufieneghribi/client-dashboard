@@ -160,9 +160,10 @@ const OrderConfirmation = () => {
     const [authChecked, setAuthChecked] = useState(false);
     const [retryCount, setRetryCount] = useState(0);
 
+    // Restored States for Delivery Modes
     const [selectedPickupStore, setSelectedPickupStore] = useState(null);
-    const [pickupStoreFee, setPickupStoreFee] = useState(0);
     const [selectedRelayPoint, setSelectedRelayPoint] = useState(null);
+    const [pickupStoreFee, setPickupStoreFee] = useState(0);
     const [relayPointFee, setRelayPointFee] = useState(0);
 
     useEffect(() => {
@@ -242,16 +243,6 @@ const OrderConfirmation = () => {
                     latitude: !isNaN(parseFloat(formData.latitude)) ? parseFloat(formData.latitude) : null,
                     longitude: !isNaN(parseFloat(formData.longitude)) ? parseFloat(formData.longitude) : null,
                 };
-            } else if (formData.order_type === 'relay_point' && selectedRelayPoint) {
-                deliveryAddress = {
-                    rue: selectedRelayPoint.address || '',
-                    ville: selectedRelayPoint.city || '',
-                    gouvernorat: selectedRelayPoint.gouvernorat || '',
-                    code_postal: selectedRelayPoint.code_postal || '',
-                };
-                const relayMode = deliveryModes.find(m => m.nom === 'Point Relais' || m.code === 'POINT_RELAIS');
-                modeId = relayMode ? relayMode.mode_livraison_id : 'POINT_RELAIS';
-                storeId = selectedRelayPoint.id;
             }
 
             dispatch(calculateDeliveryFee({
@@ -265,11 +256,13 @@ const OrderConfirmation = () => {
     }, [formData, selectedMode, orderDetails, dispatch, deliveryModes]);
 
     useEffect(() => {
-        if (calculatedFee !== null && (formData.order_type === 'delivery' || formData.order_type === 'relay_point')) {
+        if (calculatedFee !== null && formData.order_type === 'delivery') {
             setFormData(prev => ({ ...prev, delivery_fee: calculatedFee }));
         } else if (formData.order_type === 'pickup' || formData.order_type === 'store_pickup') {
             setFormData(prev => ({ ...prev, delivery_fee: PICKUP_DELIVERY_FEE }));
         }
+        // For relay_point, delivery_fee is set manually when a relay point is selected
+        // in DeliveryModeSection, so we don't override it here
     }, [calculatedFee, formData.order_type]);
 
     useEffect(() => {
@@ -371,7 +364,49 @@ const OrderConfirmation = () => {
         const sub = orderDetails.reduce((t, i) => t + (parseFloat(i.price) * parseInt(i.quantity)), 0);
         const fee = parseFloat(formData.delivery_fee) || 0;
         const ded = parseFloat(formData.cagnotte_deduction) || 0;
-        return Math.max(0, parseFloat((sub + fee - ded).toFixed(2)));
+        const total = Math.max(0, parseFloat((sub + fee - ded).toFixed(2)));
+
+        console.log("💰 Order Amount Calculation:");
+        console.log("   Subtotal (calculated from orderDetails):", sub);
+        console.log("   Subtotal (from location.state):", subtotal);
+        console.log("   Delivery Fee (formData):", fee);
+        console.log("   Cagnotte Deduction:", ded);
+        console.log("   Final Total:", total);
+
+        return total;
+    };
+
+    const prepareOrder = async (orderData) => {
+        try {
+            console.log("📋 Preparing order with backend...");
+            const response = await axios.post(
+                `${API_BASE_URL}/customer/order/prepare`,
+                orderData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 30000
+                }
+            );
+
+            console.log("✅ Prepare Response:", response.data);
+
+            if (response.status === 200 && response.data.success) {
+                const data = response.data.data;
+                console.log("=== SERVER OFFICIAL VALUES ===");
+                console.log("   Server Total:", data.total_amount);
+                console.log("   Server Delivery:", data.delivery_fee);
+                console.log("   Server Cagnotte:", data.cagnotte_deduction);
+                return data;
+            }
+
+            throw new Error('Prepare order failed');
+        } catch (error) {
+            console.error("❌ Prepare Order Failed:", error.response?.status, error.response?.data);
+            throw error;
+        }
     };
 
     const handleSubmit = async () => {
@@ -435,26 +470,68 @@ const OrderConfirmation = () => {
                 orderData.longitude = parseFloat(longitude);
             }
         } else if (formData.order_type === 'relay_point') {
-            orderData.address = formData.address;
-            if (selectedRelayPoint?.id) orderData.store_id = selectedRelayPoint.id;
+            if (selectedRelayPoint) {
+                orderData.address = `Point Relais: ${selectedRelayPoint.name}, ${selectedRelayPoint.address || ''}, ${selectedRelayPoint.city || ''}`;
+                orderData.store_id = selectedRelayPoint.id;
+                // Ensure the correct mode ID is sent if available
+                if (selectedMode) orderData.mode_livraison_id = selectedMode;
+            } else {
+                orderData.address = 'Point Relais';
+            }
         } else {
-            orderData.address = 'Emporté en magasin';
-            if (selectedPickupStore?.id) orderData.store_id = selectedPickupStore.id;
+            // Pickup / Store Pickup
+            if (selectedPickupStore) {
+                orderData.address = `Retrait Magasin: ${selectedPickupStore.name}`;
+                orderData.store_id = selectedPickupStore.id;
+            } else {
+                orderData.address = 'Emporté en magasin';
+            }
         }
 
         try {
-            const response = await axios.post(`${API_BASE_URL}/customer/order/place`, orderData, {
+            // -----------------------------------------------------------------------
+            // STEP 1: PREPARE ORDER (Server-Side Calculation)
+            // -----------------------------------------------------------------------
+            const preparedData = await prepareOrder(orderData);
+
+            // -----------------------------------------------------------------------
+            // STEP 2: Update order data with backend-calculated values
+            // -----------------------------------------------------------------------
+            const finalOrderData = {
+                ...orderData,
+                order_amount: preparedData.total_amount,
+                delivery_fee: preparedData.delivery_fee,
+                cagnotte_deduction: preparedData.cagnotte_deduction || 0
+            };
+
+            console.log("🚀 Submitting Order (With Verified Values):", finalOrderData);
+
+            // -----------------------------------------------------------------------
+            // STEP 3: PLACE ORDER (With Verified Values)
+            // -----------------------------------------------------------------------
+            const response = await axios.post(`${API_BASE_URL}/customer/order/place`, finalOrderData, {
                 headers: { 'Authorization': `Bearer ${auth_token}`, 'Content-Type': 'application/json' },
                 timeout: 30000
             });
-            if (response.status === 200 || response.status === 201) {
 
+            if (response.status === 200 || response.status === 201) {
+                console.log("✅ Order Submission Success");
                 setModalIsOpen(true);
                 localStorage.removeItem("cart");
                 localStorage.removeItem('cagnotte_deduction');
             }
         } catch (error) {
+            console.error("❌ Order Submission Failed:", error.response?.status, error.response?.data);
 
+            // Show user-friendly error message
+            if (error.response?.data?.error) {
+                alert(`Erreur: ${error.response.data.error}\n\nVeuillez réessayer.`);
+            } else if (error.response?.status === 401 || error.response?.status === 403) {
+                alert("Session expirée. Veuillez vous reconnecter.");
+                navigate("/login");
+            } else {
+                alert("Une erreur est survenue lors de la commande. Veuillez réessayer.");
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -488,16 +565,16 @@ const OrderConfirmation = () => {
                             setSelectedMode={(id) => dispatch(setSelectedMode(id))}
                             subtotal={subtotal}
                             orderDetails={orderDetails}
-                            selectedRelayPoint={selectedRelayPoint}
-                            setSelectedRelayPoint={setSelectedRelayPoint}
-                            relayPointFee={relayPointFee}
-                            setRelayPointFee={setRelayPointFee}
                             setFormData={setFormData}
                             geolocationStatus={geolocationStatus}
                             handleRetryGeolocation={() => setRetryCount(prev => prev + 1)}
                             handleMapClick={handleMapClick}
                             GOOGLE_MAPS_API_KEY={GOOGLE_MAPS_API_KEY}
                             DEFAULT_LOCATION={DEFAULT_LOCATION}
+                            selectedRelayPoint={selectedRelayPoint}
+                            setSelectedRelayPoint={setSelectedRelayPoint}
+                            relayPointFee={relayPointFee}
+                            setRelayPointFee={setRelayPointFee}
                             selectedPickupStore={selectedPickupStore}
                             setSelectedPickupStore={setSelectedPickupStore}
                             setPickupStoreFee={setPickupStoreFee}

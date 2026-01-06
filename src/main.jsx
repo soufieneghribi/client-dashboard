@@ -27,7 +27,6 @@ import OrderConfirmation from "./pages/OrderConfirmation/OrderConfirmation";
 import Orders from "./pages/Commandes";
 import SearchResult from "./components/SearchResult";
 import ProtectedRoute from "./pages/ProtectedRoute";
-import Contact from "./components/Contact";
 import OrderDetails from "./pages/OrderDetails";
 import RecipeDetails from "./pages/RecipeDetails";
 import Recipes from "./pages/Recipies";
@@ -115,7 +114,6 @@ const router = createBrowserRouter(
       <Route path="/search" element={<SearchResult />} />
       <Route path="/recipe/:id" element={<RecipeDetails />} />
       <Route path="/recipes" element={<Recipes />} />
-      <Route path="/contact" element={<Contact />} />
       <Route path="/MesDeals" element={<ProtectedRoute><MesDeals /></ProtectedRoute>} />
 
       {/* ==================== PROTECTED ROUTES ==================== */}

@@ -295,7 +295,7 @@ const GratuiteDetails = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         {/* Back Button */}
         <button
           onClick={() => navigate("/gratuite")}
@@ -360,8 +360,8 @@ const GratuiteDetails = () => {
             {offer.max_per_client && offer.max_per_client > 0 && (
               <div
                 className={`mb-6 p-4 rounded-xl ${reachedLimit
-                    ? "bg-red-50 border border-red-200"
-                    : "bg-blue-50 border border-blue-200"
+                  ? "bg-red-50 border border-red-200"
+                  : "bg-blue-50 border border-blue-200"
                   }`}
               >
                 <p className="text-sm text-gray-700">
@@ -448,8 +448,8 @@ const GratuiteDetails = () => {
                       }
                     }}
                     className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${selectedMode === mode
-                        ? "bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-md"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      ? "bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                   >
                     {getModeIcon(mode)}
@@ -501,8 +501,8 @@ const GratuiteDetails = () => {
               onClick={handleReserve}
               disabled={!canReserve || reserving}
               className={`w-full py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 ${canReserve
-                  ? "bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600 shadow-lg hover:shadow-xl"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                ? "bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600 shadow-lg hover:shadow-xl"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
             >
               {reserving ? (

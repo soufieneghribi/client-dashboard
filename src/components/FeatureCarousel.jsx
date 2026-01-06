@@ -6,11 +6,11 @@ import { FaLock, FaGift, FaStar } from 'react-icons/fa';
 import { fetchClientDeals } from '../store/slices/deals';
 
 // Asset Imports
-import mydealsImg from "../assets/mydealsImg.png";
-import recommnededImg from "../assets/recommnededImg.png";
-import remiseImg from "../assets/remiseImg.png";
-import jackpotImage from "../assets/jackpotImage.png";
-import levelupImg from "../assets/levelup.png";
+import mydealsImg from "../assets/mydealsImg.png"; // Keeping for compatibility if needed
+import gameImg from "../assets/images/game-recommanded.png";
+import promoImg from "../assets/images/discount-recommanded.png";
+import giftImg from "../assets/images/gift-recommanded.png";
+import freeImg from "../assets/images/free-recommanded.jpg";
 
 const FeatureCarousel = () => {
     const navigate = useNavigate();
@@ -44,9 +44,9 @@ const FeatureCarousel = () => {
         {
             id: 'catalogue',
             title: 'Catalogue personnalisés',
-            subtitle: 'Réductions exclusives',
-            image: recommnededImg,
-            path: '/catalogue',
+            subtitle: 'Remise Promotion',
+            image: promoImg,
+            path: '/promotions',
             color: 'from-orange-400 to-red-500',
             requiresAuth: false
         },
@@ -54,7 +54,7 @@ const FeatureCarousel = () => {
             id: 'cadeaux',
             title: 'Cadeaux',
             subtitle: 'Produits cadeaux premium',
-            image: mydealsImg,
+            image: giftImg,
             path: '/cadeaux',
             color: 'from-purple-500 to-indigo-600',
             requiresAuth: true
@@ -63,7 +63,7 @@ const FeatureCarousel = () => {
             id: 'gratuite',
             title: 'Gratuité',
             subtitle: 'Articles gratuits pour vous',
-            image: levelupImg,
+            image: freeImg,
             path: '/gratuite',
             color: 'from-green-400 to-teal-600',
             requiresAuth: true
@@ -72,7 +72,7 @@ const FeatureCarousel = () => {
             id: 'promo',
             title: 'Codes Promo',
             subtitle: 'Avantages partenaires',
-            image: remiseImg,
+            image: promoImg,
             path: '/code-promo',
             color: 'from-blue-400 to-blue-600',
             requiresAuth: true
@@ -81,7 +81,7 @@ const FeatureCarousel = () => {
             id: 'jeux',
             title: 'Jeux',
             subtitle: 'Gagnez des récompenses',
-            image: jackpotImage,
+            image: gameImg,
             path: '/jeux',
             color: 'from-yellow-400 to-orange-500',
             requiresAuth: false
@@ -90,15 +90,10 @@ const FeatureCarousel = () => {
 
     const handleNavigation = (path, id, requiresAuth) => {
         if (requiresAuth && !isLoggedIn) {
-            // 
             navigate('/login');
             return;
         }
-
-        if (id === 'jeux') {
-            
-            return;
-        }
+        if (id === 'jeux') return;
         navigate(path);
     };
 
@@ -116,6 +111,9 @@ const FeatureCarousel = () => {
         <div className="py-8 relative group">
             <style>
                 {`
+                .feature-carousel-container {
+                    padding: 0 4px;
+                }
                 .feature-carousel {
                     display: flex;
                     gap: 16px;
@@ -138,6 +136,38 @@ const FeatureCarousel = () => {
                     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
                 }
+                @media (max-width: 768px) {
+                    .feature-card {
+                        flex: 0 0 220px;
+                        height: 160px;
+                        border-radius: 20px;
+                    }
+                    .feature-card-content {
+                        padding: 12px;
+                    }
+                    .feature-card-content h3 {
+                        font-size: 1rem !important;
+                    }
+                    .feature-card-content p {
+                        font-size: 0.75rem !important;
+                    }
+                    .feature-action-btn {
+                        padding: 6px 12px;
+                        font-size: 0.75rem;
+                    }
+                    .feature-glass-badge {
+                        padding: 4px 8px;
+                        font-size: 0.65rem;
+                        top: 12px;
+                        left: 12px;
+                    }
+                    .lock-icon-container {
+                        width: 28px;
+                        height: 28px;
+                        top: 12px;
+                        right: 12px;
+                    }
+                }
                 .feature-card:hover {
                     transform: translateY(-8px) scale(1.02);
                     box-shadow: 0 20px 35px rgba(0,0,0,0.15);
@@ -145,7 +175,7 @@ const FeatureCarousel = () => {
                 .feature-card-content {
                     position: absolute;
                     inset: 0;
-                    padding: 20px;
+                    padding: 16px;
                     display: flex;
                     flex-direction: column;
                     justify-content: flex-end;
@@ -188,11 +218,11 @@ const FeatureCarousel = () => {
                     backdrop-filter: blur(4px);
                     color: #1a1a1a;
                     border: none;
-                    padding: 10px 16px;
-                    border-radius: 14px;
+                    padding: 8px 14px;
+                    border-radius: 12px;
                     font-weight: 800;
-                    font-size: 0.9rem;
-                    margin-top: 14px;
+                    font-size: 0.8rem;
+                    margin-top: 10px;
                     transition: all 0.3s ease;
                     text-align: center;
                 }
@@ -207,8 +237,8 @@ const FeatureCarousel = () => {
                     transform: translateY(-50%);
                     background: white;
                     color: #1a1a1a;
-                    width: 44px;
-                    height: 44px;
+                    width: 36px;
+                    height: 36px;
                     border-radius: 50%;
                     display: flex;
                     align-items: center;
@@ -243,105 +273,110 @@ const FeatureCarousel = () => {
                 </div>
             </div>
 
-            <div className="relative">
-                <button
-                    className="nav-arrow nav-arrow-left hidden md:flex"
-                    onClick={() => scroll('left')}
-                    aria-label="Scroll left"
-                >
-                    <span className="text-xl">❮</span>
-                </button>
+            <div className="feature-carousel-container">
+                <div className="relative">
+                    <button
+                        className="nav-arrow nav-arrow-left hidden md:flex"
+                        onClick={() => scroll('left')}
+                        aria-label="Scroll left"
+                    >
+                        <span className="text-xl">❮</span>
+                    </button>
 
-                <button
-                    className="nav-arrow nav-arrow-right hidden md:flex"
-                    onClick={() => scroll('right')}
-                    aria-label="Scroll right"
-                >
-                    <span className="text-xl">❯</span>
-                </button>
+                    <button
+                        className="nav-arrow nav-arrow-right hidden md:flex"
+                        onClick={() => scroll('right')}
+                        aria-label="Scroll right"
+                    >
+                        <span className="text-xl">❯</span>
+                    </button>
 
-                <div className="feature-carousel px-2" ref={carouselRef}>
-                    {/* 🔹 DEAL OF THE DAY (Logic state depending on Login) */}
-                    {!isLoggedIn ? (
-                        <div
-                            className="feature-card group"
-                            onClick={() => navigate('/login')}
-                            style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}
-                        >
-                            <div className="absolute inset-0 bg-opacity-40 bg-black flex items-center justify-center">
-                                <div className="text-center p-6 flex flex-col items-center">
-                                    <div className="text-white/20 text-8xl font-black absolute inset-0 flex items-center justify-center select-none">DEAL</div>
-                                    <h3 className="text-white font-black text-xl mb-2 relative z-10">Récompenses de fidélité</h3>
-                                    <p className="text-white/80 text-sm mb-4 relative z-10">Points & avantages exclusifs</p>
-                                    <div className="lock-icon-container">
-                                        <FaLock size={16} />
+                    <div className="feature-carousel px-2" ref={carouselRef}>
+                        {/* 1. 🔹 LOYALTY REWARDS (Récompenses et fidélité) */}
+                        {!isLoggedIn ? (
+                            <div
+                                className="feature-card group"
+                                onClick={() => navigate('/login')}
+                                style={{
+                                    background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                                }}
+                            >
+                                <div className="absolute inset-0 bg-opacity-20 bg-black flex items-center justify-center">
+                                    <div className="text-center p-6 flex flex-col items-center">
+                                        <div className="text-white/10 text-9xl font-black absolute inset-0 flex items-center justify-center select-none">DEAL</div>
+                                        <div className="feature-glass-badge" style={{ top: '12px', left: '12px' }}>
+                                            <FaLock size={12} />
+                                            <span>Premium</span>
+                                        </div>
+                                        <h3 className="text-white font-black text-2xl mb-1 relative z-10">Récompenses de fidélité</h3>
+                                        <p className="text-white/90 text-sm mb-4 relative z-10">Points & avantages exclusifs</p>
+                                        <button className="feature-action-btn w-full relative z-10">Se connecter pour débloquer</button>
                                     </div>
-                                    <button className="feature-action-btn w-full relative z-10">Se connecter pour débloquer</button>
                                 </div>
                             </div>
-                        </div>
-                    ) : (
-                        allDeals.length > 0 && (
+                        ) : (
                             <div
                                 className="feature-card group"
                                 onClick={() => navigate('/MesDeals')}
-                                style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}
+                                style={{
+                                    background: 'linear-gradient(135deg, #ec4899, #8b5cf6)',
+                                }}
                             >
                                 <div className="feature-card-content">
                                     <div className="feature-glass-badge">
                                         <FaStar className="text-yellow-300" />
-                                        <span>Mes Deals Actifs</span>
+                                        <span>DEAL OF THE DAY</span>
                                     </div>
-                                    <h3 className="text-white font-black text-xl leading-tight mb-1">
-                                        {allDeals.length} Deal{allDeals.length > 1 ? 's' : ''} en cours
+                                    <h3 className="text-white font-black text-2xl leading-tight mb-1">
+                                        Récompenses de fidélité
                                     </h3>
                                     <p className="text-white/90 text-sm font-medium">
-                                        Complétez vos objectifs et gagnez du cashback !
+                                        Points & avantages exclusifs
                                     </p>
                                     <button className="feature-action-btn self-start w-full">
-                                        Gérer mes deals
+                                        Voir mes avantages
                                     </button>
                                 </div>
                             </div>
-                        )
-                    )}
+                        )}
 
-                    {/* 🔹 STATIC FEATURES */}
-                    {staticFeatures.map((feature) => (
-                        <div
-                            key={feature.id}
-                            className="feature-card group"
-                            onClick={() => handleNavigation(feature.path, feature.id, feature.requiresAuth)}
-                        >
-                            <img
-                                src={feature.image}
-                                alt={feature.title}
-                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            />
-                            <div className="feature-card-content">
-                                <div className="feature-glass-badge">
-                                    {feature.id === 'cadeaux' ? <FaGift /> : <span>✨</span>}
-                                    <span>Disponible</span>
-                                </div>
-
-                                {feature.requiresAuth && !isLoggedIn && (
-                                    <div className="lock-icon-container">
-                                        <FaLock size={16} />
+                        {/* 2-6. 🔹 STATIC FEATURES (Catalogue, Cadeaux, Gratuité, Promo, Jeux) */}
+                        {staticFeatures.map((feature) => (
+                            <div
+                                key={feature.id}
+                                className="feature-card group"
+                                onClick={() => handleNavigation(feature.path, feature.id, feature.requiresAuth)}
+                            >
+                                <img
+                                    src={feature.image}
+                                    alt={feature.title}
+                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                />
+                                <div className="feature-card-content">
+                                    <div className="feature-glass-badge">
+                                        {feature.id === 'cadeaux' ? <FaGift /> : feature.id === 'promo' || feature.id === 'catalogue' ? <span className="text-lg">🏷️</span> : <span>✨</span>}
+                                        <span>Disponible</span>
                                     </div>
-                                )}
 
-                                <h3 className="text-white font-black text-xl leading-tight mb-1">
-                                    {feature.title}
-                                </h3>
-                                <p className="text-white/90 text-sm font-medium">
-                                    {feature.subtitle}
-                                </p>
-                                <button className="feature-action-btn self-start w-full">
-                                    Découvrir
-                                </button>
+                                    {feature.requiresAuth && !isLoggedIn && (
+                                        <div className="lock-icon-container">
+                                            <FaLock size={16} />
+                                        </div>
+                                    )}
+
+                                    <h3 className="text-white font-black text-xl leading-tight mb-1">
+                                        {feature.title}
+                                    </h3>
+                                    <p className="text-white/90 text-sm font-medium">
+                                        {feature.subtitle}
+                                    </p>
+                                    <button className="feature-action-btn self-start w-full">
+                                        Découvrir maintenant
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
@@ -349,5 +384,3 @@ const FeatureCarousel = () => {
 };
 
 export default FeatureCarousel;
-
-

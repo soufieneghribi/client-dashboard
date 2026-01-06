@@ -14,7 +14,7 @@ export const getImageUrl = (item, type = 'product') => {
         imageString = item;
     } else if (item) {
         // Prefer image_url if provided by API (often for categories)
-        if (item.image_url) return item.image_url;
+        if (item.image_url) imageString = item.image_url;
 
         // Product images
         if (item.img) imageString = item.img;
@@ -29,6 +29,8 @@ export const getImageUrl = (item, type = 'product') => {
                 return 'https://placehold.co/300x200?text=Categorie';
             case 'banner':
                 return 'https://placehold.co/1200x400?text=Banner';
+            case 'recipe':
+                return 'https://storage.googleapis.com/tn360-asset/recipes/' + (imageString || 'default.png');
             default:
                 return 'https://placehold.co/300x200?text=Produit';
         }

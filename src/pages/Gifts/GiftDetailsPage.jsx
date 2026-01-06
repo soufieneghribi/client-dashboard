@@ -74,84 +74,84 @@ const GiftDetailsPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4">
-            <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen bg-gray-50 py-6 px-4">
+            <div className="max-w-2xl mx-auto">
                 <button
                     onClick={() => navigate("/cadeaux")}
-                    className="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-6 font-medium transition-colors"
+                    className="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-4 text-sm font-medium transition-colors"
                 >
                     <FaArrowLeft /> Retour au catalogue
                 </button>
 
-                <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-                    <div className="relative h-64 md:h-96 w-full">
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div className="relative h-48 md:h-64 w-full">
                         <img
                             src={cadeau.image}
                             alt={cadeau.titre}
                             className="w-full h-full object-cover"
                             onError={(e) => { e.target.src = 'https://via.placeholder.com/800x600?text=Cadeau'; }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-8">
-                            <span className="inline-block bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg mb-3 w-max">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-6">
+                            <span className="inline-block bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg mb-2 w-max">
                                 {cadeau.categorie || 'Cadeau'}
                             </span>
-                            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{cadeau.titre}</h1>
+                            <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">{cadeau.titre}</h1>
                         </div>
                     </div>
 
-                    <div className="p-8">
-                        <div className="flex flex-col md:flex-row gap-8">
+                    <div className="p-6">
+                        <div className="flex flex-col gap-6">
                             <div className="flex-1 space-y-6">
-                                <div className="bg-blue-50 rounded-2xl p-6">
-                                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <div className="bg-blue-50 rounded-xl p-4">
+                                    <h3 className="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
                                         <FaInfoCircle className="text-blue-600" />
                                         Description
                                     </h3>
-                                    <p className="text-gray-700 leading-relaxed text-lg">
+                                    <p className="text-gray-700 leading-relaxed text-sm">
                                         {cadeau.description || "Aucune description disponible pour ce cadeau."}
                                     </p>
                                 </div>
 
                                 {cadeau.conditions && (
-                                    <div className="bg-red-50 rounded-2xl p-6 border border-red-100">
-                                        <h4 className="font-bold text-red-700 mb-2">Conditions d'utilisation</h4>
-                                        <p className="text-red-600 text-sm">{cadeau.conditions}</p>
+                                    <div className="bg-red-50 rounded-xl p-4 border border-red-100">
+                                        <h4 className="font-bold text-red-700 mb-1 text-sm">Conditions d'utilisation</h4>
+                                        <p className="text-red-600 text-xs">{cadeau.conditions}</p>
                                     </div>
                                 )}
                             </div>
 
-                            <div className="md:w-80 space-y-6">
-                                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                                    <h3 className="text-gray-500 font-medium mb-4 uppercase text-sm tracking-wider">Détails de l'offre</h3>
+                            <div className="space-y-6">
+                                <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                    <h3 className="text-gray-500 font-medium mb-3 uppercase text-[10px] tracking-wider">Détails de l'offre</h3>
 
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm">
-                                            <span className="text-gray-600 flex items-center gap-2"><FaCoins className="text-yellow-500" /> Prix</span>
-                                            <span className="font-bold text-xl text-blue-600">{parseFloat(cadeau.prix_cagnotte).toFixed(2)} DT</span>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="flex items-center justify-between p-2.5 bg-white rounded-lg shadow-sm">
+                                            <span className="text-gray-600 text-xs flex items-center gap-2"><FaCoins className="text-yellow-500" /> Prix</span>
+                                            <span className="font-bold text-base text-blue-600">{parseFloat(cadeau.prix_cagnotte).toFixed(2)} DT</span>
                                         </div>
 
-                                        <div className="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm">
-                                            <span className="text-gray-600 flex items-center gap-2"><MdLocalOffer className="text-purple-500" /> Partenaire</span>
-                                            <span className="font-semibold text-gray-800">{cadeau.partenaire || 'TN360'}</span>
+                                        <div className="flex items-center justify-between p-2.5 bg-white rounded-lg shadow-sm">
+                                            <span className="text-gray-600 text-xs flex items-center gap-2"><MdLocalOffer className="text-purple-500" /> Partenaire</span>
+                                            <span className="font-semibold text-gray-800 text-xs">{cadeau.partenaire || 'TN360'}</span>
                                         </div>
 
-                                        <div className="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm">
-                                            <span className="text-gray-600 flex items-center gap-2"><FaBox className="text-orange-500" /> Stock</span>
-                                            <span className="font-semibold text-gray-800">{cadeau.quantite_disponible} unités</span>
+                                        <div className="flex items-center justify-between p-2.5 bg-white rounded-lg shadow-sm">
+                                            <span className="text-gray-600 text-xs flex items-center gap-2"><FaBox className="text-orange-500" /> Stock</span>
+                                            <span className="font-semibold text-gray-800 text-xs">{cadeau.quantite_disponible} unités</span>
                                         </div>
 
-                                        <div className="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm">
-                                            <span className="text-gray-600 flex items-center gap-2"><FaCalendarAlt className="text-blue-500" /> Validité</span>
-                                            <span className="font-semibold text-gray-800 text-sm">
+                                        <div className="flex items-center justify-between p-2.5 bg-white rounded-lg shadow-sm">
+                                            <span className="text-gray-600 text-xs flex items-center gap-2"><FaCalendarAlt className="text-blue-500" /> Validité</span>
+                                            <span className="font-semibold text-gray-800 text-xs">
                                                 {new Date(cadeau.date_fin_validite).toLocaleDateString('fr-FR')}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div className="mt-6 pt-6 border-t border-gray-200">
+                                    <div className="mt-4 pt-4 border-t border-gray-200">
                                         <button
                                             onClick={() => navigate("/cadeaux")}
-                                            className="w-full bg-gray-900 text-white py-3.5 rounded-xl font-bold hover:bg-black transition-all shadow-lg text-center block"
+                                            className="w-full bg-gray-900 text-white py-2.5 rounded-lg font-bold hover:bg-black transition-all shadow-md text-center block text-sm"
                                         >
                                             Retour au catalogue
                                         </button>

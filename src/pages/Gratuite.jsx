@@ -179,7 +179,7 @@ const Gratuite = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* En-tête */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-5xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => navigate(-1)}
@@ -191,7 +191,7 @@ const Gratuite = () => {
 
             <button
               onClick={() => navigate("/mes-reservations")}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-sm"
+              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm"
             >
               <FaHistory className="text-sm" />
               <span className="font-medium">Mes Réservations</span>
@@ -199,10 +199,10 @@ const Gratuite = () => {
           </div>
 
           <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-2xl mb-4">
-              <FaGift className="text-3xl text-indigo-600" />
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-xl mb-3">
+              <FaGift className="text-2xl text-indigo-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
               Produits Gratuits
             </h1>
             <p className="text-gray-600">
@@ -212,9 +212,9 @@ const Gratuite = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Barre de recherche et filtres */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 mb-5">
           <div className="flex flex-wrap gap-3 items-center">
             {/* Recherche */}
             <div className="flex-1 min-w-[250px]">
@@ -225,7 +225,7 @@ const Gratuite = () => {
                   placeholder="Rechercher un produit..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 />
               </div>
             </div>
@@ -234,7 +234,7 @@ const Gratuite = () => {
             <select
               value={selectedType || ""}
               onChange={(e) => setSelectedType(e.target.value || null)}
-              className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">Tous les types</option>
               <option value="product">Produit</option>
@@ -246,7 +246,7 @@ const Gratuite = () => {
             <select
               value={selectedMode || ""}
               onChange={(e) => setSelectedMode(e.target.value || null)}
-              className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">Tous les modes</option>
               <option value="pickup">Retrait magasin</option>
@@ -259,7 +259,7 @@ const Gratuite = () => {
             {(searchQuery || selectedType || selectedMode) && (
               <button
                 onClick={clearFilters}
-                className="px-5 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors font-medium"
+                className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium text-sm"
               >
                 Effacer
               </button>
@@ -303,13 +303,13 @@ const Gratuite = () => {
                 return (
                   <div
                     key={offer.id}
-                    className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer"
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 overflow-hidden group cursor-pointer"
                     onClick={() =>
                       isAvailable && navigate(`/gratuite/${offer.id}`)
                     }
                   >
                     {/* Image */}
-                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600">
+                    <div className="relative h-40 overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600">
                       <img
                         src={offer.image || "https://via.placeholder.com/300x200?text=Gratuit"}
                         alt={offer.title}
@@ -318,9 +318,9 @@ const Gratuite = () => {
 
                       {/* Badge statut */}
                       <div className={`absolute top-4 right-4 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm ${status.color === "green" ? "bg-green-500/90 text-white" :
-                          status.color === "red" ? "bg-red-500/90 text-white" :
-                            status.color === "orange" ? "bg-orange-500/90 text-white" :
-                              "bg-gray-500/90 text-white"
+                        status.color === "red" ? "bg-red-500/90 text-white" :
+                          status.color === "orange" ? "bg-orange-500/90 text-white" :
+                            "bg-gray-500/90 text-white"
                         }`}>
                         {status.text}
                       </div>
@@ -338,9 +338,9 @@ const Gratuite = () => {
                     </div>
 
                     {/* Contenu */}
-                    <div className="p-5">
+                    <div className="p-4">
                       {/* Titre */}
-                      <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                      <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-indigo-600 transition-colors">
                         {offer.title}
                       </h3>
 
@@ -364,17 +364,17 @@ const Gratuite = () => {
                       </div>
 
                       {/* Infos stock */}
-                      <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 rounded-xl">
+                      <div className="flex items-center justify-between mb-3 p-2 bg-gray-50 rounded-lg">
                         <div>
-                          <p className="text-xs text-gray-500 mb-1">Stock disponible</p>
-                          <p className="text-sm font-bold text-gray-900">
+                          <p className="text-[10px] text-gray-500 mb-0.5">Stock disponible</p>
+                          <p className="text-xs font-bold text-gray-900">
                             {offer.remaining_quantity} / {offer.total_quantity}
                           </p>
                         </div>
                         {offer.max_per_client && (
                           <div className="text-right">
-                            <p className="text-xs text-gray-500 mb-1">Limite</p>
-                            <p className="text-sm font-bold text-gray-900">
+                            <p className="text-[10px] text-gray-500 mb-0.5">Limite</p>
+                            <p className="text-xs font-bold text-gray-900">
                               {offer.max_per_client} max
                             </p>
                           </div>
@@ -416,9 +416,9 @@ const Gratuite = () => {
 
                       {/* Bouton d'action */}
                       <button
-                        className={`w-full py-2.5 rounded-xl font-semibold transition-all ${isAvailable
-                            ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
-                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        className={`w-full py-2 rounded-lg text-sm font-semibold transition-all ${isAvailable
+                          ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
+                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
                           }`}
                         disabled={!isAvailable}
                         onClick={(e) => {

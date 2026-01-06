@@ -4,6 +4,7 @@ import { Outlet } from "react-router-dom";
 import { fetchCategories } from "./store/slices/categorie";
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./styles/styles.css";
 import Modal from "react-modal";
@@ -26,6 +27,9 @@ function App() {
 
   return (
     <div>
+      {/* Scroll to top component */}
+      <ScrollToTop />
+
       {/* Global Header */}
       <Header />
 

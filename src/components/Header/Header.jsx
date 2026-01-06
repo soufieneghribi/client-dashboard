@@ -21,9 +21,8 @@ const NAV_LINKS = [
     { path: "/categories", label: "Product", icon: "fa-th-large" },
     { path: "/MesDeals", label: "Deals", icon: "fa-tag" },
     { path: "/recipes", label: "Recettes", icon: "fa-utensils" },
-    { path: "/Catalogue", label: "Catalogue", icon: "fa-book" },
+    { path: "/promotions", label: "Catalogue", icon: "fa-book" },
     { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" },
-    { path: "/credit/simulation", label: "Crédit", icon: "fa-credit-card" },
     { path: "/contact", label: "Contact", icon: "fa-envelope" },
     { path: "/reclamations", label: "Réclamations", icon: "fa-exclamation-circle" }
 ];
@@ -153,28 +152,21 @@ const Header = () => {
 
     return (
         <>
-            <Navbar bg="white" expand="lg" sticky="top" className="shadow-sm border-bottom py-2">
+            <Navbar bg="white" expand="lg" sticky="top" className="shadow-sm border-bottom py-2.5">
                 <Container fluid className="px-3 px-lg-4">
                     <Button variant="link" className="d-lg-none text-secondary p-0 border-0 me-3" onClick={() => setShowMobileMenu(true)}>
                         <i className="fas fa-bars fs-4"></i>
                     </Button>
 
                     <Navbar.Brand as={Link} to="/" className="me-lg-4">
-                        <img src={COMPANY_LOGO} height="24" width="70" alt="Logo" />
+                        <img src={COMPANY_LOGO} height="26" width="75" alt="Logo" />
                     </Navbar.Brand>
 
                     <Nav className="d-none d-lg-flex me-auto align-items-center">
                         {NAV_LINKS.map((link) => (
-                            link.label === "Crédit" ? (
-                                <NavDropdown title="Crédit" id="credit-dropdown" key="credit-dropdown" className="fw-medium px-2">
-                                    <NavDropdown.Item as={Link} to="/credit/simulation">Simulation</NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} to="/credit">Voir mes crédits</NavDropdown.Item>
-                                </NavDropdown>
-                            ) : (
-                                <Nav.Link key={link.path} as={Link} to={link.path} className="fw-medium px-3 text-dark">
-                                    {link.label}
-                                </Nav.Link>
-                            )
+                            <Nav.Link key={link.path} as={Link} to={link.path} className="fw-medium px-2 text-dark text-sm hover:text-blue-600 transition-colors">
+                                {link.label}
+                            </Nav.Link>
                         ))}
                     </Nav>
 

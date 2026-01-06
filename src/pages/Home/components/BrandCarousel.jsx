@@ -10,11 +10,11 @@ const BrandCarousel = ({
 }) => {
     return (
         <section className="pt-14 border-t border-gray-200">
-            <div className="text-center mb-10">
-                <h2 className="text-3xl font-bold text-gray-800 mb-3">
+            <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
                     Nos Marques Partenaires
                 </h2>
-                <p className="text-gray-600 max-w-2xl mx-auto">
+                <p className="text-sm text-gray-600 max-w-2xl mx-auto">
                     Retrouvez vos marques préférées et découvrez des produits de qualité
                 </p>
             </div>
@@ -34,13 +34,13 @@ const BrandCarousel = ({
                             {slide.map((brand) => (
                                 <div
                                     key={brand.id}
-                                    className="relative h-44 flex-1 min-w-0 rounded-xl shadow-lg overflow-hidden cursor-pointer group transform transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                                    className="relative h-32 flex-1 min-w-0 rounded-xl shadow-md overflow-hidden cursor-pointer group transform transition-all duration-300 hover:scale-105"
                                 >
-                                    <div className="absolute inset-0 flex items-center justify-center p-4 bg-transparent">
+                                    <div className="absolute inset-0 flex items-center justify-center p-3 bg-transparent">
                                         <img
                                             src={brand.img}
                                             alt={brand.name}
-                                            className="w-full h-full object-contain max-h-32 transition-transform duration-300 group-hover:scale-110"
+                                            className="w-full h-full object-contain max-h-24 transition-transform duration-300 group-hover:scale-110"
                                             onError={(e) => {
                                                 e.target.src = "https://via.placeholder.com/150x100?text=" + brand.name;
                                             }}
@@ -70,7 +70,7 @@ const BrandCarousel = ({
                     <>
                         <button
                             onClick={prevBrandSlide}
-                            className="absolute left-0 md:left-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-3 shadow-xl transition-all duration-200 hover:scale-110 z-10"
+                            className="absolute left-0 md:left-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
                             aria-label="Marques précédentes"
                         >
                             <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,7 +79,7 @@ const BrandCarousel = ({
                         </button>
                         <button
                             onClick={nextBrandSlide}
-                            className="absolute right-0 md:right-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-3 shadow-xl transition-all duration-200 hover:scale-110 z-10"
+                            className="absolute right-0 md:right-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
                             aria-label="Marques suivantes"
                         >
                             <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

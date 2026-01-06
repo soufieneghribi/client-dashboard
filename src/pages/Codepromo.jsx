@@ -40,32 +40,32 @@ const CodePromo = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    
+
     dispatch(fetchCodePromos({ page: 1 }));
   }, [dispatch]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    
+
     dispatch(setSearch(searchQuery || null));
     dispatch(fetchCodePromos({ page: 1, filters: { ...filters, search: searchQuery || null } }));
   };
 
   const handleLoadMore = () => {
     if (!isLoading && hasMore) {
-      
+
       dispatch(fetchCodePromos({ page: currentPage + 1, filters }));
     }
   };
 
   const handleFilterChange = (filterType, value) => {
-    
+
     dispatch(setFilters({ [filterType]: value }));
     dispatch(fetchCodePromos({ page: 1, filters: { ...filters, [filterType]: value } }));
   };
 
   const handleClearFilters = () => {
-    
+
     setSearchQuery("");
     dispatch(clearFilters());
     dispatch(fetchCodePromos({ page: 1 }));
@@ -109,7 +109,7 @@ const CodePromo = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* En-tête avec design moderne */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-5xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => navigate(-1)}
@@ -121,7 +121,7 @@ const CodePromo = () => {
 
             <button
               onClick={() => navigate("/mes-code-promo")}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-sm"
+              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm"
             >
               <FaHistory className="text-sm" />
               <span className="font-medium">Mes Codes</span>
@@ -129,10 +129,10 @@ const CodePromo = () => {
           </div>
 
           <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-2xl mb-4">
-              <MdLocalOffer className="text-3xl text-indigo-600" />
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-xl mb-3">
+              <MdLocalOffer className="text-2xl text-indigo-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
               Codes Promo Partenaires
             </h1>
             <p className="text-gray-600">
@@ -142,9 +142,9 @@ const CodePromo = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Barre de recherche et filtres */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 mb-5">
           <div className="flex flex-wrap gap-3 items-center">
             {/* Recherche */}
             <form onSubmit={handleSearch} className="flex-1 min-w-[250px]">
@@ -155,7 +155,7 @@ const CodePromo = () => {
                   placeholder="Rechercher un code promo..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 />
               </div>
             </form>
@@ -163,9 +163,9 @@ const CodePromo = () => {
             {/* Bouton Filtres */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`px-5 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${showFilters
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-sm ${showFilters
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
             >
               <FaFilter />
@@ -176,7 +176,7 @@ const CodePromo = () => {
             {(filters.search || filters.offerType || filters.codeType) && (
               <button
                 onClick={handleClearFilters}
-                className="px-5 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors font-medium"
+                className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium text-sm"
               >
                 Effacer
               </button>
@@ -197,7 +197,7 @@ const CodePromo = () => {
                     onChange={(e) =>
                       handleFilterChange("offerType", e.target.value || null)
                     }
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">Tous les types</option>
                     <option value="percentage">Pourcentage</option>
@@ -217,7 +217,7 @@ const CodePromo = () => {
                     onChange={(e) =>
                       handleFilterChange("codeType", e.target.value || null)
                     }
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">Tous les codes</option>
                     <option value="unique">Code unique</option>
@@ -235,7 +235,7 @@ const CodePromo = () => {
                     onChange={(e) =>
                       handleFilterChange("status", e.target.value || null)
                     }
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">Tous</option>
                     <option value="active">Actifs</option>
@@ -299,11 +299,11 @@ const CodePromo = () => {
                 return (
                   <div
                     key={codePromo.id}
-                    className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer"
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 overflow-hidden group cursor-pointer"
                     onClick={() => navigate(`/code-promo/${codePromo.id}`)}
                   >
                     {/* Image/Banner */}
-                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600">
+                    <div className="relative h-40 overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600">
                       {codePromo.banner_url ? (
                         <img
                           src={codePromo.banner_url}
@@ -352,9 +352,9 @@ const CodePromo = () => {
                     </div>
 
                     {/* Contenu */}
-                    <div className="p-5">
+                    <div className="p-4">
                       {/* Titre */}
-                      <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                      <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-indigo-600 transition-colors">
                         {codePromo.title}
                       </h3>
 
@@ -404,9 +404,9 @@ const CodePromo = () => {
 
                       {/* Bouton d'action */}
                       <button
-                        className={`w-full py-2.5 rounded-xl font-semibold transition-all ${available
-                            ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
-                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        className={`w-full py-2 rounded-lg text-sm font-semibold transition-all ${available
+                          ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
+                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
                           }`}
                         disabled={!available}
                         onClick={(e) => {

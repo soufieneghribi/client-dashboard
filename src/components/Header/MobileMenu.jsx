@@ -24,39 +24,27 @@ const MobileMenu = ({
             </Offcanvas.Header>
             <Offcanvas.Body>
                 <Form onSubmit={handleSearchSubmit} className="mb-4">
-                    <InputGroup>
-                        <Form.Control placeholder="Rechercher..." value={searchQuery} onChange={handleSearchChange} />
-                        <Button variant="primary" type="submit"><i className="fas fa-search"></i></Button>
+                    <InputGroup className="shadow-sm rounded-pill overflow-hidden border">
+                        <Form.Control
+                            placeholder="Rechercher..."
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                            className="border-0 px-3"
+                            style={{ boxShadow: 'none' }}
+                        />
+                        <Button variant="white" type="submit" className="border-0 text-primary">
+                            <i className="fas fa-search"></i>
+                        </Button>
                     </InputGroup>
                 </Form>
 
                 <Nav className="flex-column mb-4">
-                    {NAV_LINKS.map((link) => {
-                        if (link.label === "Crédit") {
-                            return (
-                                <div key="credit-mobile-group">
-                                    <div className="py-3 d-flex align-items-center text-dark fw-bold px-3">
-                                        <i className={`fas ${link.icon} me-3 text-primary`} style={{ width: '20px' }}></i>
-                                        {link.label}
-                                    </div>
-                                    <div className="ps-5">
-                                        <Nav.Link as={Link} to="/credit/simulation" className="py-2 text-dark" onClick={onHide}>
-                                            Simulation
-                                        </Nav.Link>
-                                        <Nav.Link as={Link} to="/credit" className="py-2 text-dark" onClick={onHide}>
-                                            Voir mes crédits
-                                        </Nav.Link>
-                                    </div>
-                                </div>
-                            );
-                        }
-                        return (
-                            <Nav.Link key={link.path} as={Link} to={link.path} className="py-3 d-flex align-items-center text-dark" onClick={onHide}>
-                                <i className={`fas ${link.icon} me-3 text-primary`} style={{ width: '20px' }}></i>
-                                {link.label}
-                            </Nav.Link>
-                        );
-                    })}
+                    {NAV_LINKS.map((link) => (
+                        <Nav.Link key={link.path} as={Link} to={link.path} className="py-3 d-flex align-items-center text-dark" onClick={onHide}>
+                            <i className={`fas ${link.icon} me-3 text-primary`} style={{ width: '20px' }}></i>
+                            {link.label}
+                        </Nav.Link>
+                    ))}
                 </Nav>
 
                 <hr />

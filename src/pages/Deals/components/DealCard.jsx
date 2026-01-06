@@ -1,138 +1,153 @@
-import React, { useState } from "react";
-import { getBrandColor, getBrandInitials, getDealProgress } from "../dealUtils";
+import React, { useState, useEffect } from "react";
+import { getBrandColor, getDealProgress } from "../dealUtils";
+import { FiBarChart2, FiTag, FiCheckCircle, FiMessageSquare, FiClock } from "react-icons/fi";
 
 const DealCard = ({ deal, isFullyCompleted }) => {
     const [imageError, setImageError] = useState(false);
+    const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
-    const getCurrentObjective = () => {
-        if (deal.type === "frequence") {
-            return {
-                current: parseFloat(deal.compteur_frequence) || 0,
-                target: parseFloat(deal.objectif_frequence) || 5,
-                reward: parseFloat(deal.gain) || 5,
-                objectives: null,
-                maxReward: parseFloat(deal.gain) || 5,
-            };
-        }
+    useEffect(() => {
+        const calculateTimeLeft = () => {
+            const now = new Date().getTime();
+            const target = new Date(deal.date_fin).getTime();
+            const diff = target - now;
 
-        const objectives = [
-            { value: parseFloat(deal.objectif_1) || 0, gain: parseFloat(deal.gain_objectif_1) || 0, level: 1 },
-            { value: parseFloat(deal.objectif_2) || 0, gain: parseFloat(deal.gain_objectif_2) || 0, level: 2 },
-            { value: parseFloat(deal.objectif_3) || 0, gain: parseFloat(deal.gain_objectif_3) || 0, level: 3 },
-            { value: parseFloat(deal.objectif_4) || 0, gain: parseFloat(deal.gain_objectif_4) || 0, level: 4 },
-            { value: parseFloat(deal.objectif_5) || 0, gain: parseFloat(deal.gain_objectif_5) || 0, level: 5 },
-        ].filter((obj) => obj.value > 0);
-
-        const progressData = getDealProgress(deal);
-        const current = progressData.current;
-        const activeObjective = objectives.find((o) => current < o.value) || objectives[objectives.length - 1];
-
-        return {
-            current,
-            target: activeObjective?.value || 0,
-            reward: activeObjective?.gain || 0,
-            objectives,
-            maxReward: objectives[objectives.length - 1]?.gain || 0,
+            if (diff > 0) {
+                setTimeLeft({
+                    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                    minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+                    seconds: Math.floor((diff % (1000 * 60)) / 1000)
+                });
+            }
         };
+
+        calculateTimeLeft();
+        const timer = setInterval(calculateTimeLeft, 1000);
+        return () => clearInterval(timer);
+    }, [deal.date_fin]);
+
+    const progress = getDealProgress(deal);
+
+    const getHighestGain = (deal) => {
+        let maxGain = 0;
+        for (let i = 1; i <= 5; i++) {
+            const val = parseFloat(deal[`gain_objectif_${i}`]);
+            if (!isNaN(val) && val > maxGain) {
+                maxGain = val;
+            }
+        }
+        return maxGain;
     };
 
-    const objective = getCurrentObjective();
-    const progress = objective.target > 0 ? Math.min((objective.current / objective.target) * 100, 100) : 0;
+    const highestGain = getHighestGain(deal);
+    const brandColor = getBrandColor(deal.marque_name);
 
-    const getBadgeName = () => {
-        if (deal.type === "marque") return deal.marque_name || "Marque";
-        if (deal.type === "depense") return "Dépense";
-        if (deal.type === "frequence") return "Fréquence";
-        if (deal.type === "anniversaire") return "Anniversaire";
-        return deal.type;
+    const getStepColor = (step) => {
+        switch (step) {
+            case 1: return "#facc15"; // Yellow
+            case 2: return "#a3e635"; // Greenish
+            case 3: return "#2dd4bf"; // Teal
+            case 4: return "#818cf8"; // Indigo
+            case 5: return "#f1f5f9"; // Light grey
+            default: return "#e2e8f0";
+        }
     };
 
     if (isFullyCompleted) return null;
 
-    const brandColor = deal.type === "marque" ? getBrandColor(deal.marque_name) : "#4F46E5";
-    const progressData = getDealProgress(deal);
-
     return (
-        <div className="col-12 col-md-6 col-lg-4 mb-4">
-            <div className="deal-card-wrapper">
-                <div className="deal-card-inner">
-                    <div className="d-flex justify-content-between align-items-start mb-3">
-                        <span className="deal-type-badge" style={{
-                            backgroundColor: deal.type === "marque" ? `${brandColor}15` : "#6366f115",
-                            color: deal.type === "marque" ? brandColor : "#6366f1"
-                        }}>
-                            {getBadgeName()}
-                        </span>
+        <div className="deal-card-mobile">
+            {/* Local "Global Style" Timer Block */}
+            <div className="local-countdown-section">
+                <p className="local-countdown-label">TEMPS RESTANT</p>
+                <div className="local-timer-grid">
+                    <div className="local-timer-item">
+                        <div className="local-timer-box">{(timeLeft.days || 0).toString().padStart(2, '0')}</div>
+                        <span>JOURS</span>
                     </div>
-
-                    <div className="d-flex align-items-center mb-4">
-                        <div className="deal-card-logo" style={{
-                            backgroundColor: deal.type === "marque" ? `${brandColor}10` : "#f1f5f9",
-                            border: `1px solid ${deal.type === "marque" ? `${brandColor}20` : "#e2e8f0"}`
-                        }}>
-                            {deal.type === "marque" && deal.marque_name ? (
-                                deal.marque_logo && !imageError ? (
-                                    <img src={deal.marque_logo} alt={deal.marque_name} onError={() => setImageError(true)} style={{ width: "32px", height: "32px", objectFit: "contain" }} />
-                                ) : (
-                                    <span style={{ color: brandColor, fontWeight: 700 }}>{getBrandInitials(deal.marque_name)}</span>
-                                )
-                            ) : (
-                                <span>{deal.type === "depense" ? "💰" : deal.type === "frequence" ? "🔄" : deal.type === "anniversaire" ? "🎂" : "🎁"}</span>
-                            )}
-                        </div>
-                        <div className="ms-3">
-                            <h3 className="deal-card-title">{deal.type === "marque" && deal.marque_name ? deal.marque_name : getBadgeName()}</h3>
-                            <p className="mb-0 text-muted small fw-600">Offre Fidélité</p>
-                        </div>
+                    <div className="local-timer-sep">:</div>
+                    <div className="local-timer-item">
+                        <div className="local-timer-box">{(timeLeft.hours || 0).toString().padStart(2, '0')}</div>
+                        <span>HEURE</span>
                     </div>
+                    <div className="local-timer-sep">:</div>
+                    <div className="local-timer-item">
+                        <div className="local-timer-box">{(timeLeft.minutes || 0).toString().padStart(2, '0')}</div>
+                        <span>MIN</span>
+                    </div>
+                    <div className="local-timer-sep">:</div>
+                    <div className="local-timer-item">
+                        <div className="local-timer-box">{(timeLeft.seconds || 0).toString().padStart(2, '0')}</div>
+                        <span>SEC</span>
+                    </div>
+                </div>
+            </div>
 
-                    <p className="deal-card-desc">
-                        {deal.type === "marque"
-                            ? `Gagnez des récompenses en achetant des produits de la marque ${deal.marque_name}.`
-                            : `Profitez de ce deal exclusif et boostez votre cagnotte !`}
-                    </p>
+            <div className="deal-card-header">
+                <span className={`mobile-badge ${deal.type}`} style={{ backgroundColor: brandColor }}>
+                    {deal.type === 'depense' ? 'Dépense' : 'Marque'}
+                </span>
+            </div>
 
-                    {objective.objectives && objective.objectives.length > 0 && (
-                        <div className="deal-objective-track mb-3">
-                            {objective.objectives.map((obj, idx) => {
-                                const isCompleted = objective.current >= obj.value;
-                                return (
-                                    <div key={idx} className={`deal-objective-step ${isCompleted ? 'completed' : ''}`}>
-                                        <div className="small fw-600 opacity-75 mb-1" style={{ fontSize: '0.65rem' }}>{obj.level}ère</div>
-                                        <div className="fw-bold mb-1" style={{ color: isCompleted ? "#db2777" : "#475569" }}>{obj.value} DT</div>
-                                        <div className="small fw-600" style={{ color: isCompleted ? "#f472b6" : "#94a3b8" }}>+{obj.gain} DT</div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+            <div className="deal-icon-container">
+                <div className="deal-icon-circle">
+                    {deal.image_url || deal.marque_logo ? (
+                        <img src={deal.image_url || deal.marque_logo} alt={deal.marque_name} onError={() => setImageError(true)} />
+                    ) : (
+                        deal.type === 'depense' ? <FiBarChart2 className="graph-icon" style={{ color: brandColor }} /> : <FiTag className="tag-icon" style={{ color: brandColor }} />
                     )}
+                </div>
+            </div>
 
-                    <div className="deal-progress-container">
-                        <div className="deal-progress-label">
-                            <span>Progression</span>
-                            <span style={{ color: "#6366f1" }}>{Math.round(progress)}%</span>
-                        </div>
-                        <div className="deal-progress-bar">
-                            <div className="deal-progress-fill" style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${brandColor}, ${brandColor}CC)` }} />
-                        </div>
-                        <div className="d-flex justify-content-between mt-2 font-mono" style={{ fontSize: '0.7rem', fontWeight: 700 }}>
-                            <span className="text-secondary">
-                                {deal.type === "frequence" ? `${Math.floor(objective.current)} visite${Math.floor(objective.current) > 1 ? "s" : ""}` : `${Number(objective.current).toFixed(1)} DT`}
-                            </span>
-                            <span className="text-dark">
-                                {deal.type === "frequence" ? `${objective.target} visite${objective.target > 1 ? "s" : ""}` : `${objective.target} DT`}
-                            </span>
-                        </div>
-                    </div>
+            <div className="deal-gain-banner">
+                <p>Gagné jusqu'à</p>
+                <h3>{highestGain.toFixed(2)} <span>dt</span></h3>
+                <p className="small">si vous atteignez l'objectif</p>
+            </div>
 
-                    <div className="deal-reward-box">
-                        <div className="d-flex align-items-center justify-content-center" style={{ backgroundColor: "#22c55e", width: "24px", height: "24px", borderRadius: "6px", color: "white" }}>
-                            <span style={{ fontSize: '0.8rem' }}>🎁</span>
+            <div className="deal-title-section">
+                <h2>Deal {deal.type === 'depense' ? 'Dépense' : `Marque ${deal.marque_name || ''}`}</h2>
+                <p className="description-text">{deal.description || `Dépensez et gagnez jusqu'à ${highestGain} DT`}</p>
+            </div>
+
+            <div className="deal-meter-container">
+                <div className="deal-meter-bar">
+                    <div
+                        className="deal-meter-fill"
+                        style={{ width: `${Math.min(100, (progress.current / (parseFloat(deal.objectif_5) || 100)) * 100)}%` }}
+                    ></div>
+                </div>
+            </div>
+
+            <div className="deal-steps-grid">
+                {[1, 2, 3, 4, 5].map((step) => {
+                    const objVal = parseFloat(deal[`objectif_${step}`]);
+                    const objGain = parseFloat(deal[`gain_objectif_${step}`]);
+                    const isCompleted = progress.current >= objVal && objVal > 0;
+
+                    if (!objVal || isNaN(objVal) || objVal === 0) return <div key={step} className="deal-step-box empty" />;
+
+                    return (
+                        <div
+                            key={step}
+                            className={`deal-step-box ${isCompleted ? 'completed' : ''}`}
+                            style={{ backgroundColor: isCompleted ? getStepColor(step) : '#f8fafc' }}
+                        >
+                            <div className="step-label">
+                                {step}{step === 1 ? 'ère' : 'ème'} {isCompleted && <FiCheckCircle className="step-check" />}
+                            </div>
+                            <div className="step-value">{objVal} DT</div>
+                            <div className="step-gain">+{objGain} DT</div>
                         </div>
-                        <div>
-                            Gains potentiels: <span className="fw-800">{Number(objective.maxReward).toFixed(1)} DT</span>
-                        </div>
-                    </div>
+                    );
+                })}
+            </div>
+
+            <div className="deal-card-footer-summary">
+                <div className="purchase-stat-box">
+                    <FiMessageSquare className="chat-icon" />
+                    <span>Mes achats : {progress.current.toFixed(2)} DT</span>
                 </div>
             </div>
         </div>

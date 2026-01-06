@@ -36,8 +36,8 @@ const Reclamations = () => {
         const Icon = config.icon;
 
         return (
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${config.color}`}>
-                <Icon className="text-sm" />
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${config.color}`}>
+                <Icon className="text-xs" />
                 {config.label}
             </span>
         );
@@ -71,22 +71,22 @@ const Reclamations = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-6">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+                <div className="bg-white rounded-xl shadow-xl p-4 sm:p-6 mb-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">
                                 📝 Mes Réclamations
                             </h1>
-                            <p className="text-gray-600">
+                            <p className="text-sm text-gray-600">
                                 Gérez vos réclamations et suivez leur statut
                             </p>
                         </div>
                         <button
                             onClick={() => navigate('/reclamations/new')}
-                            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                         >
                             <FaPlus />
                             Nouvelle Réclamation
@@ -95,10 +95,10 @@ const Reclamations = () => {
                 </div>
 
                 {/* Filters */}
-                <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6">
-                    <div className="flex items-center gap-2 mb-4">
-                        <FaFilter className="text-gray-600" />
-                        <h2 className="text-lg font-semibold text-gray-800">Filtrer par statut</h2>
+                <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 mb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                        <FaFilter className="text-gray-600 text-sm" />
+                        <h2 className="text-base font-semibold text-gray-800">Filtrer par statut</h2>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {[
@@ -111,7 +111,7 @@ const Reclamations = () => {
                             <button
                                 key={filter.value}
                                 onClick={() => setFilterStatus(filter.value)}
-                                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${filterStatus === filter.value
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${filterStatus === filter.value
                                     ? 'bg-blue-600 text-white shadow-md'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
@@ -186,18 +186,18 @@ const Reclamations = () => {
                         {filteredComplaints.map((complaint) => (
                             <div
                                 key={complaint.id}
-                                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group"
+                                className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group"
                             >
-                                <div className="p-6">
+                                <div className="p-4">
                                     {/* Header */}
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="text-3xl">{getCategoryIcon(complaint.category)}</div>
+                                            <div className="text-2xl">{getCategoryIcon(complaint.category)}</div>
                                             <div>
-                                                <h3 className="font-bold text-gray-800 text-lg line-clamp-1">
+                                                <h3 className="font-bold text-gray-800 text-base line-clamp-1">
                                                     {complaint.subject}
                                                 </h3>
-                                                <p className="text-sm text-gray-500">
+                                                <p className="text-[10px] text-gray-500">
                                                     {new Date(complaint.created_at).toLocaleDateString('fr-FR')}
                                                 </p>
                                             </div>
@@ -205,12 +205,12 @@ const Reclamations = () => {
                                     </div>
 
                                     {/* Status */}
-                                    <div className="mb-4">
+                                    <div className="mb-3">
                                         {getStatusBadge(complaint.status)}
                                     </div>
 
                                     {/* Description */}
-                                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                                    <p className="text-gray-600 text-xs mb-3 line-clamp-2">
                                         {complaint.description}
                                     </p>
 
@@ -218,14 +218,14 @@ const Reclamations = () => {
                                     <div className="flex gap-2 pt-4 border-t border-gray-100">
                                         <button
                                             onClick={() => navigate(`/reclamations/${complaint.id}`)}
-                                            className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-lg font-medium transition-all duration-200"
+                                            className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
                                         >
                                             <FaEye />
                                             Voir
                                         </button>
                                         <button
                                             onClick={() => handleDelete(complaint.id)}
-                                            className="inline-flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium transition-all duration-200"
+                                            className="inline-flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg font-medium transition-all duration-200"
                                         >
                                             <FaTrash />
                                         </button>

@@ -213,9 +213,9 @@ const Categories = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Hero Header - Simple Background */}
-      <div className="bg-blue-600 text-white py-8 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">
+      <div className="bg-blue-600 text-white py-6 shadow-lg">
+        <div className="max-w-5xl mx-auto px-4 text-center">
+          <h1 className="text-2xl md:text-3xl font-bold mb-1">
             🛍️ Découvrez Nos Produits
           </h1>
           <p className="text-blue-100">
@@ -224,12 +224,12 @@ const Categories = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Section 1: Catégories (Carousel Automatique) */}
-        <div className="bg-white rounded-2xl shadow-xl p-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-xl shadow-xl p-4">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">
+              <h2 className="text-xl font-bold text-gray-800">
                 📦 Catégories Principales
               </h2>
               <p className="text-gray-500 text-sm mt-1">
@@ -251,10 +251,10 @@ const Categories = () => {
             {slides.length > 1 && (
               <button
                 onClick={goToPrevSlide}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 -ml-4"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 -ml-4"
                 aria-label="Slide précédent"
               >
-                <FaChevronLeft className="text-xl" />
+                <FaChevronLeft className="text-lg" />
               </button>
             )}
 
@@ -271,8 +271,8 @@ const Categories = () => {
                     <div
                       key={category.id}
                       onClick={() => handleCategorySelect(category)}
-                      className={`relative h-44 flex-1 rounded-2xl shadow-lg overflow-hidden cursor-pointer group transition-all duration-500 ease-out ${selectedCategory?.id === category.id
-                        ? "ring-4 ring-blue-500 scale-105 shadow-2xl"
+                      className={`relative h-36 flex-1 rounded-xl shadow-lg overflow-hidden cursor-pointer group transition-all duration-500 ease-out ${selectedCategory?.id === category.id
+                        ? "ring-4 ring-blue-500 scale-105 shadow-2xll"
                         : "hover:scale-105 hover:shadow-xl"
                         }`}
                       style={{
@@ -285,21 +285,20 @@ const Categories = () => {
 
                       {/* Badge de sélection */}
                       {selectedCategory?.id === category.id && (
-                        <div className="absolute top-3 right-3 bg-blue-500 text-white rounded-full p-2.5 shadow-xl animate-pulse">
-                          <FaCheckCircle className="text-xl" />
+                        <div className="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-2 shadow-xl animate-pulse">
+                          <FaCheckCircle className="text-lg" />
                         </div>
                       )}
 
                       {/* Nom de la catégorie */}
-                      <div className="absolute bottom-0 w-full bg-white/95 backdrop-blur-sm py-4 text-center group-hover:bg-white transition-all duration-300">
-                        <span className="text-base font-bold text-gray-800 px-2">
+                      <div className="absolute bottom-0 w-full bg-white/95 backdrop-blur-sm py-2 text-center group-hover:bg-white transition-all duration-300">
+                        <span className="text-sm font-bold text-gray-800 px-2">
                           {category.title}
                         </span>
                       </div>
 
-                      {/* Overlay au hover */}
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40">
-                        <div className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                        <div className="bg-white text-blue-600 px-3 py-1.5 rounded-lg text-sm font-semibold transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                           Sélectionner
                         </div>
                       </div>
@@ -313,10 +312,10 @@ const Categories = () => {
             {slides.length > 1 && (
               <button
                 onClick={goToNextSlide}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 -mr-4"
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 -mr-4"
                 aria-label="Slide suivant"
               >
-                <FaChevronRight className="text-xl" />
+                <FaChevronRight className="text-lg" />
               </button>
             )}
 
@@ -340,17 +339,17 @@ const Categories = () => {
 
         {/* Section 2: Sous-catégories - Navigation vers page produits */}
         {selectedCategory && subCategories.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-xl p-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white rounded-xl shadow-xl p-4">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-800">
+                <h2 className="text-xl font-bold text-gray-800">
                   🏷️ {selectedCategory.title}
                 </h2>
                 <p className="text-gray-500 text-sm mt-1">
                   Cliquez sur une catégorie pour voir les produits
                 </p>
               </div>
-              <div className="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold">
+              <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
                 {subCategories.length} sous-catégories
               </div>
             </div>
@@ -362,7 +361,7 @@ const Categories = () => {
                   onClick={() => handleSubCategoryClick(subCat)}
                   className="group relative cursor-pointer rounded-xl overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105"
                 >
-                  <div className="relative h-40 overflow-hidden">
+                  <div className="relative h-32 overflow-hidden">
                     <img
                       src={getCategoryImageUrl(subCat)}
                       alt={subCat.title}
@@ -374,14 +373,14 @@ const Categories = () => {
                     {/* Badge "Voir les produits" au hover */}
                     <div className="absolute inset-0 bg-blue-600/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <div className="text-white text-center">
-                        <div className="text-3xl mb-2">🛒</div>
-                        <p className="font-bold text-lg">Voir les produits</p>
+                        <div className="text-2xl mb-1">🛒</div>
+                        <p className="font-bold text-sm">Produits</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-white p-3 text-center">
-                    <p className="font-bold text-sm text-gray-800 line-clamp-2">
+                  <div className="bg-white p-2 text-center">
+                    <p className="font-bold text-xs text-gray-800 line-clamp-2">
                       {subCat.title}
                     </p>
                   </div>

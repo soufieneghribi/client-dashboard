@@ -17,14 +17,16 @@ const SearchSection = ({
     return (
         <div className="d-none d-lg-block flex-grow-1 mx-4 position-relative" style={{ maxWidth: '500px' }} ref={searchRef}>
             <Form onSubmit={handleSearchSubmit}>
-                <InputGroup>
+                <InputGroup className="shadow-sm rounded-pill overflow-hidden border">
                     <Form.Control
                         placeholder="Rechercher un produit..."
                         value={searchQuery}
                         onChange={handleSearchChange}
                         onFocus={() => searchQuery && searchResults.length > 0 && setShowSearchResults(true)}
+                        className="border-0 px-4 py-2"
+                        style={{ boxShadow: 'none' }}
                     />
-                    <Button variant="outline-secondary" type="submit" disabled={searchLoading}>
+                    <Button variant="white" type="submit" disabled={searchLoading} className="border-0 px-3 text-secondary">
                         {searchLoading ? <span className="spinner-border spinner-border-sm"></span> : <i className="fas fa-search"></i>}
                     </Button>
                 </InputGroup>

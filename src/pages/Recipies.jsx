@@ -67,7 +67,7 @@ const Recipes = () => {
 
   // Fonction améliorée pour récupérer l'URL de l'image
   const getImageUrl = (recipe) => {
-    const imagePath = recipe.img || recipe.image || recipe.picture || recipe.thumbnail || recipe.photo;
+    const imagePath = recipe.image_url || recipe.img || recipe.image || recipe.picture || recipe.thumbnail || recipe.photo;
 
     if (!imagePath) return "https://via.placeholder.com/400x300?text=Recette";
     if (imagePath.startsWith('http')) return imagePath;
@@ -128,7 +128,7 @@ const Recipes = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-4 py-8">
 
         {/* Header */}
         <div className="text-center mb-12">

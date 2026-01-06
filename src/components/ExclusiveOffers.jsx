@@ -14,7 +14,7 @@ const ExclusiveOffers = () => {
     const isLoggedIn = useSelector(selectIsLoggedIn);
 
     const showLoginPrompt = () => {
-        
+
         setTimeout(() => {
             navigate("/login");
         }, 1000);
@@ -22,7 +22,7 @@ const ExclusiveOffers = () => {
 
     const handleLoyaltyClick = () => {
         if (isLoggedIn) {
-            navigate("/Loyality");
+            navigate("/MesDeals");
         } else {
             showLoginPrompt();
         }
@@ -30,7 +30,7 @@ const ExclusiveOffers = () => {
 
     const handlePersonalizedClick = () => {
         if (isLoggedIn) {
-            navigate("/Catalogue");
+            navigate("/promotions");
         } else {
             showLoginPrompt();
         }

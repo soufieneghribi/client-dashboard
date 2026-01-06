@@ -12,43 +12,6 @@ const Step4Summary = ({
 }) => {
     return (
         <div>
-            <div className="section-header">
-                <div className="section-icon-wrapper">
-                    <i className="bi bi-check-circle"></i>
-                </div>
-                <h2 className="section-title">Confirmation</h2>
-                <p className="section-subtitle">Vérifiez vos données avant de valider</p>
-            </div>
-
-            <div className="summary-card">
-                <h4 className="h6 fw-bold mb-3">Résumé du profil</h4>
-                <div className="summary-item">
-                    <span className="summary-label">Nom</span>
-                    <span className="summary-value">{user.nom_et_prenom}</span>
-                </div>
-                <div className="summary-item">
-                    <span className="summary-label">Email</span>
-                    <span className="summary-value text-break">{user.email}</span>
-                </div>
-                <div className="summary-item">
-                    <span className="summary-label">Enseigne</span>
-                    <span className="summary-value">{selectedEnseigne?.nom || '360TN'}</span>
-                </div>
-                <div className="summary-item">
-                    <span className="summary-label">Ville</span>
-                    <span className="summary-value">{user.ville}, {user.gouvernorat}</span>
-                </div>
-                <div className="summary-item">
-                    <span className="summary-label">Situation</span>
-                    <span className="summary-value">{user.situation_familiale}</span>
-                </div>
-                {nombreEnfants > 0 && (
-                    <div className="summary-item">
-                        <span className="summary-label">Enfants</span>
-                        <span className="summary-value">{nombreEnfants}</span>
-                    </div>
-                )}
-            </div>
 
             {/* Terms and Conditions */}
             <div className="mb-3">

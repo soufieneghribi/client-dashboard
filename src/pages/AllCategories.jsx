@@ -63,10 +63,10 @@ const AllCategories = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-6">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 mb-6">
+                <div className="bg-white rounded-xl shadow-xl p-4 sm:p-6 mb-4">
                     <button
                         onClick={() => navigate('/')}
                         className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4 transition-colors"
@@ -76,17 +76,17 @@ const AllCategories = () => {
                     </button>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">
                                 {getUniverseTitle()}
                             </h1>
-                            <p className="text-gray-600">
+                            <p className="text-sm text-gray-600">
                                 {filteredCategories.length} {filteredCategories.length === 1 ? 'catégorie disponible' : 'catégories disponibles'}
                             </p>
                         </div>
                     </div>
 
                     {/* Search Bar */}
-                    <div className="mt-6 relative">
+                    <div className="mt-4 relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <FaSearch className="text-gray-400" />
                         </div>
@@ -95,7 +95,7 @@ const AllCategories = () => {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Rechercher une catégorie..."
-                            className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
                         />
                     </div>
                 </div>
@@ -135,7 +135,7 @@ const AllCategories = () => {
                                 className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer group transform hover:scale-105"
                             >
                                 {/* Image Section */}
-                                <div className="relative h-32 sm:h-40 bg-gray-100">
+                                <div className="relative h-32 bg-gray-100">
                                     <img
                                         src={getCategoryImageUrl(category)}
                                         alt={category.title}
@@ -151,8 +151,8 @@ const AllCategories = () => {
                                 </div>
 
                                 {/* Content Section */}
-                                <div className="p-3 sm:p-4">
-                                    <h3 className="font-semibold text-gray-800 text-sm sm:text-base mb-2 line-clamp-2 min-h-[2.5rem]">
+                                <div className="p-3">
+                                    <h3 className="font-semibold text-gray-800 text-xs sm:text-sm mb-1 line-clamp-2 min-h-[2rem]">
                                         {category.title}
                                     </h3>
 

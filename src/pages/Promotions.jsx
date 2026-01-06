@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { API_ENDPOINTS, getAuthHeaders, handleApiError } from "../services/api";
 
-import { 
-  FaArrowLeft, 
-  FaSpinner, 
-  FaEye, 
+import {
+  FaArrowLeft,
+  FaSpinner,
+  FaEye,
   FaCalendarAlt,
   FaTag,
   FaBoxOpen,
@@ -19,7 +19,7 @@ import Cookies from "js-cookie";
 const Promotions = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
+
   const [promotions, setPromotions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [clientInfo, setClientInfo] = useState(null);
@@ -54,7 +54,7 @@ const Promotions = () => {
         }
 
         const result = await response.json();
-        
+
         if (result.success) {
           setClientInfo(result.client);
           setPromotions(result.data || []);
@@ -87,20 +87,20 @@ const Promotions = () => {
 
     // Récupérer le panier actuel depuis les cookies
     const currentCart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
-    
+
     // Vérifier si l'article est déjà dans le panier
     const existingItemIndex = currentCart.findIndex(item => item.id === article.id);
-    
+
     if (existingItemIndex !== -1) {
       // Article déjà dans le panier, augmenter la quantité
       currentCart[existingItemIndex].quantity += 1;
       currentCart[existingItemIndex].total = (
-        parseFloat(currentCart[existingItemIndex].price === 0 ? 
-        currentCart[existingItemIndex].Initialprice : 
-        currentCart[existingItemIndex].price) * 
+        parseFloat(currentCart[existingItemIndex].price === 0 ?
+          currentCart[existingItemIndex].Initialprice :
+          currentCart[existingItemIndex].price) *
         currentCart[existingItemIndex].quantity
       ).toFixed(2);
-      
+
       // 
     } else {
       // Nouvel article à ajouter
@@ -117,21 +117,21 @@ const Promotions = () => {
         promo_name: promotion.name,
         discount_percent: article.pivot.discount_percent
       };
-      
+
       currentCart.push(cartItem);
       // 
     }
-    
+
     // Sauvegarder le panier mis à jour
     Cookies.set("cart", JSON.stringify(currentCart), { expires: 7 });
-    
+
     // Simuler un délai pour l'effet visuel
     setTimeout(() => {
       setAddingToCart(prev => ({ ...prev, [article.id]: false }));
-      
+
       // Afficher une notification de confirmation avec une coche
-      const event = new CustomEvent('cartUpdated', { 
-        detail: { itemCount: currentCart.length } 
+      const event = new CustomEvent('cartUpdated', {
+        detail: { itemCount: currentCart.length }
       });
       window.dispatchEvent(event);
     }, 500);
@@ -164,10 +164,10 @@ const Promotions = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-4 px-2 sm:py-8 sm:px-4">
-      <div className="max-w-7xl mx-auto">
-        
+      <div className="max-w-5xl mx-auto">
+
         {/* Header */}
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 mb-6 sm:mb-8">
+        <div className="bg-white rounded-xl shadow-xl p-4 sm:p-5 mb-4 sm:mb-6">
           <div className="flex items-center justify-between mb-4 flex-wrap">
             <button
               onClick={() => navigate(-1)}
@@ -176,7 +176,7 @@ const Promotions = () => {
               <FaArrowLeft className="text-xl" />
               <span className="font-semibold">Retour</span>
             </button>
-            
+
             {clientInfo && (
               <div className="text-right">
                 <p className="text-xs sm:text-sm text-gray-600">Bienvenue,</p>
@@ -187,14 +187,14 @@ const Promotions = () => {
 
           <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">🔥 Mes Promotions Exclusives</h1>
-              <p className="text-gray-600">Profitez de vos offres personnalisées</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">🔥 Mes Promotions Exclusives</h1>
+              <p className="text-sm text-gray-600">Profitez de vos offres personnalisées</p>
             </div>
 
             {Userprofile && (
-              <div className="bg-gradient-to-r from-blue-100 to-indigo-100 px-5 py-3 rounded-xl w-full sm:w-auto text-center sm:text-right">
-                <p className="text-sm text-blue-800 font-semibold">💰 Votre Cagnotte</p>
-                <p className="text-2xl sm:text-3xl font-bold text-blue-600">
+              <div className="bg-gradient-to-r from-blue-100 to-indigo-100 px-4 py-2 rounded-xl w-full sm:w-auto text-center sm:text-right">
+                <p className="text-xs text-blue-800 font-semibold">💰 Votre Cagnotte</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-600">
                   {parseFloat(Userprofile.cagnotte_balance || 0).toFixed(2)} DT
                 </p>
               </div>
@@ -213,10 +213,10 @@ const Promotions = () => {
               Revenez bientôt pour découvrir nos nouvelles offres !
             </p>
             <button
-              onClick={() => navigate('/catalogue')}
-              className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 sm:px-8 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all shadow-lg hover:shadow-xl"
+              onClick={() => navigate('/')}
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all shadow-lg hover:shadow-xl text-sm"
             >
-              Retour au Catalogue
+              Retour à l'accueil
             </button>
           </div>
         ) : (
@@ -227,20 +227,20 @@ const Promotions = () => {
                 className="bg-white rounded-xl sm:rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all border border-blue-100"
               >
                 {/* Header Promotion */}
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 sm:p-6 text-white">
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 sm:p-5 text-white">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <MdLocalOffer className="text-2xl sm:text-3xl" />
-                        <h2 className="text-xl sm:text-2xl font-bold">{promotion.name}</h2>
+                      <div className="flex items-center gap-3 mb-1">
+                        <MdLocalOffer className="text-xl sm:text-2xl" />
+                        <h2 className="text-lg sm:text-xl font-bold">{promotion.name}</h2>
                       </div>
                       {promotion.description && (
-                        <p className="text-blue-100 text-sm sm:text-base">{promotion.description}</p>
+                        <p className="text-blue-100 text-xs sm:text-sm">{promotion.description}</p>
                       )}
                     </div>
 
                     {promotion.discount_value && (
-                      <div className="bg-white text-blue-600 px-3 py-1 sm:px-4 sm:py-2 rounded-full font-bold text-lg shadow-lg">
+                      <div className="bg-white text-blue-600 px-3 py-1 rounded-full font-bold text-base shadow-lg">
                         -{promotion.discount_value}%
                       </div>
                     )}
@@ -250,7 +250,7 @@ const Promotions = () => {
                     <div className="flex items-center gap-2">
                       <FaCalendarAlt />
                       <span>
-                        Du {new Date(promotion.start_date).toLocaleDateString('fr-FR')} 
+                        Du {new Date(promotion.start_date).toLocaleDateString('fr-FR')}
                         {' '}au {new Date(promotion.end_date).toLocaleDateString('fr-FR')}
                       </span>
                     </div>
@@ -279,11 +279,10 @@ const Promotions = () => {
                           <button
                             onClick={() => addToCart(article, promotion)}
                             disabled={addingToCart[article.id]}
-                            className={`flex items-center justify-center w-10 h-10 rounded-full text-xs font-semibold shadow-lg transition-all ${
-                              addingToCart[article.id]
-                                ? 'bg-blue-400 text-white cursor-not-allowed'
-                                : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white'
-                            }`}
+                            className={`flex items-center justify-center w-10 h-10 rounded-full text-xs font-semibold shadow-lg transition-all ${addingToCart[article.id]
+                              ? 'bg-blue-400 text-white cursor-not-allowed'
+                              : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white'
+                              }`}
                             title="Ajouter au panier"
                           >
                             {addingToCart[article.id] ? (

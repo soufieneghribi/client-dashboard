@@ -14,11 +14,11 @@ const CategoryCarousel = ({
 }) => {
     return (
         <section>
-            <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-800 mb-3">
+            <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
                     Nos Catégories
                 </h2>
-                <p className="text-gray-600 max-w-2xl mx-auto">
+                <p className="text-sm text-gray-600 max-w-2xl mx-auto">
                     Découvrez notre large sélection de produits organisés par catégories
                 </p>
             </div>
@@ -64,15 +64,15 @@ const CategoryCarousel = ({
                                         onClick={() => handleCategoryClick(category.id, category.title)}
                                     >
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/70 transition-all duration-300"></div>
-                                        <div className="absolute bottom-0 w-full bg-white/90 backdrop-blur-sm py-3 text-center group-hover:bg-white/95 transition-all duration-300">
-                                            <span className="text-sm md:text-base font-semibold text-gray-800 px-2">
+                                        <div className="absolute bottom-0 w-full bg-white/90 backdrop-blur-sm py-2 text-center group-hover:bg-white/95 transition-all duration-300">
+                                            <span className="text-xs md:text-sm font-semibold text-gray-800 px-2">
                                                 {category.title.length > 14
                                                     ? category.title.slice(0, 14) + "..."
                                                     : category.title}
                                             </span>
                                         </div>
                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                            <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                            <div className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                                                 Voir les produits
                                             </div>
                                         </div>

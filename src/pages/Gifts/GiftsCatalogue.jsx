@@ -198,7 +198,7 @@ const GiftsCatalogue = () => {
                         <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
                             <div className="text-6xl mb-6">🎁</div>
                             <h2 className="text-2xl font-bold text-gray-800 mb-2">Aucun cadeau disponible</h2>
-                            <button onClick={() => navigate('/catalogue')} className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl">Retour</button>
+                            <button onClick={() => navigate('/')} className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl">Retour</button>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

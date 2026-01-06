@@ -15,7 +15,6 @@ import Categories from "./pages/Categories";
 import Products from "./pages/ProductsBySubCategory";
 import ProductDetails from "./pages/ProductDetails";
 import SubCategory from "./components/SubCategory";
-import Catalogue from "./pages/Catalogue";
 import Promotions from "./pages/Promotions";
 import Cadeaux from "./pages/Gifts/GiftsCatalogue";
 import GiftDetailsPage from "./pages/Gifts/GiftDetailsPage";
@@ -100,7 +99,6 @@ const router = createBrowserRouter(
       <Route path="/verify-email" element={<EmailVerification />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/catalogue" element={<Catalogue />} />
       <Route path="/promotions" element={<Promotions />} />
       <Route path="/cadeaux" element={<Cadeaux />} />
       <Route path="/cadeaux/:id" element={<GiftDetailsPage />} />

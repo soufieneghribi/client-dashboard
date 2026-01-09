@@ -80,6 +80,7 @@ export const API_ENDPOINTS = {
       BY_CLIENT: (clientId) => `${API_BASE_URL}/dealAnniversaire/clientId/${clientId}`,
       TRANSFER: (dealId) => `${API_BASE_URL}/dealAnniversaire/${dealId}/transfer-cagnotte`,
     },
+    UNIFIED: (clientId) => `${API_BASE_URL}/deals?client_id=${clientId}`,
   },
 
   // ==================== OFFERS ====================
@@ -228,6 +229,7 @@ export const API_ENDPOINTS = {
     ELIGIBILITY: `${API_BASE_URL}/credit/eligibility`,
     CREATE_DOSSIER: `${API_BASE_URL}/credit/dossier`,
     LIST_DOSSIERS: `${API_BASE_URL}/credit/dossiers`,
+    GET_DOSSIER: (id) => `${API_BASE_URL}/credit/dossier/${id}`,
     UPLOAD_DOCUMENT: `${API_BASE_URL}/credit/upload`,
   },
 };

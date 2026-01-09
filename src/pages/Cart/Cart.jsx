@@ -16,6 +16,7 @@ const Cart = () => {
     const { Userprofile } = useSelector((state) => state.user);
     const [showCagnotteModal, setShowCagnotteModal] = useState(false);
     const [useCagnotte, setUseCagnotte] = useState(false);
+    const [cagnotteAmount, setCagnotteAmount] = useState(0);
     const navigate = useNavigate();
     const auth = useSelector((state) => state.auth);
     const dispatch = useDispatch();
@@ -44,6 +45,8 @@ const Cart = () => {
 
         const savedUseCagnotte = localStorage.getItem('use_cagnotte') === 'true';
         setUseCagnotte(savedUseCagnotte);
+        const savedCagnotteAmount = parseFloat(localStorage.getItem('cagnotte_amount') || 0);
+        setCagnotteAmount(savedCagnotteAmount);
     }, [dispatch, auth.isLoggedIn]);
 
     useEffect(() => {
@@ -54,18 +57,39 @@ const Cart = () => {
         }
     }, [auth.isLoggedIn]);
 
+    // Auto-disable cagnotte if subtotal falls below used amount
+    useEffect(() => {
+        const subtotal = cartItems.reduce((acc, item) => acc + parseFloat(item.total), 0);
+        if (useCagnotte && subtotal < cagnotteAmount) {
+            const newAmount = Math.min(cagnotteAmount, subtotal);
+            if (newAmount === 0) {
+                localStorage.removeItem('use_cagnotte');
+                localStorage.removeItem('cagnotte_amount');
+                setUseCagnotte(false);
+                setCagnotteAmount(0);
+            } else {
+                localStorage.setItem('cagnotte_amount', newAmount.toString());
+                setCagnotteAmount(newAmount);
+            }
+        }
+    }, [cartItems, useCagnotte, cagnotteAmount]);
+
     const calculateTotal = useMemo(() => {
         const subtotal = cartItems.reduce((acc, item) => acc + parseFloat(item.total), 0);
         let cagnotteDeduction = 0;
+        const threshold = 300; // Only for credit simulation threshold display
+
         if (useCagnotte && Userprofile?.cagnotte_balance) {
             const cagnotteBalance = parseFloat(Userprofile.cagnotte_balance);
-            cagnotteDeduction = Math.min(cagnotteBalance, subtotal);
+            // Use the manual amount if set, otherwise default to full balance (clipped to subtotal)
+            const maxPossibleDeduction = Math.min(cagnotteBalance, subtotal);
+            cagnotteDeduction = cagnotteAmount > 0 ? Math.min(cagnotteAmount, maxPossibleDeduction) : maxPossibleDeduction;
         }
         const totalTTC = Math.max(0, subtotal - cagnotteDeduction).toFixed(2);
-        return { subtotal, totalTTC, cagnotteDeduction };
-    }, [cartItems, useCagnotte, Userprofile?.cagnotte_balance]);
+        return { subtotal, totalTTC, cagnotteDeduction, threshold, subtotalMetThreshold: subtotal >= threshold };
+    }, [cartItems, useCagnotte, Userprofile?.cagnotte_balance, cagnotteAmount]);
 
-    const { subtotal, totalTTC, cagnotteDeduction } = calculateTotal;
+    const { subtotal, totalTTC, cagnotteDeduction, threshold, subtotalMetThreshold } = calculateTotal;
 
     const handleRemoveItem = (itemId) => {
         const updatedCart = cartItems.filter((item) => item.id !== itemId);
@@ -100,8 +124,7 @@ const Cart = () => {
             cagnotteDeduction: useCagnotte ? cagnotteDeduction : 0,
             useCagnotte: useCagnotte
         };
-        Cookies.remove("cart");
-        localStorage.removeItem('use_cagnotte');
+        // Don't clear cart here - it will be cleared after successful order placement
         navigate("/order-confirmation", { state: checkoutData });
     };
 
@@ -110,21 +133,21 @@ const Cart = () => {
         return Math.min(parseFloat(Userprofile.cagnotte_balance), parseFloat(subtotal));
     };
 
-    const confirmCagnotteUse = () => {
-        const deduction = calculateCagnotteDeduction();
-        if (deduction <= 0) {
-            // 
-            return;
-        }
+    const confirmCagnotteUse = (appliedAmount) => {
+        if (!appliedAmount || appliedAmount <= 0) return;
+
         localStorage.setItem('use_cagnotte', 'true');
+        localStorage.setItem('cagnotte_amount', appliedAmount.toString());
         setUseCagnotte(true);
+        setCagnotteAmount(appliedAmount);
         setShowCagnotteModal(false);
-        // } DT seront déduits de votre cagnotte.`);
     };
 
     const cancelCagnotteUse = () => {
         localStorage.removeItem('use_cagnotte');
+        localStorage.removeItem('cagnotte_amount');
         setUseCagnotte(false);
+        setCagnotteAmount(0);
         // 
     };
 
@@ -159,9 +182,9 @@ const Cart = () => {
     return (
         <div className="cart-container">
             <div className="container">
-                <div className="row g-4">
-                    <div className="col-lg-8">
-                        <h1 className="h3 fw-bold mb-4">Mon Panier</h1>
+                <div className="row g-3 g-md-4">
+                    <div className="col-12 col-lg-8">
+                        <h1 className="h3 h2-md fw-bold mb-3 mb-md-4">Mon Panier</h1>
                         <div className="cart-card overflow-hidden">
                             <div className="d-none d-md-flex justify-content-between p-3 fw-bold bg-light text-muted border-bottom" style={{ fontSize: '0.85rem', textTransform: 'uppercase' }}>
                                 <div className="flex-grow-1">Produit</div>
@@ -183,12 +206,12 @@ const Cart = () => {
                             ))}
                         </div>
 
-                        <button onClick={() => navigate("/")} className="btn mt-4 text-muted fw-medium d-flex align-items-center gap-2">
+                        <button onClick={() => navigate("/")} className="btn mt-3 mt-md-4 text-muted fw-medium d-flex align-items-center gap-2">
                             <span>←</span> Continuer mes achats
                         </button>
                     </div>
 
-                    <div className="col-lg-4">
+                    <div className="col-12 col-lg-4 mt-4 mt-lg-0">
                         <CartSummary
                             subtotal={subtotal}
                             totalTTC={totalTTC}
@@ -198,6 +221,9 @@ const Cart = () => {
                             handleShowCagnotte={() => setShowCagnotteModal(true)}
                             cancelCagnotteUse={cancelCagnotteUse}
                             canUseCagnotte={Userprofile?.cagnotte_balance > 0}
+                            threshold={threshold}
+                            subtotalMetThreshold={subtotalMetThreshold}
+                            cagnotteBalance={parseFloat(Userprofile?.cagnotte_balance || 0)}
                         />
                     </div>
                 </div>

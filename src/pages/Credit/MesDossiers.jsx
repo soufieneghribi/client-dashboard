@@ -17,14 +17,15 @@ const MesDossiers = () => {
 
     const filteredDossiers = filterStatus === 'all'
         ? dossiers
-        : dossiers.filter(d => d.statut === filterStatus);
+        : filterStatus === 'valide'
+            ? dossiers.filter(d => ['valide', 'validé', 'validee par admin', 'refuse', 'refusé'].includes(d.statut))
+            : dossiers.filter(d => d.statut === filterStatus);
 
     const statusFilters = [
         { value: 'all', label: 'Tous' },
         { value: 'depose', label: 'Déposés' },
         { value: 'en_cours', label: 'En cours' },
-        { value: 'valide', label: 'Validés' },
-        { value: 'refuse', label: 'Refusés' }
+        { value: 'valide', label: 'Traités' }
     ];
 
     return (
@@ -73,15 +74,9 @@ const MesDossiers = () => {
                         </div>
                         <div className="bg-white rounded-2xl shadow-md p-4 text-center border-t-4 border-green-500">
                             <p className="text-2xl font-bold text-green-600">
-                                {dossiers.filter(d => d.statut === 'valide').length}
+                                {dossiers.filter(d => ['valide', 'validé', 'validee par admin', 'refuse', 'refusé'].includes(d.statut)).length}
                             </p>
-                            <p className="text-gray-600 text-xs font-semibold uppercase">Validés</p>
-                        </div>
-                        <div className="bg-white rounded-2xl shadow-md p-4 text-center border-t-4 border-red-500">
-                            <p className="text-2xl font-bold text-red-600">
-                                {dossiers.filter(d => d.statut === 'refuse').length}
-                            </p>
-                            <p className="text-gray-600 text-xs font-semibold uppercase">Refusés</p>
+                            <p className="text-gray-600 text-xs font-semibold uppercase">Traités</p>
                         </div>
                     </div>
                 )}
@@ -116,7 +111,11 @@ const MesDossiers = () => {
                                 {filter.value !== 'all' && (
                                     <span className={`ml-2 px-1.5 py-0.5 rounded-full text-[10px] ${filterStatus === filter.value ? 'bg-white text-blue-600' : 'bg-gray-200 text-gray-600'
                                         }`}>
-                                        {filter.value === 'all' ? dossiers.length : dossiers.filter(d => d.statut === filter.value).length}
+                                        {filter.value === 'all'
+                                            ? dossiers.length
+                                            : filter.value === 'valide'
+                                                ? dossiers.filter(d => ['valide', 'validé', 'validee par admin', 'refuse', 'refusé'].includes(d.statut)).length
+                                                : dossiers.filter(d => d.statut === filter.value).length}
                                     </span>
                                 )}
                             </button>

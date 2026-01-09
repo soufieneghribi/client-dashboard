@@ -51,6 +51,7 @@ import ReclamationDetails from "./pages/ReclamationDetails/ReclamationDetails";
 import CreditSimulation from "./pages/Credit/CreditSimulation";
 import CreditDossier from "./pages/Credit/CreditDossier";
 import MesDossiers from "./pages/Credit/MesDossiers";
+import DossierDetails from "./pages/Credit/DossierDetails";
 
 // ⬅️ NOUVEAU IMPORT - Toutes les catégories
 import AllCategories from "./pages/AllCategories";
@@ -220,6 +221,10 @@ const router = createBrowserRouter(
       <Route
         path="/credit/mes-dossiers"
         element={<ProtectedRoute><MesDossiers /></ProtectedRoute>}
+      />
+      <Route
+        path="/credit/dossier/:id"
+        element={<ProtectedRoute><DossierDetails /></ProtectedRoute>}
       />
 
       {/* ==================== 404 FALLBACK ==================== */}

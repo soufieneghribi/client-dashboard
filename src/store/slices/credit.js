@@ -84,24 +84,35 @@ export const createDossier = createAsyncThunk(
     }
 );
 
+// Helper to convert file to base64
+const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+    });
+};
+
 // Upload document
 export const uploadDocument = createAsyncThunk(
     'credit/uploadDocument',
     async ({ dossierId, typeDocument, file }, { rejectWithValue }) => {
         try {
-            const formData = new FormData();
-            formData.append('dossier_id', dossierId);
-            formData.append('type_document', typeDocument);
-            formData.append('file', file);
+            const base64File = await fileToBase64(file);
+
+            const payload = {
+                dossier_id: dossierId,
+                type_document: typeDocument,
+                file_base64: base64File,
+                file_name: file.name
+            };
 
             const response = await axios.post(
                 API_ENDPOINTS.CREDIT.UPLOAD_DOCUMENT,
-                formData,
+                payload,
                 {
-                    headers: {
-                        ...getAuthHeaders(),
-                        'Content-Type': 'multipart/form-data',
-                    },
+                    headers: getAuthHeaders(),
                 }
             );
             return response.data;
@@ -125,6 +136,23 @@ export const fetchDossiers = createAsyncThunk(
         } catch (error) {
             return rejectWithValue(
                 error.response?.data?.message || 'Erreur lors du chargement des dossiers'
+            );
+        }
+    }
+);
+
+// Fetch single dossier
+export const fetchDossierById = createAsyncThunk(
+    'credit/fetchDossierById',
+    async (id, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(API_ENDPOINTS.CREDIT.GET_DOSSIER(id), {
+                headers: getAuthHeaders(),
+            });
+            return response.data.data || response.data;
+        } catch (error) {
+            return rejectWithValue(
+                error.response?.data?.message || 'Erreur lors du chargement du dossier'
             );
         }
     }
@@ -255,6 +283,20 @@ const creditSlice = createSlice({
                 state.dossiers = action.payload;
             })
             .addCase(fetchDossiers.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+
+            // Fetch single dossier
+            .addCase(fetchDossierById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchDossierById.fulfilled, (state, action) => {
+                state.loading = false;
+                state.currentDossier = action.payload;
+            })
+            .addCase(fetchDossierById.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });

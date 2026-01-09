@@ -46,20 +46,38 @@ const CreditDossier = () => {
     };
 
     const handleFileSelect = (typeDocument, file) => {
+        // Validation: Ensure we have a real File object
+        if (!(file instanceof File)) {
+            console.error("Invalid file object selected");
+            return;
+        }
+
         // Create preview for images
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onloadend = () => {
                 setDocuments(prev => ({
                     ...prev,
-                    [typeDocument]: { ...file, preview: reader.result }
+                    [typeDocument]: {
+                        file: file, // Keep the actual File object
+                        preview: reader.result,
+                        name: file.name,
+                        size: file.size,
+                        uploaded: false
+                    }
                 }));
             };
             reader.readAsDataURL(file);
         } else {
             setDocuments(prev => ({
                 ...prev,
-                [typeDocument]: file
+                [typeDocument]: {
+                    file: file,
+                    preview: null,
+                    name: file.name,
+                    size: file.size,
+                    uploaded: false
+                }
             }));
         }
     };
@@ -73,25 +91,47 @@ const CreditDossier = () => {
     };
 
     const handleUploadDocument = async (typeDocument) => {
-        if (!currentDossier || !documents[typeDocument]) return;
+        const docData = documents[typeDocument];
+        if (!currentDossier || !docData || !docData.file) return;
 
-        await dispatch(uploadDocument({
+        const result = await dispatch(uploadDocument({
             dossierId: currentDossier.dossier_id || currentDossier.id,
             typeDocument,
-            file: documents[typeDocument]
-        }));
+            file: docData.file // Pass the actual File instance
+        })).unwrap();
+
+        if (result) {
+            setDocuments(prev => ({
+                ...prev,
+                [typeDocument]: { ...prev[typeDocument], uploaded: true }
+            }));
+        }
     };
 
     const handleUploadAll = async () => {
         if (!currentDossier) return;
 
-        for (const [typeDocument, file] of Object.entries(documents)) {
-            if (file && !file.uploaded) {
-                await dispatch(uploadDocument({
-                    dossierId: currentDossier.dossier_id || currentDossier.id,
-                    typeDocument,
-                    file
-                }));
+        let allSuccess = true;
+        for (const typeDocument of Object.keys(documents)) {
+            const docData = documents[typeDocument];
+            if (docData && !docData.uploaded) {
+                try {
+                    const result = await dispatch(uploadDocument({
+                        dossierId: currentDossier.dossier_id || currentDossier.id,
+                        typeDocument,
+                        file: docData.file
+                    })).unwrap();
+
+                    if (result) {
+                        setDocuments(prev => ({
+                            ...prev,
+                            [typeDocument]: { ...prev[typeDocument], uploaded: true }
+                        }));
+                    }
+                } catch (err) {
+                    console.error(`Failed to upload ${typeDocument}:`, err);
+                    allSuccess = false;
+                }
             }
         }
     };

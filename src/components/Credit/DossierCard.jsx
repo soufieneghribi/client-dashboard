@@ -34,8 +34,7 @@ const DossierCard = ({ dossier }) => {
 
     return (
         <div
-            onClick={() => navigate(`/credit/dossier/${dossier.id}`)}
-            className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-6 cursor-pointer border-2 border-gray-100 hover:border-blue-300"
+            className="bg-white rounded-xl shadow-md p-6 border-2 border-gray-100"
         >
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
@@ -98,13 +97,6 @@ const DossierCard = ({ dossier }) => {
                     </span>
                 </div>
             )}
-
-            {/* View Details Link */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-blue-600 font-medium text-sm hover:text-blue-700">
-                    Voir les détails →
-                </p>
-            </div>
         </div>
     );
 };

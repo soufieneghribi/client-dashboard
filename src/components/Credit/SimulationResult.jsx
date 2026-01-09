@@ -11,60 +11,50 @@ const SimulationResult = ({ simulation }) => {
     const { details } = simulation;
 
     return (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 sm:p-8 border-2 border-blue-200">
+        <div className="bg-white rounded-xl border border-blue-100 p-4 sm:p-5 shadow-sm">
             {/* Header */}
-            <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                    <span className="text-2xl">✅</span>
+            <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
+                    <span className="text-xl">✅</span>
                 </div>
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Résultat de la Simulation</h2>
-                    <p className="text-gray-600">Votre crédit est finançable</p>
+                    <h2 className="text-sm font-bold text-slate-800">Résultat de la simulation</h2>
+                    <p className="text-[11px] text-blue-600 font-medium">Financement possible</p>
                 </div>
             </div>
 
             {/* Results Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                {/* Montant Financé */}
-                <div className="bg-white rounded-xl p-5 shadow-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">💰</span>
-                        <p className="text-sm text-gray-600 font-medium">Montant Financé</p>
-                    </div>
-                    <p className="text-2xl font-bold text-gray-800">
-                        {formatCurrency(details.montant_finance)}
-                    </p>
-                </div>
-
                 {/* Mensualité */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border-2 border-blue-300">
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">📅</span>
-                        <p className="text-sm text-gray-600 font-medium">Mensualité</p>
+                <div className="bg-blue-600 rounded-xl p-4 shadow-sm text-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                        <p className="text-[10px] text-blue-100 font-bold uppercase tracking-wider">Mensualité</p>
                     </div>
-                    <p className="text-2xl font-bold text-blue-600">
+                    <p className="text-2xl font-black text-white">
                         {formatCurrency(details.mensualite)}
                     </p>
                 </div>
 
+                {/* Montant Financé */}
+                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 text-center">Montant Financé</p>
+                    <p className="text-lg font-bold text-slate-800 text-center">
+                        {formatCurrency(details.montant_finance)}
+                    </p>
+                </div>
+
                 {/* Coût Total */}
-                <div className="bg-white rounded-xl p-5 shadow-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">💳</span>
-                        <p className="text-sm text-gray-600 font-medium">Coût Total</p>
-                    </div>
-                    <p className="text-2xl font-bold text-gray-800">
+                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 text-center">Coût Total</p>
+                    <p className="text-lg font-bold text-slate-800 text-center">
                         {formatCurrency(details.cout_total)}
                     </p>
                 </div>
 
                 {/* Taux d'Intérêt */}
-                <div className="bg-white rounded-xl p-5 shadow-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">📊</span>
-                        <p className="text-sm text-gray-600 font-medium">Taux d'Intérêt</p>
-                    </div>
-                    <p className="text-2xl font-bold text-gray-800">
+                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 text-center">Taux d'Intérêt</p>
+                    <p className="text-lg font-bold text-slate-800 text-center">
                         {formatPercentage(details.taux_interet)}
                     </p>
                 </div>

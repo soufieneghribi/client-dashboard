@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 
 import { useSelector, useDispatch } from "react-redux";
 import axios from 'axios';
@@ -517,8 +518,11 @@ const OrderConfirmation = () => {
             if (response.status === 200 || response.status === 201) {
                 console.log("✅ Order Submission Success");
                 setModalIsOpen(true);
+                // Clear cart from both localStorage and cookies after successful order
                 localStorage.removeItem("cart");
-                localStorage.removeItem('cagnotte_deduction');
+                localStorage.removeItem('cagnotte_amount');
+                localStorage.removeItem('use_cagnotte');
+                Cookies.remove("cart");
             }
         } catch (error) {
             console.error("❌ Order Submission Failed:", error.response?.status, error.response?.data);

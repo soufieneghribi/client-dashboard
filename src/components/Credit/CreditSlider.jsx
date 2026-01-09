@@ -23,8 +23,8 @@ const CreditSlider = ({
         <div className="space-y-3">
             {/* Label and Value */}
             <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-gray-700 font-semibold">
-                    {icon && <span className="text-xl">{icon}</span>}
+                <label className="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
+                    {icon && <span className="text-base">{icon}</span>}
                     {label}
                 </label>
                 <div className="flex items-center gap-2">
@@ -35,9 +35,9 @@ const CreditSlider = ({
                         min={min}
                         max={max}
                         step={step}
-                        className="w-28 px-3 py-2 border-2 border-gray-200 rounded-lg text-right font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-24 px-2 py-1.5 border border-slate-200 rounded text-right font-black text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
-                    <span className="text-gray-600 font-medium min-w-[40px]">{unit}</span>
+                    <span className="text-slate-400 font-bold text-[10px] uppercase">{unit}</span>
                 </div>
             </div>
 
@@ -50,23 +50,23 @@ const CreditSlider = ({
                     min={min}
                     max={max}
                     step={step}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb"
+                    className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer slider-thumb"
                     style={{
-                        background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`
+                        background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${percentage}%, #f1f5f9 ${percentage}%, #f1f5f9 100%)`
                     }}
                 />
             </div>
 
             {/* Min/Max Labels and Helper Text */}
-            <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">
-                    Min: {min.toLocaleString()} {unit}
+            <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                <span>
+                    {min.toLocaleString()} {unit}
                 </span>
                 {helperText && (
-                    <span className="text-gray-500 italic">{helperText}</span>
+                    <span className="text-blue-500/50 normal-case italic font-medium">{helperText}</span>
                 )}
-                <span className="text-gray-500">
-                    Max: {max.toLocaleString()} {unit}
+                <span>
+                    {max.toLocaleString()} {unit}
                 </span>
             </div>
 

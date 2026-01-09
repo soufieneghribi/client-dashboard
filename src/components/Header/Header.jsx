@@ -22,8 +22,7 @@ const NAV_LINKS = [
     { path: "/MesDeals", label: "Deals", icon: "fa-tag" },
     { path: "/recipes", label: "Recettes", icon: "fa-utensils" },
     { path: "/promotions", label: "Catalogue", icon: "fa-book" },
-    { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" },
-    { path: "/reclamations", label: "Réclamations", icon: "fa-exclamation-circle" }
+    { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" }
 ];
 
 const Header = () => {

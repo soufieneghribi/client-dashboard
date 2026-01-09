@@ -15,6 +15,7 @@ import ProfileForm from "./components/ProfileForm";
 import PasswordForm from "./components/PasswordForm";
 import AdvantagesSection from "./components/AdvantagesSection";
 import WalletSection from "./components/WalletSection";
+import ClaimsSection from "./components/ClaimsSection";
 
 const Profile = () => {
     const dispatch = useDispatch();
@@ -225,10 +226,10 @@ const Profile = () => {
                             getInitials={getInitials}
                         />
 
-                        <Row>
-                            <Col xs={12} lg={8}>
+                        <Row className="g-3 g-md-4">
+                            <Col xs={12} lg={8} className="mb-3 mb-lg-0">
                                 <Card className="profile-main-card">
-                                    <Card.Body className="profile-main-card-body">
+                                    <Card.Body className="profile-main-card-body p-3 p-md-4">
                                         {isChangingPassword ? (
                                             <PasswordForm
                                                 passwordData={passwordData}
@@ -252,6 +253,10 @@ const Profile = () => {
                                         )}
                                     </Card.Body>
                                 </Card>
+
+                                <div className="mt-4">
+                                    <ClaimsSection />
+                                </div>
                             </Col>
 
                             <Col xs={12} lg={4}>

@@ -5,6 +5,25 @@ const DossierCard = ({ dossier }) => {
     const navigate = useNavigate();
 
     const getStatusConfig = (statut) => {
+        // Normalize status for easier matching
+        const normalizedStatus = statut?.toLowerCase().trim();
+
+        if (['valide', 'validé', 'validee', 'validee par admin'].includes(normalizedStatus)) {
+            return {
+                label: 'Validé',
+                color: 'bg-green-100 text-green-800 border-green-300',
+                icon: '✅'
+            };
+        }
+
+        if (['refuse', 'refusé'].includes(normalizedStatus)) {
+            return {
+                label: 'Refusé',
+                color: 'bg-red-100 text-red-800 border-red-300',
+                icon: '❌'
+            };
+        }
+
         const configs = {
             depose: {
                 label: 'Déposé',
@@ -15,19 +34,10 @@ const DossierCard = ({ dossier }) => {
                 label: 'En cours',
                 color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
                 icon: '⏳'
-            },
-            valide: {
-                label: 'Validé',
-                color: 'bg-green-100 text-green-800 border-green-300',
-                icon: '✅'
-            },
-            refuse: {
-                label: 'Refusé',
-                color: 'bg-red-100 text-red-800 border-red-300',
-                icon: '❌'
             }
         };
-        return configs[statut] || configs.depose;
+
+        return configs[normalizedStatus] || configs.depose;
     };
 
     const statusConfig = getStatusConfig(dossier.statut);

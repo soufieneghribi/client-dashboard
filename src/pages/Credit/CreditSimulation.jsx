@@ -24,6 +24,7 @@ const CreditSimulation = () => {
     const [apport, setApport] = useState(1000);
     const [duree, setDuree] = useState(12);
     const [validationErrors, setValidationErrors] = useState({});
+    const [eligibilityInputs, setEligibilityInputs] = useState(null);
 
     // Reset process when mounting to allow fresh start
     useEffect(() => {
@@ -69,6 +70,7 @@ const CreditSimulation = () => {
     };
 
     const handleCheckEligibility = (eligibilityData) => {
+        setEligibilityInputs(eligibilityData);
         dispatch(checkEligibility({
             ...eligibilityData,
             type_credit: selectedType
@@ -80,7 +82,11 @@ const CreditSimulation = () => {
         navigate('/credit/dossier', {
             state: {
                 simulation,
-                eligibility,
+                eligibility: {
+                    ...eligibility,
+                    revenu_net: eligibilityInputs?.salaire_net || 0,
+                    charges: eligibilityInputs?.charges || 0
+                },
                 formData: {
                     type_credit: selectedType,
                     montant_panier: montantPanier,

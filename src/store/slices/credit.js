@@ -142,14 +142,24 @@ export const fetchDossiers = createAsyncThunk(
 );
 
 // Fetch single dossier
+// Fetch single dossier (Modified to filter from list as backend endpoint is missing)
 export const fetchDossierById = createAsyncThunk(
     'credit/fetchDossierById',
     async (id, { rejectWithValue }) => {
         try {
-            const response = await axios.get(API_ENDPOINTS.CREDIT.GET_DOSSIER(id), {
+            // Use LIST_DOSSIERS instead of GET_DOSSIER
+            const response = await axios.get(API_ENDPOINTS.CREDIT.LIST_DOSSIERS, {
                 headers: getAuthHeaders(),
             });
-            return response.data.data || response.data;
+
+            const dossiers = response.data.data || response.data;
+            const dossier = dossiers.find(d => d.id === id);
+
+            if (!dossier) {
+                return rejectWithValue('Dossier non trouvé');
+            }
+
+            return dossier;
         } catch (error) {
             return rejectWithValue(
                 error.response?.data?.message || 'Erreur lors du chargement du dossier'

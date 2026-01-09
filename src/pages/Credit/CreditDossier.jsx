@@ -225,7 +225,7 @@ const CreditDossier = () => {
                 {/* Step 1: Summary */}
                 {step === 1 && (
                     <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-6">Récapitulatif de votre demande</h2>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6">Récapitulatif de votre demande (Final)</h2>
 
                         <div className="space-y-6">
                             {/* Simulation Details */}
@@ -266,13 +266,23 @@ const CreditDossier = () => {
                             {/* Eligibility */}
                             <div className="bg-green-50 rounded-xl p-5">
                                 <h3 className="font-bold text-gray-800 mb-4">Éligibilité</h3>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 mb-4">
                                     <FaCheckCircle className="text-green-600 text-2xl" />
                                     <div>
                                         <p className="font-bold text-green-800">Vous êtes éligible</p>
                                         <p className="text-sm text-green-700">
                                             Taux d'endettement: {eligibility.taux_endettement?.toFixed(2)}%
                                         </p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 border-t border-green-200 pt-3">
+                                    <div>
+                                        <p className="text-green-700 text-xs uppercase font-bold">Revenus</p>
+                                        <p className="font-bold text-green-900">{parseFloat(eligibility.revenu_net || 0).toLocaleString()} DT</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-green-700 text-xs uppercase font-bold">Charges</p>
+                                        <p className="font-bold text-green-900">{parseFloat(eligibility.charges || 0).toLocaleString()} DT</p>
                                     </div>
                                 </div>
                             </div>

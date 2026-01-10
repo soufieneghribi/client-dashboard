@@ -5,6 +5,7 @@ import { loginSuccess } from '../store/slices/authSlice';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../services/api';
 import COMPANY_LOGO from "../assets/images/logo_0.png";
+import { toast } from 'react-toastify';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ const Login = () => {
 
     if (!credentials.email) {
       newErrors.email = 'Email requis';
-    } else if (!/\S+@\S+\.\S+/.test(credentials.email)) {
+    } else if (!/\S+@\S+\.\S/.test(credentials.email)) {
       newErrors.email = 'Email invalide';
     }
 
@@ -74,8 +75,7 @@ const Login = () => {
         is_email_verified === "0" ||
         is_email_verified === "false"
       ) {
-
-
+        toast.warning('Veuillez vérifier votre email avant de vous connecter.');
         setIsLoading(false);
 
         setTimeout(() => {
@@ -94,22 +94,21 @@ const Login = () => {
           token: token
         }));
 
-
+        toast.success(`Bienvenue ${client.nom_et_prenom || 'Client'} !`);
 
         setTimeout(() => {
           navigate('/');
         }, 1000);
       } else {
-        // 
+        toast.error('Erreur lors de la connexion. Veuillez réessayer.');
         setIsLoading(false);
       }
 
     } catch (error) {
-
-
       if (error.response?.data?.message?.toLowerCase().includes('verify') ||
         error.response?.data?.message?.toLowerCase().includes('vérif')) {
 
+        toast.info('Votre compte nécessite une vérification.');
 
         setTimeout(() => {
           navigate('/verify-email', {
@@ -122,9 +121,9 @@ const Login = () => {
       }
 
       if (error.response?.status === 401) {
-        // 
+        toast.error('Email ou mot de passe incorrect.');
       } else if (error.response?.status === 403) {
-        // 
+        toast.warning('Accès refusé. Veuillez vérifier votre email.');
         setTimeout(() => {
           navigate('/verify-email', {
             state: { email: credentials.email }
@@ -134,14 +133,14 @@ const Login = () => {
         const errors = error.response?.data?.errors;
         if (errors) {
           const firstError = Object.values(errors)[0];
-          // ? firstError[0] : firstError);
+          toast.error(typeof firstError === 'string' ? firstError : firstError[0]);
         } else {
-          // 
+          toast.error('Données invalides. Veuillez vérifier vos informations.');
         }
       } else if (error.response?.data?.message) {
-        // 
+        toast.error(error.response.data.message);
       } else {
-        // 
+        toast.error('Une erreur est survenue. Veuillez réessayer plus tard.');
       }
 
       setIsLoading(false);

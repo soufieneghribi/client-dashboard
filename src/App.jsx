@@ -5,6 +5,8 @@ import { fetchCategories } from "./store/slices/categorie";
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./styles/styles.css";
 import Modal from "react-modal";
@@ -38,6 +40,20 @@ function App() {
 
       {/* Global Footer */}
       <Footer />
+
+      {/* Global Toast Notifications */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 }

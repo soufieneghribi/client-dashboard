@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { getBrandColor, getDealProgress } from "../dealUtils";
 import { FiBarChart2, FiTag, FiCheckCircle, FiMessageSquare, FiClock } from "react-icons/fi";
 import { FaGift, FaStar } from "react-icons/fa";
+import { Spinner } from "react-bootstrap";
 import frequencesImg from "../../../assets/images/frequencesImg.png";
 
-const DealCard = ({ deal, isFullyCompleted }) => {
+const DealCard = ({ deal, onTransfer, isTransferring }) => {
     const [imageError, setImageError] = useState(false);
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
@@ -29,9 +30,30 @@ const DealCard = ({ deal, isFullyCompleted }) => {
         return () => clearInterval(timer);
     }, [deal.date_fin]);
 
-    const progress = getDealProgress(deal);
+    // V2 Progress Calculation
+    const getProgress = () => {
+        if (deal.dealType === 'frequency') {
+            return {
+                current: deal.compteur_frequence || 0,
+                target: deal.objectif_frequence || 0
+            };
+        } else {
+            // spend, brand, birthday
+            return {
+                current: deal.compteur_objectif || 0,
+                target: deal.objectif_5 || deal.objectif_4 || deal.objectif_3 || deal.objectif_2 || deal.objectif_1 || 0
+            };
+        }
+    };
+
+    const progress = getProgress();
+    const amountEarned = deal.amount_earned || 0;
+    const isCompleted = amountEarned > 0;
 
     const getHighestGain = (deal) => {
+        if (deal.dealType === 'frequency') {
+            return deal.gain || 0;
+        }
         let maxGain = 0;
         for (let i = 1; i <= 5; i++) {
             const val = parseFloat(deal[`gain_objectif_${i}`]);
@@ -43,7 +65,7 @@ const DealCard = ({ deal, isFullyCompleted }) => {
     };
 
     const highestGain = getHighestGain(deal);
-    const brandColor = getBrandColor(deal.marque_name);
+    const brandColor = getBrandColor(deal.marque?.nom_marque || deal.marque_name);
 
     const getStepColor = (step) => {
         switch (step) {
@@ -64,12 +86,11 @@ const DealCard = ({ deal, isFullyCompleted }) => {
         '#f3f4f6'
     ];
 
-    if (isFullyCompleted) return null;
 
     // -------------------------------------------
     // FREQUENCY CARD DESIGN
     // -------------------------------------------
-    if (deal.type === 'frequence') {
+    if (deal.dealType === 'frequency') {
         return (
             <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 relative overflow-hidden mb-4">
                 {/* Badge */}
@@ -84,12 +105,14 @@ const DealCard = ({ deal, isFullyCompleted }) => {
                     </div>
                     <div>
                         <div className="text-right">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Gagné</p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">
+                                {isCompleted ? 'Gagné' : 'À Gagner'}
+                            </p>
                             <h3 className="text-xl font-black text-[#ef4444] leading-none">
-                                {deal.gain} <span className="text-sm text-slate-400 font-bold">dt</span>
+                                {isCompleted ? amountEarned.toFixed(2) : (deal.gain || 0).toFixed(2)} <span className="text-sm text-slate-400 font-bold">dt</span>
                             </h3>
                             <p className="text-[10px] text-slate-400 font-semibold leading-tight mt-1">
-                                si vous atteignez l'objectif
+                                {isCompleted ? 'Transférez vers votre cagnotte' : 'si vous atteignez l\'objectif'}
                             </p>
                         </div>
                     </div>
@@ -99,7 +122,7 @@ const DealCard = ({ deal, isFullyCompleted }) => {
                 <div className="mb-5">
                     <h2 className="text-lg font-black text-slate-800 mb-1">Deal Fréquence</h2>
                     <p className="text-sm font-medium text-slate-500 leading-relaxed">
-                        Commande régulièrement et gagnez jusqu'à {deal.gain} DT
+                        Commande régulièrement et gagnez jusqu'à {deal.gain || 0} DT
                     </p>
                 </div>
 
@@ -108,33 +131,32 @@ const DealCard = ({ deal, isFullyCompleted }) => {
                     <div
                         className="h-full rounded-full transition-all duration-500 ease-out relative"
                         style={{
-                            width: `${Math.min(100, (progress.current / deal.objectif_frequence) * 100)}%`,
+                            width: `${Math.min(100, (progress.current / progress.target) * 100)}%`,
                             background: 'linear-gradient(90deg, #06b6d4, #3b82f6)'
                         }}
                     >
                     </div>
                 </div>
 
-                {/* Visit Steps (Mocking general steps visually if specific data isn't step-based like marque deals) */}
+                {/* Visit Steps */}
                 <div className="flex gap-2 mb-5 overflow-x-auto pb-2 scrollbar-hide">
                     {[1, 2, 3, 4, 5].map((step, idx) => {
-                        const isCompleted = progress.current >= (deal.objectif_frequence / 5) * step; // Approximation logic
+                        const isStepCompleted = progress.current >= step;
                         const bgStyle = frequencyStepColors[idx % frequencyStepColors.length];
-                        const isGradient = bgStyle.includes('gradient');
 
                         return (
                             <div
                                 key={step}
                                 className="flex-1 min-w-[60px] h-[70px] rounded-2xl flex flex-col items-center justify-center relative p-1 transition-transform active:scale-95"
                                 style={{
-                                    background: isCompleted ? bgStyle : '#f8fafc',
-                                    boxShadow: isCompleted ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
-                                    color: isCompleted ? 'white' : '#94a3b8'
+                                    background: isStepCompleted ? bgStyle : '#f8fafc',
+                                    boxShadow: isStepCompleted ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+                                    color: isStepCompleted ? 'white' : '#94a3b8'
                                 }}
                             >
                                 <span className="text-[10px] font-bold opacity-80">{step}ère</span>
-                                <span className="text-sm font-black mt-0.5">10 DT</span>
-                                {isCompleted && (
+                                <span className="text-sm font-black mt-0.5">{((deal.gain || 0) / 5).toFixed(1)} DT</span>
+                                {isStepCompleted && (
                                     <div className="absolute -bottom-2 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
                                         <FiCheckCircle className="text-green-500 text-xs" />
                                     </div>
@@ -185,39 +207,43 @@ const DealCard = ({ deal, isFullyCompleted }) => {
             </div>
 
             <div className="deal-card-header">
-                <span className={`mobile-badge ${deal.type}`} style={{ backgroundColor: brandColor }}>
-                    {deal.type === 'depense' ? 'Dépense' :
-                        deal.type === 'marque' ? 'Marque' : 'Anniversaire'}
+                <span className={`mobile-badge ${deal.dealType}`} style={{ backgroundColor: brandColor }}>
+                    {deal.dealType === 'spend' ? 'Dépense' :
+                        deal.dealType === 'brand' ? 'Marque' : 'Anniversaire'}
                 </span>
             </div>
 
             <div className="deal-icon-container">
                 <div className="deal-icon-circle">
-                    {deal.image_url || deal.marque_logo ? (
-                        <img src={deal.image_url || deal.marque_logo} alt={deal.marque_name} onError={() => setImageError(true)} />
+                    {deal.marque?.image_url || deal.image_url ? (
+                        <img
+                            src={deal.marque?.image_url || deal.image_url}
+                            alt={deal.marque?.nom_marque || deal.marque_name}
+                            onError={() => setImageError(true)}
+                        />
                     ) : (
-                        deal.type === 'depense' ? <FiBarChart2 className="graph-icon" style={{ color: brandColor }} /> :
-                            deal.type === 'anniversaire' ? <FaGift className="tag-icon" style={{ color: brandColor }} /> :
+                        deal.dealType === 'spend' ? <FiBarChart2 className="graph-icon" style={{ color: brandColor }} /> :
+                            deal.dealType === 'birthday' ? <FaGift className="tag-icon" style={{ color: brandColor }} /> :
                                 <FiTag className="tag-icon" style={{ color: brandColor }} />
                     )}
                 </div>
             </div>
 
             <div className="deal-gain-banner">
-                <p>Gagné jusqu'à</p>
-                <h3>{highestGain.toFixed(2)} <span>dt</span></h3>
-                <p className="small">si vous atteignez l'objectif</p>
+                <p>{isCompleted ? 'Gagné' : 'Gagné jusqu\'à'}</p>
+                <h3>{isCompleted ? amountEarned.toFixed(2) : highestGain.toFixed(2)} <span>dt</span></h3>
+                <p className="small">{isCompleted ? 'Transférez vers votre cagnotte' : 'si vous atteignez l\'objectif'}</p>
             </div>
 
             <div className="deal-title-section">
                 <h2>
-                    {deal.type === 'depense' ? 'Deal Dépense' :
-                        deal.type === 'anniversaire' ? 'Deal Anniversaire' :
-                            `Marque ${deal.marque_name || ''}`}
+                    {deal.dealType === 'spend' ? 'Deal Dépense' :
+                        deal.dealType === 'birthday' ? 'Deal Anniversaire' :
+                            `Marque ${deal.marque?.nom_marque || deal.marque_name || ''}`}
                 </h2>
                 <p className="description-text">
                     {deal.description || (
-                        deal.type === 'anniversaire' ? "C'est votre anniversaire ! Profitez de ce deal spécial." :
+                        deal.dealType === 'birthday' ? "C'est votre anniversaire ! Profitez de ce deal spécial." :
                             `Dépensez et gagnez jusqu'à ${highestGain} DT`
                     )}
                 </p>

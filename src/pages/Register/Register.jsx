@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { signUp, fetchEnseignes } from '../../store/slices/user';
 import COMPANY_LOGO from "../../assets/images/logo_0.png";
+import { toast } from 'react-toastify';
 
 
 // Constants
@@ -211,7 +212,7 @@ const Register = () => {
         e.preventDefault();
 
         if (!validateStep(4)) {
-            // 
+            toast.error("Veuillez remplir tous les champs obligatoires");
             return;
         }
 
@@ -224,22 +225,22 @@ const Register = () => {
 
             const result = await dispatch(signUp({ user: payload })).unwrap();
 
+            toast.success("Inscription réussie !");
+
             if (result.email && result.is_email_verified === false) {
-                // 
+                toast.info("Veuillez vérifier votre email pour activer votre compte.");
                 setTimeout(() => {
                     navigate('/verify-email', {
                         state: { email: user.email }
                     });
                 }, 1500);
             } else if (result.token) {
-                // 
                 setTimeout(() => {
                     navigate('/');
                 }, 1000);
             }
 
         } catch (error) {
-
             handleApiErrors(error);
         }
     };
@@ -269,7 +270,7 @@ const Register = () => {
             errorMessage = error.message;
         }
 
-        // 
+        toast.error(errorMessage);
 
         if (window.grecaptcha && recaptchaRef.current) {
             try {

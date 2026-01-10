@@ -10,7 +10,7 @@ import EmailVerification from "./pages/EmailVerification";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
-import MesDeals from "./pages/Deals/Deals";
+import MesDeals from "./pages/Deals/DealsV2";
 import Categories from "./pages/Categories";
 import Products from "./pages/ProductsBySubCategory";
 import ProductDetails from "./pages/ProductDetails";

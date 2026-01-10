@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
+import { toast } from 'react-toastify';
 
 import { useSelector, useDispatch } from "react-redux";
 import axios from 'axios';
@@ -417,19 +418,19 @@ const OrderConfirmation = () => {
         const { contact_person_name, contact_person_number, payment_method, latitude, longitude } = formData;
 
         if (!contact_person_name?.trim() || !contact_person_number?.trim() || !payment_method) {
-
+            toast.error("Veuillez remplir tous les champs obligatoires (nom, téléphone, méthode de paiement)");
             setIsSubmitting(false);
             return;
         }
 
         if (formData.order_type === 'delivery') {
             if (geolocationStatus === 'loading') {
-
+                toast.info("Veuillez patienter, localisation en cours...");
                 setIsSubmitting(false);
                 return;
             }
             if (!formData.rue?.trim() || !formData.ville?.trim() || !formData.gouvernorat?.trim() || !selectedMode) {
-
+                toast.error("Veuillez remplir l'adresse complète et choisir un mode de livraison");
                 setIsSubmitting(false);
                 return;
             }
@@ -437,7 +438,7 @@ const OrderConfirmation = () => {
 
         const auth_token = getAuthToken();
         if (!auth_token) {
-
+            toast.warning("Votre session a expiré. Veuillez vous reconnecter.");
             navigate("/login");
             setIsSubmitting(false);
             return;
@@ -517,6 +518,7 @@ const OrderConfirmation = () => {
 
             if (response.status === 200 || response.status === 201) {
                 console.log("✅ Order Submission Success");
+                toast.success("Commande passée avec succès !");
                 setModalIsOpen(true);
                 // Clear cart from both localStorage and cookies after successful order
                 localStorage.removeItem("cart");
@@ -529,12 +531,12 @@ const OrderConfirmation = () => {
 
             // Show user-friendly error message
             if (error.response?.data?.error) {
-                alert(`Erreur: ${error.response.data.error}\n\nVeuillez réessayer.`);
+                toast.error(`Erreur: ${error.response.data.error}`);
             } else if (error.response?.status === 401 || error.response?.status === 403) {
-                alert("Session expirée. Veuillez vous reconnecter.");
+                toast.error("Session expirée. Veuillez vous reconnecter.");
                 navigate("/login");
             } else {
-                alert("Une erreur est survenue lors de la commande. Veuillez réessayer.");
+                toast.error("Une erreur est survenue lors de la commande. Veuillez réessayer.");
             }
         } finally {
             setIsSubmitting(false);

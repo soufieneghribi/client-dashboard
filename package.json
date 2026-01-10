@@ -47,6 +47,7 @@
     "react-responsive-carousel": "^3.2.23",
     "react-router-dom": "^7.9.4",
     "react-swipeable": "^7.0.2",
+    "react-toastify": "^11.0.5",
     "redux": "^5.0.1",
     "swiper": "^11.1.15",
     "vite-plugin-node-polyfills": "^0.24.0"

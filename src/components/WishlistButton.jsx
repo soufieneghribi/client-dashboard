@@ -4,6 +4,7 @@ import { toggleWishlist, fetchWishlist, selectIsInWishlist } from "../store/slic
 import { selectIsLoggedIn } from "../store/slices/authSlice";
 import { useNavigate } from "react-router-dom";
 
+import { toast } from "react-toastify";
 import "../styles/WishlistButton.css";
 
 const WishlistButton = ({ productId, size = "medium", className = "" }) => {
@@ -19,7 +20,7 @@ const WishlistButton = ({ productId, size = "medium", className = "" }) => {
         e.stopPropagation();
 
         if (!isLoggedIn) {
-            // 
+            toast.info("Veuillez vous connecter pour gérer vos favoris");
             setTimeout(() => navigate("/login"), 1000);
             return;
         }
@@ -29,13 +30,16 @@ const WishlistButton = ({ productId, size = "medium", className = "" }) => {
         setIsAnimating(true);
         setIsLoading(true);
 
+        const wasInWishlist = isInWishlist;
         try {
             await dispatch(toggleWishlist(productId)).unwrap();
+            const actionMessage = !wasInWishlist ? "ajouté aux" : "retiré des";
+            toast.success(`Produit ${actionMessage} favoris !`);
+
             // Refetch wishlist to ensure we have the latest data
-            // This is important when adding items to get full product details
             await dispatch(fetchWishlist());
         } catch (error) {
-
+            toast.error("Erreur lors de la mise à jour des favoris");
         } finally {
             setIsLoading(false);
             setTimeout(() => setIsAnimating(false), 600);
@@ -60,7 +64,7 @@ const WishlistButton = ({ productId, size = "medium", className = "" }) => {
             <svg
                 className="wishlist-icon"
                 viewBox="0 0 24 24"
-                fill={isInWishlist ? "currentColor" : "none"}
+                fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"

@@ -194,20 +194,26 @@ export const fetchClientDeals = createAsyncThunk(
 
       const headers = getAuthHeaders(token);
 
+      const fetchWithCatch = async (endpoint) => {
+        try {
+          const response = await axios.get(endpoint, { headers });
+          return response.data;
+        } catch (err) {
+          return { data: [] }; // Return empty data on success failure
+        }
+      };
+
       const [depenseRes, marqueRes, frequenceRes, anniversaireRes] = await Promise.all([
-        axios.get(API_ENDPOINTS.DEALS.DEPENSE.BY_CLIENT(clientId), { headers }),
-        axios.get(API_ENDPOINTS.DEALS.MARQUE.BY_CLIENT(clientId), { headers }),
-        axios.get(API_ENDPOINTS.DEALS.FREQUENCE.BY_CLIENT(clientId), { headers }),
-        axios.get(API_ENDPOINTS.DEALS.ANNIVERSAIRE.BY_CLIENT(clientId), { headers })
+        fetchWithCatch(API_ENDPOINTS.DEALS.DEPENSE.BY_CLIENT(clientId)),
+        fetchWithCatch(API_ENDPOINTS.DEALS.MARQUE.BY_CLIENT(clientId)),
+        fetchWithCatch(API_ENDPOINTS.DEALS.FREQUENCE.BY_CLIENT(clientId)),
+        fetchWithCatch(API_ENDPOINTS.DEALS.ANNIVERSAIRE.BY_CLIENT(clientId))
       ]);
 
-      // ✅ Log pour debug
-
-
-      const depenseDeals = transformDealsData(depenseRes.data?.data || []).map(d => ({ ...d, type: 'depense' }));
-      const marqueDeals = transformMarqueDealsData(marqueRes.data?.data || []).map(d => ({ ...d, type: 'marque' }));
-      const frequenceDeals = transformFrequenceDealsData(frequenceRes.data?.data || []).map(d => ({ ...d, type: 'frequence' }));
-      const anniversaireDeals = transformDealsData(anniversaireRes.data?.data || []).map(d => ({ ...d, type: 'anniversaire' }));
+      const depenseDeals = transformDealsData(depenseRes?.data || []).map(d => ({ ...d, type: 'depense' }));
+      const marqueDeals = transformMarqueDealsData(marqueRes?.data || []).map(d => ({ ...d, type: 'marque' }));
+      const frequenceDeals = transformFrequenceDealsData(frequenceRes?.data || []).map(d => ({ ...d, type: 'frequence' }));
+      const anniversaireDeals = transformDealsData(anniversaireRes?.data || []).map(d => ({ ...d, type: 'anniversaire' }));
 
       // ✅ Log pour debug
 

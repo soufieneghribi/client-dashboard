@@ -2,8 +2,8 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FiHeart } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-
-
+import Cookies from "js-cookie";
+import { toast } from "react-toastify";
 import { fetchWishlist, removeFromWishlist } from "../../store/slices/wishlist";
 import FavoriteCard from "./components/FavoriteCard";
 import "./Favorites.css";
@@ -27,8 +27,44 @@ const Favorites = () => {
     };
 
     const addToCartHandler = (product) => {
-        
-        // 
+        try {
+            const quantity = 1;
+            const price = parseFloat(product.price) || 0;
+            const finalPrice = product.discount_price ? parseFloat(product.discount_price) : price;
+            const total = (finalPrice * quantity).toFixed(3);
+
+            const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
+
+            const newItem = {
+                id: product.id,
+                name: product.name,
+                img: product.img,
+                Initialprice: price.toFixed(3),
+                price: finalPrice.toFixed(3),
+                total,
+                quantity,
+                isPromotion: !!product.discount_price
+            };
+
+            const existingItemIndex = cart.findIndex((el) => el.id === newItem.id);
+
+            if (existingItemIndex !== -1) {
+                cart[existingItemIndex].quantity += newItem.quantity;
+                cart[existingItemIndex].total = (
+                    parseFloat(cart[existingItemIndex].total) + parseFloat(newItem.total)
+                ).toFixed(3);
+            } else {
+                cart.push(newItem);
+            }
+
+            Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
+            toast.success(`${product.name} ajouté au panier !`);
+
+            // Optional: trigger a custom event or store update if header needs immediate refresh
+            window.dispatchEvent(new Event('cartUpdated'));
+        } catch (error) {
+            toast.error("Erreur lors de l'ajout au panier");
+        }
     };
 
     const calculateDiscount = (price, discountPrice) => {

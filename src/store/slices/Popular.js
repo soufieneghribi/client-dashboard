@@ -61,6 +61,7 @@ export const fetchPopularWithPromotions = createAsyncThunk(
               if (promo.articles && Array.isArray(promo.articles)) {
                 return [...acc, ...promo.articles.map(article => ({
                   ...article,
+                  id: article.id || article.ID || article.product_id, // Normalize ID
                   promo_name: promo.name,
                   promo_id: promo.id,
                   promo_discount: promo.discount_value,
@@ -98,6 +99,7 @@ export const fetchPopularWithPromotions = createAsyncThunk(
           const shuffled = [...allProducts].sort(() => 0.5 - Math.random());
           articles = shuffled.slice(0, 6).map(product => ({
             ...product,
+            id: product.id || product.ID, // Normalize ID
             isPromotion: false // ✅ FORCER à false car pas de promotion pour ce client
           }));
         }

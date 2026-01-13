@@ -6,11 +6,12 @@ import { fetchProduct } from '../store/slices/product';
 import Cookies from "js-cookie";
 import { Container, Row, Col, Card, Button, Breadcrumb, Badge, Pagination } from 'react-bootstrap';
 import { getImageUrl, handleImageError } from '../utils/imageHelper';
+import WishlistButton from '../components/WishlistButton';
 
 const ProductsBySubCategory = () => {
   const location = useLocation();
   const { product = {}, loading, error } = useSelector((state) => state.product);
-  const { categories } = useSelector((state) => state.categorie);
+  const { categories = [] } = useSelector((state) => state.categorie);
   const allProducts = product.products || [];
   const dispatch = useDispatch();
 
@@ -27,6 +28,16 @@ const ProductsBySubCategory = () => {
     const currentCat = categories.find(cat => cat.id === parseInt(subId));
     if (!currentCat) return null;
     return categories.find(cat => cat.id === currentCat.parent_id);
+  }, [subId, categories]);
+
+  const isElectronic = useMemo(() => {
+    if (!subId || !categories || categories.length === 0) return false;
+    const currentCat = categories.find(cat => cat.id === parseInt(subId));
+    if (!currentCat) return false;
+    return currentCat.universe_id === 2 ||
+      currentCat.id === 144 ||
+      currentCat.parent_id === 144 ||
+      (currentCat.parent_id !== 0 && categories.find(c => c.id === currentCat.parent_id)?.universe_id === 2);
   }, [subId, categories]);
 
   // Image URL Helper is now centralized
@@ -84,6 +95,8 @@ const ProductsBySubCategory = () => {
       price: finalPrice,
       total,
       quantity,
+      category_id: product.category_id || subId,
+      isElectronic: isElectronic
     };
 
     const existingItemIndex = cart.findIndex((el) => el.id === newItem.id);
@@ -149,23 +162,28 @@ const ProductsBySubCategory = () => {
               <Card className="h-100 shadow-sm hover-card">
                 <div className="position-relative">
                   {imageUrl && (
-                    <Card.Img
-                      variant="top"
-                      src={getProductImageUrl(product)}
-                      alt={product.name}
-                      style={{ height: '150px', objectFit: 'contain' }}
-                      onError={handleImageError}
-                    />
+                    <>
+                      <Card.Img
+                        variant="top"
+                        src={getProductImageUrl(product)}
+                        alt={product.name}
+                        style={{ height: '150px', objectFit: 'contain' }}
+                        onError={handleImageError}
+                      />
+                      <div className="position-absolute top-0 start-0 m-2">
+                        <WishlistButton productId={product.id} size="small" />
+                      </div>
+                      <Button
+                        variant="success"
+                        size="sm"
+                        className="position-absolute top-0 end-0 m-2 rounded-circle"
+                        onClick={() => addToCartHandler(product)}
+                        style={{ width: '35px', height: '35px', padding: 0 }}
+                      >
+                        <i className="fa fa-cart-plus"></i>
+                      </Button>
+                    </>
                   )}
-                  <Button
-                    variant="success"
-                    size="sm"
-                    className="position-absolute top-0 end-0 m-2 rounded-circle"
-                    onClick={() => addToCartHandler(product)}
-                    style={{ width: '35px', height: '35px', padding: 0 }}
-                  >
-                    <i className="fa fa-cart-plus"></i>
-                  </Button>
                 </div>
 
                 <Card.Body className="d-flex flex-column">
@@ -190,13 +208,39 @@ const ProductsBySubCategory = () => {
                   )}
 
                   <Button
-                    variant="primary"
-                    size="sm"
-                    className="mt-auto w-100"
                     onClick={() => handleDetails(product.id, subId)}
+                    className={`mt-auto w-100 py-1 border-0 shadow-sm transition-all duration-300 hover:scale-105 ${isElectronic
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                      : "bg-primary text-white"
+                      }`}
+                    style={{
+                      fontSize: '0.7rem',
+                      borderRadius: '8px',
+                      fontWeight: '600',
+                      background: isElectronic ? 'linear-gradient(90deg, #4F46E5, #6366F1)' : undefined
+                    }}
                   >
                     Voir détails
                   </Button>
+
+                  {isElectronic && price > 300 && (
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      className="mt-2 w-100 py-1 transition-all duration-300 hover:bg-blue-50"
+                      onClick={() => navigate('/credit/simulation', { state: { product } })}
+                      style={{
+                        fontSize: '0.65rem',
+                        borderStyle: 'dashed',
+                        borderRadius: '8px',
+                        fontWeight: '700',
+                        color: '#4F46E5',
+                        borderColor: '#4F46E5'
+                      }}
+                    >
+                      💰 SIMULER CRÉDIT
+                    </Button>
+                  )}
                 </Card.Body>
               </Card>
             </Col>
@@ -204,27 +248,29 @@ const ProductsBySubCategory = () => {
         })}
       </Row>
 
-      {allProducts.length > 0 && totalPages > 1 && (
-        <Pagination className="justify-content-center">
-          <Pagination.Prev
-            onClick={handlePreviousPage}
-            disabled={currentPage === 1}
-          />
-          {[...Array(totalPages).keys()].map((page) => (
-            <Pagination.Item
-              key={page}
-              active={currentPage === page + 1}
-              onClick={() => handlePageClick(page + 1)}
-            >
-              {page + 1}
-            </Pagination.Item>
-          ))}
-          <Pagination.Next
-            onClick={handleNextPage}
-            disabled={currentPage === totalPages}
-          />
-        </Pagination>
-      )}
+      {
+        allProducts.length > 0 && totalPages > 1 && (
+          <Pagination className="justify-content-center">
+            <Pagination.Prev
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+            />
+            {[...Array(totalPages).keys()].map((page) => (
+              <Pagination.Item
+                key={page}
+                active={currentPage === page + 1}
+                onClick={() => handlePageClick(page + 1)}
+              >
+                {page + 1}
+              </Pagination.Item>
+            ))}
+            <Pagination.Next
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            />
+          </Pagination>
+        )
+      }
 
       <style jsx>{`
         .hover-card {
@@ -235,7 +281,7 @@ const ProductsBySubCategory = () => {
           box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
         }
       `}</style>
-    </Container>
+    </Container >
   );
 };
 

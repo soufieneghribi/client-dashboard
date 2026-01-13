@@ -6,26 +6,27 @@
 
 .favorite-card {
     background: white;
-    border-radius: 1rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 0.75rem;
+    box-shadow: none;
     overflow: hidden;
     transition: all 0.3s ease;
-    border: 1px solid #f3f4f6;
+    border: 1px solid #e5e7eb;
+    height: 100%;
 }
 
 .favorite-card:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
 }
 
 .favorite-image-container {
     position: relative;
-    height: 200px;
+    height: 180px;
     background: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1rem;
+    padding: 1.5rem;
 }
 
 .favorite-image {
@@ -55,42 +56,79 @@
 .favorite-remove-btn {
     position: absolute;
     top: 0.75rem;
-    right: 0.75rem;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(4px);
+    left: 0.75rem;
+    background: white;
     padding: 0.5rem;
-    border-radius: 9999px;
-    color: #ef4444;
-    border: none;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.2s;
+    border-radius: 50%;
+    color: #94a3b8;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    z-index: 5;
 }
 
 .favorite-remove-btn:hover {
-    background-color: #fef2f2;
+    background-color: #f8fafc;
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+.favorite-cart-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: #108954;
+    padding: 0.5rem;
+    border-radius: 50%;
+    color: white;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    z-index: 5;
+}
+
+.favorite-cart-btn:hover {
+    background-color: #0d6e43;
+    transform: scale(1.05);
 }
 
 .favorite-info {
-    padding: 1.25rem;
+    padding: 1rem;
+    text-align: left;
 }
 
 .favorite-title {
-    color: #111827;
-    font-weight: 600;
-    font-size: 0.9375rem;
+    color: #003366;
+    font-weight: 700;
+    font-size: 1rem;
     display: -webkit-box;
-    line-clamp: 2;
-    -webkit-line-clamp: 2;
+    line-clamp: 1;
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    height: 2.75rem;
-    margin-bottom: 0.5rem;
+    height: auto;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+}
+
+.favorite-price-container {
+    text-align: center;
 }
 
 .favorite-price {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     font-weight: 700;
-    color: #111827;
+    color: #f9b115;
 }
 
 .empty-favorites-card {

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { signUp, fetchEnseignes } from '../../store/slices/user';
 import COMPANY_LOGO from "../../assets/images/logo_0.png";
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 
 // Constants
@@ -228,7 +228,7 @@ const Register = () => {
             toast.success("Inscription réussie !");
 
             if (result.email && result.is_email_verified === false) {
-                toast.info("Veuillez vérifier votre email pour activer votre compte.");
+                toast("Veuillez vérifier votre email pour activer votre compte.", { icon: '📧' });
                 setTimeout(() => {
                     navigate('/verify-email', {
                         state: { email: user.email }
@@ -246,38 +246,73 @@ const Register = () => {
     };
 
     const handleApiErrors = (error) => {
+        // Since we use unwrap() and rejectWithValue, 'error' is now the payload (response data or message string)
         let errorMessage = 'Erreur lors de l\'inscription';
         const apiErrors = {};
 
-        if (error.response?.data?.errors) {
-            const errorsList = error.response.data.errors;
-            if (Array.isArray(errorsList)) {
-                errorsList.forEach(err => {
-                    if (err.code && err.message) {
-                        apiErrors[err.code] = err.message;
-                        if (errorMessage === 'Erreur lors de l\'inscription') errorMessage = err.message;
-                    }
-                });
-            } else if (typeof errorsList === 'object') {
+        // Helper function to extract string from potential object error
+        const getStringError = (err) => {
+            if (typeof err === 'string') return err;
+            if (err?.message && typeof err.message === 'string') return err.message;
+            if (err?.error && typeof err.error === 'string') return err.error;
+            return JSON.stringify(err);
+        };
+
+        // 1. Logique spécifique pour compte existant (422)
+        // On vérifie le message ou les erreurs retournées par l'API
+        const errorString = JSON.stringify(error || {}).toLowerCase();
+        const isExistingAccount =
+            errorString.includes('existe') ||
+            errorString.includes('taken') ||
+            errorString.includes('déjà utilisé') ||
+            errorString.includes('already exists');
+
+        if (isExistingAccount) {
+            toast.error("Compte déjà existant. Veuillez changer l'email ou le téléphone.", {
+                duration: 6000,
+                icon: '⚠️',
+                style: {
+                    border: '1px solid #ef4444',
+                    padding: '16px',
+                    color: '#1f2937',
+                }
+            });
+            return;
+        }
+
+        // 2. Gestion des erreurs de validation structurées
+        if (error?.errors) {
+            const errorsList = error.errors;
+            if (typeof errorsList === 'object') {
                 Object.keys(errorsList).forEach(key => {
                     const messages = errorsList[key];
-                    apiErrors[key] = Array.isArray(messages) ? messages[0] : messages;
+                    // Ensure we get a string even if the API returns an object {code, message}
+                    const rawMsg = Array.isArray(messages) ? messages[0] : messages;
+                    apiErrors[key] = getStringError(rawMsg);
+
                     if (errorMessage === 'Erreur lors de l\'inscription') errorMessage = apiErrors[key];
                 });
             }
             setErrors(apiErrors);
-        } else if (error.message) {
-            errorMessage = error.message;
+        } else if (error?.message) {
+            errorMessage = getStringError(error.message);
+        } else if (typeof error === 'string') {
+            errorMessage = error;
         }
 
-        toast.error(errorMessage);
+        // 3. Fallback toast pour les autres erreurs
+        if (errorMessage !== 'Erreur lors de l\'inscription') {
+            toast.error(getStringError(errorMessage));
+        } else {
+            toast.error("Une erreur est survenue lors de l'inscription.");
+        }
 
         if (window.grecaptcha && recaptchaRef.current) {
             try {
                 window.grecaptcha.reset();
                 setRecaptchaToken('');
             } catch (e) {
-
+                console.error("reCAPTCHA reset error", e);
             }
         }
     };

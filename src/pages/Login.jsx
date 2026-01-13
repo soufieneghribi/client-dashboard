@@ -5,7 +5,7 @@ import { loginSuccess } from '../store/slices/authSlice';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../services/api';
 import COMPANY_LOGO from "../assets/images/logo_0.png";
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -75,7 +75,7 @@ const Login = () => {
         is_email_verified === "0" ||
         is_email_verified === "false"
       ) {
-        toast.warning('Veuillez vérifier votre email avant de vous connecter.');
+        toast('Veuillez vérifier votre email avant de vous connecter.', { icon: '📧' });
         setIsLoading(false);
 
         setTimeout(() => {
@@ -108,7 +108,7 @@ const Login = () => {
       if (error.response?.data?.message?.toLowerCase().includes('verify') ||
         error.response?.data?.message?.toLowerCase().includes('vérif')) {
 
-        toast.info('Votre compte nécessite une vérification.');
+        toast('Votre compte nécessite une vérification.', { icon: '🛡️' });
 
         setTimeout(() => {
           navigate('/verify-email', {
@@ -123,7 +123,7 @@ const Login = () => {
       if (error.response?.status === 401) {
         toast.error('Email ou mot de passe incorrect.');
       } else if (error.response?.status === 403) {
-        toast.warning('Accès refusé. Veuillez vérifier votre email.');
+        toast('Accès refusé. Veuillez vérifier votre email.', { icon: '🚫' });
         setTimeout(() => {
           navigate('/verify-email', {
             state: { email: credentials.email }

@@ -1,5 +1,5 @@
 // Popular.jsx — UI Premium (Bleu + Orange + Carousel Automatique)
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchPopularWithPromotions,
@@ -18,7 +18,7 @@ import {
   Spinner,
 } from "react-bootstrap";
 import { FaTag, FaStar, FaShoppingCart, FaHeart } from "react-icons/fa";
-
+import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 import WishlistButton from "./WishlistButton";
 import { getImageUrl, handleImageError } from "../utils/imageHelper";
@@ -30,6 +30,7 @@ const Popular = () => {
   const products = useSelector(selectPopularProducts);
   const loading = useSelector(selectPopularLoading);
   const hasPromotions = useSelector(selectHasPromotions);
+  const { categories = [] } = useSelector((state) => state.categorie);
 
   const userProfile = useSelector((state) => state.auth?.user);
   const clientId =
@@ -102,6 +103,10 @@ const Popular = () => {
     const total = (finalPrice * quantity).toFixed(3);
     const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
 
+    const catId = product.category_id || product.id_type;
+    const currentCat = categories.find(c => c.id === parseInt(catId));
+    const isElectronic = currentCat?.universe_id === 2 || currentCat?.id === 144 || currentCat?.parent_id === 144;
+
     const newItem = {
       id: product.id,
       name: product.name,
@@ -111,6 +116,8 @@ const Popular = () => {
       quantity,
       isPromotion: product.isPromotion,
       promo_name: product.isPromotion ? product.promo_name : null,
+      category_id: catId,
+      isElectronic: isElectronic
     };
 
     const existingItemIndex = cart.findIndex((el) => el.id === newItem.id);
@@ -124,6 +131,7 @@ const Popular = () => {
     }
 
     Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
+    toast.success(`${product.name} ajouté au panier !`);
   };
 
   const slides = products.reduce((acc, product, i) => {
@@ -170,7 +178,6 @@ const Popular = () => {
             </>
           ) : (
             <>
-              <FaStar className="fs-2" style={{ color: "#FF9500" }} />
               <div>
                 <h3 className="fw-bold mb-0" style={{ color: "#0A1E3C" }}>
                   Produits Populaires
@@ -227,21 +234,25 @@ const Popular = () => {
                           />
                         )}
 
-                        {/* Wishlist & Cart Buttons */}
-                        <div className="position-absolute top-0 end-0 m-1 d-flex gap-1">
-                          <div style={{ transform: "scale(0.8)" }}>
+                        {/* Wishlist Button (Top Left) */}
+                        <div className="position-absolute top-0 start-0 m-1" style={{ zIndex: 10 }}>
+                          <div style={{ transform: "scale(0.85)" }}>
                             <WishlistButton productId={product.id} size="small" />
                           </div>
+                        </div>
+
+                        {/* Cart Button (Top Right) */}
+                        <div className="position-absolute top-0 end-0 m-1" style={{ zIndex: 10 }}>
                           <Button
                             variant=""
                             size="sm"
-                            className="rounded-circle d-flex align-items-center justify-content-center"
+                            className="rounded-circle d-flex align-items-center justify-content-center shadow-sm"
                             onClick={() => addToCartHandler(product)}
                             title="Ajouter au panier"
                             style={{
-                              width: "28px",
-                              height: "28px",
-                              background: "#1E90FF",
+                              width: "30px",
+                              height: "30px",
+                              background: "#10b981", // Green to match FavoriteCard theme
                               color: "white",
                               border: "none",
                             }}
@@ -258,17 +269,7 @@ const Popular = () => {
 
 
                         ) : (
-                          <Badge
-                            className="position-absolute top-0 start-0 m-1"
-                            style={{
-                              background: "#FF9500",
-                              fontSize: "0.7rem",
-                              padding: "3px 6px",
-                            }}
-                          >
-                            <FaStar className="me-1" size={10} />
-                            Top
-                          </Badge>
+                          null
                         )}
                       </div>
 
@@ -302,11 +303,50 @@ const Popular = () => {
                         {/* Bouton Voir Détails */}
                         <Button
                           onClick={() => handleProductClick(product)}
-                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-1 rounded-lg font-medium transition-colors mt-1"
-                          style={{ border: "none", fontSize: "0.875rem" }}
+                          className="w-full border-0 shadow-sm transition-all duration-300 hover:scale-105 mt-1 text-white"
+                          style={{
+                            fontSize: "0.75rem",
+                            fontWeight: "600",
+                            borderRadius: '8px',
+                            background: 'linear-gradient(90deg, #4F46E5, #6366F1)',
+                            padding: '6px 0'
+                          }}
                         >
                           Voir détails
                         </Button>
+
+                        {/* Simulation Crédit */}
+                        {(() => {
+                          const catId = product.category_id || product.id_type;
+                          const currentCat = categories.find(c => c.id === parseInt(catId));
+                          const isElec = currentCat?.universe_id === 2 || currentCat?.id === 144 || currentCat?.parent_id === 144;
+                          const price = product.isPromotion && product.pivot ? parseFloat(product.pivot.promo_price) : parseFloat(product.price);
+
+                          if (isElec && price > 300) {
+                            return (
+                              <Button
+                                variant="outline-primary"
+                                size="sm"
+                                className="w-full mt-2 py-1 transition-all duration-300 hover:bg-blue-50"
+                                style={{
+                                  fontSize: "0.65rem",
+                                  borderStyle: 'dashed',
+                                  borderRadius: '8px',
+                                  fontWeight: '700',
+                                  color: '#4F46E5',
+                                  borderColor: '#4F46E5'
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate('/credit/simulation', { state: { product } });
+                                }}
+                              >
+                                💰 SIMULER CRÉDIT
+                              </Button>
+                            );
+                          }
+                          return null;
+                        })()}
                       </Card.Body>
                     </Card>
                   </Col>
@@ -356,7 +396,7 @@ const Popular = () => {
 }
 
       `}</style>
-    </Container>
+    </Container >
   );
 };
 

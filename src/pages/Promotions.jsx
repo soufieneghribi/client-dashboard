@@ -15,6 +15,7 @@ import {
 import { MdLocalOffer } from "react-icons/md";
 import { fetchUserProfile } from "../store/slices/user";
 import Cookies from "js-cookie";
+import WishlistButton from "../components/WishlistButton";
 
 const Promotions = () => {
   const navigate = useNavigate();
@@ -275,7 +276,7 @@ const Promotions = () => {
                         className="border border-blue-200 rounded-xl p-4 hover:shadow-lg transition-all bg-white relative group"
                       >
                         {/* Bouton Ajouter au panier en haut à gauche - VERT */}
-                        <div className="absolute top-2 left-2 z-10">
+                        <div className="absolute top-2 left-2 z-10 flex flex-col gap-2">
                           <button
                             onClick={() => addToCart(article, promotion)}
                             disabled={addingToCart[article.id]}
@@ -291,6 +292,10 @@ const Promotions = () => {
                               <FaShoppingCart className="text-base" />
                             )}
                           </button>
+
+                          <div className="bg-white rounded-full shadow-lg p-0.5">
+                            <WishlistButton productId={article.id} size="small" />
+                          </div>
                         </div>
 
                         <div className="relative mb-3">

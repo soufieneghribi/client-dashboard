@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaCalculator, FaArrowRight, FaShoppingCart } from "react-icons/fa";
+import Cookies from "js-cookie";
 
 const CreditSimulationCard = ({ subtotal }) => {
     const navigate = useNavigate();
@@ -11,9 +12,15 @@ const CreditSimulationCard = ({ subtotal }) => {
     }
 
     const handleNavigateToCredit = () => {
+        // Find if there's an electronic product in current cart
+        const cart = JSON.parse(Cookies.get("cart") || "[]");
+        const electronicProduct = cart.find(item => item.isElectronic && (parseFloat(item.price) > 300 || parseFloat(item.total) > 300));
+
         navigate('/credit/simulation', {
             state: {
-                montantPanier: subtotal,
+                // If it's an electronic product, use its amount, otherwise use full subtotal
+                montantPanier: electronicProduct ? (parseFloat(electronicProduct.price) * (electronicProduct.quantity || 1)) : subtotal,
+                product: electronicProduct,
                 fromCart: true
             }
         });

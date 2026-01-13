@@ -12,6 +12,7 @@ import {
 
 import Cookies from "js-cookie";
 import { Container, Row, Col, Card, Button, Breadcrumb, Badge, Pagination, Spinner } from 'react-bootstrap';
+import WishlistButton from './WishlistButton';
 
 const SearchResultsPage = () => {
   const [searchParams] = useSearchParams();
@@ -22,9 +23,23 @@ const SearchResultsPage = () => {
   const searchResults = useSelector(selectSearchResults);
   const searchLoading = useSelector(selectSearchLoading);
   const searchError = useSelector(selectSearchError);
+  const { categories = [] } = useSelector((state) => state.categorie);
+  const userProfile = useSelector((state) => state.auth?.user);
+  const clientId = userProfile?.ID_client || userProfile?.id || localStorage.getItem("client_id");
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
+
+  const getIsElectronic = (product) => {
+    if (!categories.length) return false;
+    const catId = parseInt(product.category_id || product.type_id || product.id_type);
+    const currentCat = categories.find(cat => cat.id === catId);
+    if (!currentCat) return false;
+    return currentCat.universe_id === 2 ||
+      currentCat.id === 144 ||
+      currentCat.parent_id === 144 ||
+      (currentCat.parent_id !== 0 && categories.find(c => c.id === currentCat.parent_id)?.universe_id === 2);
+  };
 
   // Image URL Helper is now centralized
   const getProductImageUrl = (p) => getImageUrl(p, 'product');
@@ -72,6 +87,8 @@ const SearchResultsPage = () => {
 
     const cart = Cookies.get("cart") ? JSON.parse(Cookies.get("cart")) : [];
 
+    const isElectronic = getIsElectronic(product);
+
     const newItem = {
       id: product.id,
       name: product.name,
@@ -80,6 +97,8 @@ const SearchResultsPage = () => {
       price: finalPrice,
       total,
       quantity,
+      category_id: product.category_id || product.type_id,
+      isElectronic: isElectronic
     };
 
     const existingItemIndex = cart.findIndex((el) => el.id === newItem.id);
@@ -165,6 +184,9 @@ const SearchResultsPage = () => {
                         style={{ height: '150px', objectFit: 'contain', padding: '10px' }}
                         onError={handleImageError}
                       />
+                      <div className="position-absolute top-0 start-0 m-2">
+                        <WishlistButton productId={product.id} size="small" />
+                      </div>
                       <Button
                         variant="success"
                         size="sm"
@@ -205,6 +227,24 @@ const SearchResultsPage = () => {
                       >
                         Voir détails
                       </Button>
+                      {getIsElectronic(product) && price > 300 && (
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          className="mt-2 w-100 py-1 transition-all duration-300 hover:bg-blue-50"
+                          onClick={() => navigate('/credit/simulation', { state: { product } })}
+                          style={{
+                            fontSize: '0.65rem',
+                            borderStyle: 'dashed',
+                            borderRadius: '8px',
+                            fontWeight: '700',
+                            color: '#4F46E5',
+                            borderColor: '#4F46E5'
+                          }}
+                        >
+                          💰 SIMULER CRÉDIT
+                        </Button>
+                      )}
                     </Card.Body>
                   </Card>
                 </Col>
@@ -234,7 +274,8 @@ const SearchResultsPage = () => {
             </Pagination>
           )}
         </>
-      )}
+      )
+      }
 
       <style jsx>{`
         .hover-card {
@@ -245,7 +286,7 @@ const SearchResultsPage = () => {
           box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
         }
       `}</style>
-    </Container>
+    </Container >
   );
 };
 

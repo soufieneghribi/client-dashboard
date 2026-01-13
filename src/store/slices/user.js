@@ -113,7 +113,7 @@ export const forgetPassword = createAsyncThunk(
 
 export const signUp = createAsyncThunk(
   "user/signup",
-  async ({ user, navigate }) => {
+  async ({ user }, { rejectWithValue }) => {
     try {
       await waitForRateLimit();
 
@@ -122,17 +122,14 @@ export const signUp = createAsyncThunk(
         user
       );
 
-      // 
       return data;
     } catch (error) {
       if (error.response?.status === 429) {
-        // 
-        throw new Error("Rate limit exceeded");
+        return rejectWithValue("Trop de tentatives. Veuillez patienter.");
       }
 
-      const errorMessage = error.response?.data?.message || "Compte déjà existant.";
-      // 
-      throw error;
+      // Return the full response data/error for the component to handle
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );

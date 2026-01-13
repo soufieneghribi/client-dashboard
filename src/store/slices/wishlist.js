@@ -271,6 +271,12 @@ const wishlistSlice = createSlice({
                 state.items = action.payload;
                 state.count = action.payload.length;
 
+                // Sync checkedProducts with current items in wishlist
+                const checked = {};
+                action.payload.forEach(item => {
+                    checked[item.id] = true;
+                });
+                state.checkedProducts = checked;
             })
             .addCase(fetchWishlist.rejected, (state, action) => {
                 state.loading = false;

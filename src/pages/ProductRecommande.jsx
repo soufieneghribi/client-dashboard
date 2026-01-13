@@ -4,6 +4,7 @@ import { fetchRecommendedProduct } from "../store/slices/recommended";
 import { getImageUrl, handleImageError } from "../utils/imageHelper";
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Spinner, Alert, Badge, Pagination } from 'react-bootstrap';
+import WishlistButton from '../components/WishlistButton';
 
 const ProductRecommande = () => {
   const dispatch = useDispatch();
@@ -72,6 +73,10 @@ const ProductRecommande = () => {
                   >
                     Recommandé
                   </Badge>
+
+                  <div className="position-absolute top-0 end-0 m-2" style={{ zIndex: 1 }}>
+                    <WishlistButton productId={product.id} size="small" />
+                  </div>
 
                   {/* Product Image */}
                   <div

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { API_ENDPOINTS, getAuthHeaders } from "../services/api";
 import { FaArrowRight, FaShoppingCart, FaFire } from "react-icons/fa";
+import WishlistButton from "./WishlistButton";
 
 const TodaysOffers = () => {
   const navigate = useNavigate();
@@ -90,6 +91,10 @@ const TodaysOffers = () => {
               onClick={() => navigate(`/product/${article.id}`)}
             >
               <div className="badge">-{discount}%</div>
+
+              <div className="wishlist-wrapper" onClick={(e) => e.stopPropagation()}>
+                <WishlistButton productId={article.id} size="small" />
+              </div>
 
               <div className="img-box">
                 <img src={article.img} alt={article.name} />
@@ -206,6 +211,13 @@ const TodaysOffers = () => {
         .offer-card:hover {
           transform: translateY(-5px);
           box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .wishlist-wrapper {
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          z-index: 10;
         }
 
         .badge {

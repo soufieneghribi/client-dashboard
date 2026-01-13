@@ -14,6 +14,7 @@ import {
 import { Breadcrumb, Container } from 'react-bootstrap';
 import { enrichProductWithPromotion } from "../utils/promotionHelper";
 import { getImageUrl, handleImageError } from "../utils/imageHelper";
+import WishlistButton from "../components/WishlistButton";
 
 const ProductDetails = () => {
   const location = useLocation();
@@ -30,7 +31,6 @@ const ProductDetails = () => {
 
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [enrichedProduct, setEnrichedProduct] = useState(null);
   const [promotionLoading, setPromotionLoading] = useState(true);
 
@@ -72,6 +72,17 @@ const ProductDetails = () => {
     return { parent, sub: currentSub };
   }, [product, categories, subId]);
 
+  const isElectronic = useMemo(() => {
+    if (!product || !categories.length) return false;
+    const catId = parseInt(subId || product.category_id);
+    const currentCat = categories.find(cat => cat.id === catId);
+    if (!currentCat) return false;
+    return currentCat.universe_id === 2 ||
+      currentCat.id === 144 ||
+      currentCat.parent_id === 144 ||
+      (currentCat.parent_id !== 0 && categories.find(c => c.id === currentCat.parent_id)?.universe_id === 2);
+  }, [product, categories, subId]);
+
   const displayProduct = enrichedProduct || product;
   const hasPromotion = displayProduct.isPromotion && displayProduct.pivot;
   const basePrice = hasPromotion ? parseFloat(displayProduct.pivot.original_price) : parseFloat(displayProduct.price || 0);
@@ -92,6 +103,8 @@ const ProductDetails = () => {
         total: totalPrice,
         quantity,
         isPromotion: hasPromotion,
+        category_id: displayProduct?.category_id,
+        isElectronic: isElectronic
       };
       const existingIdx = cart.findIndex((item) => item.id === newItem.id);
       if (existingIdx !== -1) {
@@ -107,10 +120,7 @@ const ProductDetails = () => {
     }
   };
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    // 
-  };
+
 
   if (loading || promotionLoading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -146,16 +156,9 @@ const ProductDetails = () => {
           <div className="relative">
             {hasPromotion && <div className="absolute top-0 left-0 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded">-{discountPercent}%</div>}
 
-            <button
-              onClick={toggleFavorite}
-              className="absolute top-0 right-0 p-2 hover:scale-110 transition-transform z-10"
-            >
-              {isFavorite ? (
-                <FaHeart className="text-red-500 text-xl" />
-              ) : (
-                <FaRegHeart className="text-gray-400 text-xl" />
-              )}
-            </button>
+            <div className="absolute top-0 right-0 p-2 z-10 transition-transform hover:scale-110">
+              <WishlistButton productId={displayProduct?.id || id} size="large" />
+            </div>
 
             <div className="bg-gray-50 rounded-lg aspect-square flex items-center justify-center">
               <img src={getProductImageUrl(displayProduct)} alt={displayProduct.name} className="w-full h-full object-contain p-8" onError={handleImageError} />
@@ -194,9 +197,21 @@ const ProductDetails = () => {
               </div>
             </div>
 
-            <button onClick={addToCartHandler} disabled={isAdded} className={`w-full py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-3 ${isAdded ? "bg-green-500 text-white" : "bg-blue-500 text-white hover:bg-blue-600"}`}>
-              <FaShoppingCart /> {isAdded ? "Ajouté !" : "Ajouter au panier"}
-            </button>
+            <div className="flex flex-col gap-3">
+              <button onClick={addToCartHandler} disabled={isAdded} className={`w-full py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-3 ${isAdded ? "bg-green-500 text-white" : "bg-blue-500 text-white hover:bg-blue-600"}`}>
+                <FaShoppingCart /> {isAdded ? "Ajouté !" : "Ajouter au panier"}
+              </button>
+
+              {isElectronic && unitPrice > 300 && (
+                <button
+                  onClick={() => navigate('/credit/simulation', { state: { product: displayProduct } })}
+                  className="w-full py-2.5 rounded-xl font-bold text-indigo-600 border-2 border-indigo-500 border-dashed hover:bg-indigo-50 transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2"
+                  style={{ fontSize: '1rem', letterSpacing: '0.025em' }}
+                >
+                  💰 SIMULER MON CRÉDIT
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

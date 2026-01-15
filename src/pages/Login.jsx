@@ -263,7 +263,7 @@ const Login = () => {
            content: '';
            flex: 1;
            border-bottom: 1px solid #e2e8f0;
-        }
+         }
         
         .divider span {
            padding: 0 1rem;
@@ -357,5 +357,3 @@ const Login = () => {
 };
 
 export default Login;
-
-

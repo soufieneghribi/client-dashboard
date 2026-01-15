@@ -78,6 +78,11 @@ const Banners = () => {
                   <img
                     src={getBannerImageUrl(banner)}
                     alt={banner.title || banner.name || "Banner"}
+                    fetchpriority={slideIdx === 0 ? "high" : "auto"}
+                    loading={slideIdx === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                    width={itemsPerSlide > 1 ? "600" : "1200"}
+                    height="400"
                     className="w-full h-full object-cover rounded-xl bg-gray-50"
                     onError={(e) => {
                       e.target.src = 'https://placehold.co/800x450?text=Image+Indisponible';

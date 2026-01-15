@@ -155,7 +155,7 @@ const Home = () => {
 
                 <section>
                     <div className="text-center mb-8">
-                        <h2 className="text-3xl font-bold text-gray-800 mb-3"> Vos Promotions Exclusives </h2>
+                        <h1 className="text-3xl font-black text-gray-800 mb-3 tracking-tight"> Vos Promotions Exclusives </h1>
                         <p className="text-gray-600 max-w-2xl mx-auto"> Économisez avec nos meilleures offres </p>
                     </div>
                     <Popular />

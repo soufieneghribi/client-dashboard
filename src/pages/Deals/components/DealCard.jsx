@@ -92,84 +92,108 @@ const DealCard = ({ deal, onTransfer, isTransferring }) => {
     // -------------------------------------------
     if (deal.dealType === 'frequency') {
         return (
-            <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 relative overflow-hidden mb-4">
-                {/* Badge */}
-                <span className="inline-block px-4 py-1.5 rounded-xl bg-[#8b5cf6] text-white font-bold text-sm mb-4 shadow-md shadow-purple-200">
-                    Fréquence
-                </span>
-
-                {/* Main Content Row */}
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="w-24 h-24 shrink-0 flex items-center justify-center">
-                        <img src={frequencesImg} alt="Deal Fréquence" className="w-full h-full object-contain drop-shadow-lg" />
-                    </div>
-                    <div>
-                        <div className="text-right">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">
-                                {isCompleted ? 'Gagné' : 'À Gagner'}
-                            </p>
-                            <h3 className="text-xl font-black text-[#ef4444] leading-none">
-                                {isCompleted ? amountEarned.toFixed(2) : (deal.gain || 0).toFixed(2)} <span className="text-sm text-slate-400 font-bold">dt</span>
-                            </h3>
-                            <p className="text-[10px] text-slate-400 font-semibold leading-tight mt-1">
-                                {isCompleted ? 'Transférez vers votre cagnotte' : 'si vous atteignez l\'objectif'}
-                            </p>
+            <div className="deal-card-mobile">
+                {/* Local "Global Style" Timer Block */}
+                <div className="local-countdown-section">
+                    <p className="local-countdown-label">TEMPS RESTANT</p>
+                    <div className="local-timer-grid">
+                        <div className="local-timer-item">
+                            <div className="local-timer-box">{(timeLeft.days || 0).toString().padStart(2, '0')}</div>
+                            <span>JOURS</span>
+                        </div>
+                        <div className="local-timer-sep">:</div>
+                        <div className="local-timer-item">
+                            <div className="local-timer-box">{(timeLeft.hours || 0).toString().padStart(2, '0')}</div>
+                            <span>HEURE</span>
+                        </div>
+                        <div className="local-timer-sep">:</div>
+                        <div className="local-timer-item">
+                            <div className="local-timer-box">{(timeLeft.minutes || 0).toString().padStart(2, '0')}</div>
+                            <span>MIN</span>
+                        </div>
+                        <div className="local-timer-sep">:</div>
+                        <div className="local-timer-item">
+                            <div className="local-timer-box">{(timeLeft.seconds || 0).toString().padStart(2, '0')}</div>
+                            <span>SEC</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Title & Desc */}
-                <div className="mb-5">
-                    <h2 className="text-lg font-black text-slate-800 mb-1">Deal Fréquence</h2>
-                    <p className="text-sm font-medium text-slate-500 leading-relaxed">
+                <div className="deal-card-header">
+                    <span className="mobile-badge frequency" style={{ backgroundColor: "#8b5cf6" }}>
+                        Fréquence
+                    </span>
+                </div>
+
+                <div className="deal-icon-container">
+                    <div className="deal-icon-circle">
+                        <img
+                            src={frequencesImg}
+                            alt="Deal Fréquence"
+                            style={{ filter: 'drop-shadow(0 4px 10px rgba(139, 92, 246, 0.3))' }}
+                        />
+                    </div>
+                </div>
+
+                <div className="deal-gain-banner">
+                    <p>{isCompleted ? 'Gagné' : 'À Gagner'}</p>
+                    <h3 style={{ color: "#ef4444" }}>
+                        {isCompleted ? amountEarned.toFixed(2) : (deal.gain || 0).toFixed(2)} <span>dt</span>
+                    </h3>
+                    <p className="small">
+                        {isCompleted ? 'Transférez vers votre cagnotte' : 'si vous atteignez l\'objectif'}
+                    </p>
+                </div>
+
+                <div className="deal-title-section">
+                    <h2>Deal Fréquence</h2>
+                    <p className="description-text">
                         Commande régulièrement et gagnez jusqu'à {deal.gain || 0} DT
                     </p>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="h-3 bg-slate-100 rounded-full overflow-hidden mb-6 relative">
-                    <div
-                        className="h-full rounded-full transition-all duration-500 ease-out relative"
-                        style={{
-                            width: `${Math.min(100, (progress.current / progress.target) * 100)}%`,
-                            background: 'linear-gradient(90deg, #06b6d4, #3b82f6)'
-                        }}
-                    >
+                <div className="deal-meter-container">
+                    <div className="deal-meter-bar">
+                        <div
+                            className="deal-meter-fill"
+                            style={{
+                                width: `${Math.min(100, (progress.current / progress.target) * 100)}%`,
+                                background: 'linear-gradient(90deg, #8b5cf6, #d946ef)'
+                            }}
+                        ></div>
                     </div>
                 </div>
 
-                {/* Visit Steps */}
-                <div className="flex gap-2 mb-5 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="deal-steps-grid">
                     {[1, 2, 3, 4, 5].map((step, idx) => {
                         const isStepCompleted = progress.current >= step;
                         const bgStyle = frequencyStepColors[idx % frequencyStepColors.length];
+                        const stepGain = ((deal.gain || 0) / 5).toFixed(1);
 
                         return (
                             <div
                                 key={step}
-                                className="flex-1 min-w-[60px] h-[70px] rounded-2xl flex flex-col items-center justify-center relative p-1 transition-transform active:scale-95"
+                                className={`deal-step-box ${isStepCompleted ? 'completed' : ''}`}
                                 style={{
                                     background: isStepCompleted ? bgStyle : '#f8fafc',
-                                    boxShadow: isStepCompleted ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
                                     color: isStepCompleted ? 'white' : '#94a3b8'
                                 }}
                             >
-                                <span className="text-[10px] font-bold opacity-80">{step}ère</span>
-                                <span className="text-sm font-black mt-0.5">{((deal.gain || 0) / 5).toFixed(1)} DT</span>
-                                {isStepCompleted && (
-                                    <div className="absolute -bottom-2 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
-                                        <FiCheckCircle className="text-green-500 text-xs" />
-                                    </div>
-                                )}
+                                <div className="step-label">
+                                    {step}{step === 1 ? 'ère' : 'ème'} {isStepCompleted && <FiCheckCircle className="step-check" />}
+                                </div>
+                                <div className="step-value" style={{ fontSize: '10px' }}>{stepGain} DT</div>
+                                <div className="step-gain">Objectif {step}</div>
                             </div>
-                        )
+                        );
                     })}
                 </div>
 
-                {/* Footer */}
-                <div className="flex items-center gap-2 text-[#ef4444] font-bold text-sm bg-red-50 px-4 py-3 rounded-xl border border-red-100">
-                    <FaGift className="text-lg" />
-                    <span>Mes visites : {progress.current}</span>
+                <div className="deal-card-footer-summary">
+                    <div className="purchase-stat-box" style={{ background: '#f5f3ff', borderColor: '#ddd6fe', color: '#8b5cf6' }}>
+                        <FaGift className="chat-icon" />
+                        <span>Mes visites : {progress.current} / {progress.target}</span>
+                    </div>
                 </div>
             </div>
         );

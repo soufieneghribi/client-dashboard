@@ -108,7 +108,7 @@ const FeatureCarousel = () => {
     };
 
     return (
-        <div className="py-8 relative group">
+        <div className="py-8 relative group" style={{ minHeight: '380px' }}>
             <style>
                 {`
                 .feature-carousel-container {

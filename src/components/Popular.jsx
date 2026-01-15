@@ -17,7 +17,7 @@ import {
   Badge,
   Spinner,
 } from "react-bootstrap";
-import { FaTag, FaStar, FaShoppingCart, FaHeart } from "react-icons/fa";
+import { FaTag, FaStar, FaShoppingCart, FaHeart, FaPlus } from "react-icons/fa";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 import WishlistButton from "./WishlistButton";
@@ -239,86 +239,85 @@ const Popular = () => {
                           />
                         )}
 
-                        {/* Wishlist Button (Top Left) */}
-                        <div className="position-absolute top-0 start-0 m-1" style={{ zIndex: 10 }}>
-                          <div style={{ transform: "scale(0.85)" }}>
+                        {/* Wishlist Button (Top Right Floating) */}
+                        <div className="position-absolute top-0 end-0 m-2" style={{ zIndex: 10 }}>
+                          <div className="transition-all duration-300 hover:scale-110 bg-white/80 backdrop-blur-md shadow-sm rounded-full p-1 border border-white/50">
                             <WishlistButton productId={product.id} size="small" />
                           </div>
                         </div>
 
-                        {/* Cart Button (Top Right) */}
-                        <div className="position-absolute top-0 end-0 m-1" style={{ zIndex: 10 }}>
-                          <Button
-                            variant=""
-                            size="sm"
-                            className="rounded-circle d-flex align-items-center justify-content-center shadow-sm"
-                            onClick={() => addToCartHandler(product)}
-                            title="Ajouter au panier"
-                            style={{
-                              width: "30px",
-                              height: "30px",
-                              background: "#10b981", // Green to match FavoriteCard theme
-                              color: "white",
-                              border: "none",
-                            }}
-                          >
-                            <FaShoppingCart size={14} />
-                          </Button>
-                        </div>
-
-                        {/* Badge promo */}
+                        {/* Badge promo (Top Left) */}
                         {product.isPromotion && product.pivot ? (
-                          <Badge className="position-absolute top-0 start-0 m-1 badge-red">
-                            -{parseFloat(product.pivot.discount_percent).toFixed(0)}%
-                          </Badge>
-
-
-                        ) : (
-                          null
-                        )}
+                          <div className="position-absolute top-0 start-0 m-2" style={{ zIndex: 10 }}>
+                            <Badge className="badge-red shadow-sm" style={{ borderRadius: '6px', padding: '4px 8px' }}>
+                              -{parseFloat(product.pivot.discount_percent).toFixed(0)}%
+                            </Badge>
+                          </div>
+                        ) : null}
                       </div>
 
-                      <Card.Body className="d-flex flex-column">
+                      <Card.Body className="d-flex flex-column p-2">
                         <Card.Title
-                          className="text-truncate mb-1"
+                          className="text-truncate mb-1 font-semibold text-gray-800"
                           title={product.name}
-                          style={{ minHeight: "35px", fontSize: "0.875rem" }}
+                          style={{ minHeight: "35px", fontSize: "0.85rem" }}
                         >
                           {product.name}
                         </Card.Title>
 
-                        {/* Prix */}
-                        <div className="mt-auto text-center" style={{ fontSize: "0.875rem" }}>
+                        {/* Prix Area */}
+                        <div className="mt-auto mb-2">
                           {product.isPromotion && product.pivot ? (
-                            <>
-                              <div className="text-muted text-decoration-line-through small">
+                            <div className="d-flex flex-column">
+                              <span className="text-muted text-decoration-line-through" style={{ fontSize: '0.75rem' }}>
                                 {formatPrice(product.pivot.original_price)} DT
-                              </div>
-                              <div className="fw-bold" style={{ color: "#FF3B30" }}>
+                              </span>
+                              <span className="fw-bold" style={{ color: "#ef4444", fontSize: '1rem' }}>
                                 {formatPrice(product.pivot.promo_price)} DT
-                              </div>
-                            </>
+                              </span>
+                            </div>
                           ) : (
-                            <div className="fw-bold" style={{ color: "#FF9500" }}>
+                            <div className="fw-bold" style={{ color: "#f97316", fontSize: '1rem' }}>
                               {formatPrice(product.price)} DT
                             </div>
                           )}
                         </div>
 
-                        {/* Bouton Voir Détails */}
-                        <Button
-                          onClick={() => handleProductClick(product)}
-                          className="w-full border-0 shadow-sm transition-all duration-300 hover:scale-105 mt-1 text-white"
-                          style={{
-                            fontSize: "0.75rem",
-                            fontWeight: "600",
-                            borderRadius: '8px',
-                            background: 'linear-gradient(90deg, #4F46E5, #6366F1)',
-                            padding: '6px 0'
-                          }}
-                        >
-                          Voir détails
-                        </Button>
+                        {/* Actions Area (Friendly IHM) */}
+                        <div className="d-flex gap-2">
+                          <Button
+                            onClick={() => handleProductClick(product)}
+                            className="flex-grow-1 border-0 shadow-sm transition-all duration-300 hover:brightness-110 text-white"
+                            style={{
+                              fontSize: "0.75rem",
+                              fontWeight: "700",
+                              borderRadius: '8px',
+                              background: 'linear-gradient(90deg, #4F46E5, #6366F1)',
+                              padding: '8px 0',
+                            }}
+                          >
+                            Détails
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCartHandler(product);
+                            }}
+                            className="flex-shrink-0 shadow-sm transition-all duration-300 hover:scale-110 d-flex align-items-center justify-content-center"
+                            style={{
+                              borderRadius: '8px',
+                              background: '#ffffff',
+                              border: '1.5px solid #4F46E5',
+                              width: '28px',
+                              height: '38px',
+                              color: '#4F46E5',
+                              padding: '0'
+                            }}
+                            title="Ajouter au panier"
+                          >
+                            <FaPlus size={16} />
+                          </Button>
+                        </div>
 
                         {/* Simulation Crédit */}
                         {(() => {

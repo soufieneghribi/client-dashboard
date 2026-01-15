@@ -1,22 +1,129 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
+    <!-- ============================================ -->
+    <!-- ESSENTIAL META TAGS -->
+    <!-- ============================================ -->
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
-
-
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     
+    <!-- ============================================ -->
+    <!-- SEO META TAGS -->
+    <!-- ============================================ -->
+    <title>TN360 - Votre Marketplace Tunisienne | Électronique & Crédit Facile</title>
+    <meta name="description" content="Découvrez TN360, votre marketplace tunisienne pour l'électronique, l'électroménager et plus. Profitez de notre simulation de crédit instantanée et de paiements flexibles (SMT, D17, Flouci)." />
+    <meta name="keywords" content="marketplace tunisie, électronique tunisie, crédit facile, TN360, e-commerce tunisie, paiement mobile tunisie" />
+    <meta name="author" content="TN360" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://tn360-client-dashboard-122923924979.europe-west1.run.app/" />
+    
+    <!-- ============================================ -->
+    <!-- OPEN GRAPH / FACEBOOK -->
+    <!-- ============================================ -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://tn360-client-dashboard-122923924979.europe-west1.run.app/" />
+    <meta property="og:title" content="TN360 - Votre Marketplace Tunisienne" />
+    <meta property="og:description" content="Découvrez notre marketplace avec simulation de crédit instantanée et paiements flexibles." />
+    <meta property="og:image" content="https://tn360-client-dashboard-122923924979.europe-west1.run.app/og-image.jpg" />
+    <meta property="og:locale" content="fr_TN" />
+    <meta property="og:site_name" content="TN360" />
+    
+    <!-- ============================================ -->
+    <!-- TWITTER CARD -->
+    <!-- ============================================ -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://tn360-client-dashboard-122923924979.europe-west1.run.app/" />
+    <meta name="twitter:title" content="TN360 - Votre Marketplace Tunisienne" />
+    <meta name="twitter:description" content="Découvrez notre marketplace avec simulation de crédit instantanée et paiements flexibles." />
+    <meta name="twitter:image" content="https://tn360-client-dashboard-122923924979.europe-west1.run.app/og-image.jpg" />
+    
+    <!-- ============================================ -->
+    <!-- PWA / MOBILE APP -->
+    <!-- ============================================ -->
+    <meta name="theme-color" content="#0066cc" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TN360" />
+    <meta name="application-name" content="TN360" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- ============================================ -->
+    <!-- ICONS & FAVICONS -->
+    <!-- ============================================ -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#0066cc" />
+    
+    <!-- ============================================ -->
+    <!-- PRECONNECT & DNS-PREFETCH -->
+    <!-- ============================================ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+    
+    <!-- ============================================ -->
+    <!-- GOOGLE FONTS (Optional - Modern Typography) -->
+    <!-- ============================================ -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- ============================================ -->
+    <!-- STRUCTURED DATA (JSON-LD) -->
+    <!-- ============================================ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "TN360",
+      "url": "https://tn360-client-dashboard-122923924979.europe-west1.run.app/",
+      "description": "Marketplace tunisienne pour l'électronique avec crédit facile",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://tn360-client-dashboard-122923924979.europe-west1.run.app/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "TN360",
+      "url": "https://tn360-client-dashboard-122923924979.europe-west1.run.app/",
+      "logo": "https://tn360-client-dashboard-122923924979.europe-west1.run.app/logo.png",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Service",
+        "availableLanguage": ["French", "Arabic"]
+      }
+    }
+    </script>
   </head>
+  
   <body>
+    <!-- Skip to main content (Accessibility) -->
+    <a href="#main-content" class="skip-link" style="position: absolute; left: -9999px; z-index: 999; padding: 1em; background: #000; color: #fff; text-decoration: none;">
+      Aller au contenu principal
+    </a>
+    
+    <!-- React Root -->
     <div id="root"></div>
+    
+    <!-- Main Application Script -->
     <script type="module" src="/src/main.jsx"></script>
-
-
-    <script src="https://cdn.jsdelivr.net/npm/react/umd/react.production.min.js" crossorigin></script>
-
-
+    
+    <!-- Noscript fallback -->
+    <noscript>
+      <div style="padding: 2rem; text-align: center; font-family: system-ui, sans-serif;">
+        <h1>JavaScript est requis</h1>
+        <p>Veuillez activer JavaScript dans votre navigateur pour utiliser TN360.</p>
+      </div>
+    </noscript>
   </body>
 </html>

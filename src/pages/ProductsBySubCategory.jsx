@@ -4,9 +4,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { fetchProduct } from '../store/slices/product';
 
 import Cookies from "js-cookie";
-import { Container, Row, Col, Card, Button, Breadcrumb, Badge, Pagination } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Breadcrumb, Badge, Pagination, Offcanvas } from 'react-bootstrap';
 import { getImageUrl, handleImageError } from '../utils/imageHelper';
 import WishlistButton from '../components/WishlistButton';
+import { FaFilter, FaTimes } from 'react-icons/fa';
 
 const ProductsBySubCategory = () => {
   const location = useLocation();
@@ -20,6 +21,7 @@ const ProductsBySubCategory = () => {
 
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const itemsPerPage = 12;
 
   // Calculer l'objet parent pour afficher son titre dynamiquement
@@ -269,6 +271,124 @@ const ProductsBySubCategory = () => {
     Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
   };
 
+  const FilterContent = () => (
+    <>
+      <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-b lg:d-none">
+        <h3 className="text-lg font-bold text-gray-800 mb-0">Filtrer</h3>
+        <Button variant="link" className="p-0 text-gray-400 d-lg-none" onClick={() => setShowMobileFilters(false)}>
+          <FaTimes />
+        </Button>
+      </div>
+
+      {/* Prix */}
+      <div className="mb-6">
+        <label className="text-sm font-bold text-gray-600 mb-3 d-block uppercase tracking-wider">Prix</label>
+        <div className="px-2">
+          <div className="d-flex justify-content-between text-xs font-bold text-blue-600 mb-2">
+            <span>{priceRange[0]} DT</span>
+            <span>{priceRange[1]} DT</span>
+          </div>
+          <input
+            type="range"
+            className="form-range"
+            min="0"
+            max={maxPrice}
+            step="1"
+            value={priceRange[1]}
+            onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+          />
+        </div>
+      </div>
+
+      {/* Catégories */}
+      <div className="mb-6">
+        <label className="text-sm font-bold text-gray-600 mb-3 d-block uppercase tracking-wider">Catégorie</label>
+        <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
+          <div className="form-check custom-checkbox">
+            <input className="form-check-input" type="checkbox" checked readOnly />
+            <label className="form-check-label text-sm text-gray-700">{subTitle}</label>
+          </div>
+        </div>
+      </div>
+
+      {/* Marques */}
+      {brands.length > 0 && (
+        <div className="mb-6">
+          <label className="text-sm font-bold text-gray-600 mb-3 d-block uppercase tracking-wider">Marque</label>
+          <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
+            {brands.map(brand => (
+              <div key={brand} className="form-check custom-checkbox">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id={`mobile-brand-${brand}`}
+                  checked={selectedBrands.includes(brand)}
+                  onChange={() => handleBrandChange(brand)}
+                />
+                <label className="form-check-label text-sm text-gray-700" htmlFor={`mobile-brand-${brand}`}>
+                  {brand}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Filtres Spécifiques */}
+      {Object.keys(availableSpecs).map(specKey => (
+        <div key={specKey} className="mb-6">
+          <label className="text-sm font-bold text-gray-600 mb-3 d-block uppercase tracking-wider">{specKey}</label>
+          <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
+            {availableSpecs[specKey].map(value => (
+              <div key={value} className="form-check custom-checkbox">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id={`mobile-spec-${specKey}-${value}`}
+                  checked={(selectedSpecs[specKey] || []).includes(value)}
+                  onChange={() => handleSpecChange(specKey, value)}
+                />
+                <label className="form-check-label text-sm text-gray-700" htmlFor={`mobile-spec-${specKey}-${value}`}>
+                  {value}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* Disponibilité */}
+      <div className="mb-4">
+        <label className="text-sm font-bold text-gray-600 mb-3 d-block uppercase tracking-wider">Disponibilité</label>
+        <div className="space-y-2">
+          <div className="form-check custom-checkbox">
+            <input className="form-check-input" type="checkbox" defaultChecked />
+            <label className="form-check-label text-sm text-gray-700">En stock</label>
+          </div>
+          <div className="form-check custom-checkbox">
+            <input className="form-check-input" type="checkbox" />
+            <label className="form-check-label text-sm text-gray-700">En arrivage</label>
+          </div>
+        </div>
+      </div>
+
+      <Button
+        className="w-100 mt-4 rounded-xl font-bold py-2 bg-red-600 border-0 shadow-lg text-white hover:brightness-110 d-lg-none"
+        onClick={() => setShowMobileFilters(false)}
+      >
+        Voir les résultats ({filteredProducts.length})
+      </Button>
+
+      <Button
+        variant="link"
+        onClick={() => { setPriceRange([0, maxPrice]); setSelectedBrands([]); setSelectedSpecs({}); }}
+        className="w-100 mt-2 text-blue-600 font-bold decoration-none text-sm"
+      >
+        Réinitialiser
+      </Button>
+    </>
+  );
+
   if (error) return (
     <Container className="py-12 text-center">
       <div className="alert alert-danger shadow-sm rounded-2xl">Erreur : {error}</div>
@@ -303,129 +423,74 @@ const ProductsBySubCategory = () => {
           <Breadcrumb.Item active>{subTitle}</Breadcrumb.Item>
         </Breadcrumb>
 
-        <div className="d-flex justify-content-between align-items-center mb-6">
-          <h1 className="text-2xl font-black text-gray-800 mb-0">{subTitle}</h1>
-          <div className="d-flex align-items-center gap-3">
-            <span className="text-gray-500 text-sm">Trier par:</span>
-            <select
-              className="form-select border-0 shadow-sm rounded-lg text-sm font-medium"
-              style={{ width: '180px' }}
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="relevance">Pertinence</option>
-              <option value="price-asc">Prix croissant</option>
-              <option value="price-desc">Prix décroissant</option>
-            </select>
+        <div className="mb-6 d-none d-lg-block">
+          <div className="d-flex justify-content-between align-items-center">
+            <h1 className="text-2xl font-black text-gray-800 mb-0">{subTitle}</h1>
+            <div className="d-flex align-items-center gap-3">
+              <span className="text-gray-500 text-sm">Trier par:</span>
+              <select
+                className="form-select border-0 shadow-sm rounded-lg text-sm font-medium"
+                style={{ width: '180px' }}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="relevance">Pertinence</option>
+                <option value="price-asc">Prix croissant</option>
+                <option value="price-desc">Prix décroissant</option>
+              </select>
+            </div>
           </div>
         </div>
 
+        <div className="d-lg-none mb-3">
+          <h1 className="text-xl font-black text-gray-800 mb-0">{subTitle}</h1>
+        </div>
+
         <Row>
-          {/* Sidebar FILTRES */}
+          {/* Sidebar FILTRES Desktop */}
           <Col lg={3} className="d-none d-lg-block">
             <div className="bg-white rounded-2xl shadow-sm p-4 sticky-top" style={{ top: '100px', zIndex: 10 }}>
               <h3 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">Filtrer</h3>
-
-              {/* Prix */}
-              <div className="mb-6">
-                <label className="text-sm font-bold text-gray-600 mb-3 d-block uppercase tracking-wider">Prix</label>
-                <div className="px-2">
-                  <div className="d-flex justify-content-between text-xs font-bold text-blue-600 mb-2">
-                    <span>{priceRange[0]} DT</span>
-                    <span>{priceRange[1]} DT</span>
-                  </div>
-                  <input
-                    type="range"
-                    className="form-range"
-                    min="0"
-                    max={maxPrice}
-                    step="1"
-                    value={priceRange[1]}
-                    onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                  />
-                </div>
-              </div>
-
-              {/* Catégories (Placeholder) */}
-              <div className="mb-6">
-                <label className="text-sm font-bold text-gray-600 mb-3 d-block uppercase tracking-wider">Catégorie</label>
-                <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
-                  <div className="form-check custom-checkbox">
-                    <input className="form-check-input" type="checkbox" checked readOnly />
-                    <label className="form-check-label text-sm text-gray-700">{subTitle}</label>
-                  </div>
-                </div>
-              </div>
-
-              {/* Marques */}
-              {brands.length > 0 && (
-                <div className="mb-6">
-                  <label className="text-sm font-bold text-gray-600 mb-3 d-block uppercase tracking-wider">Marque</label>
-                  <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
-                    {brands.map(brand => (
-                      <div key={brand} className="form-check custom-checkbox">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id={`brand-${brand}`}
-                          checked={selectedBrands.includes(brand)}
-                          onChange={() => handleBrandChange(brand)}
-                        />
-                        <label className="form-check-label text-sm text-gray-700" htmlFor={`brand-${brand}`}>
-                          {brand}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Filtres Spécifiques (RAM, Stockage, Puissance, etc.) */}
-              {Object.keys(availableSpecs).map(specKey => (
-                <div key={specKey} className="mb-6">
-                  <label className="text-sm font-bold text-gray-600 mb-3 d-block uppercase tracking-wider">{specKey}</label>
-                  <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
-                    {availableSpecs[specKey].map(value => (
-                      <div key={value} className="form-check custom-checkbox">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id={`spec-${specKey}-${value}`}
-                          checked={(selectedSpecs[specKey] || []).includes(value)}
-                          onChange={() => handleSpecChange(specKey, value)}
-                        />
-                        <label className="form-check-label text-sm text-gray-700" htmlFor={`spec-${specKey}-${value}`}>
-                          {value}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              {/* Disponibilité */}
-              <div className="mb-4">
-                <label className="text-sm font-bold text-gray-600 mb-3 d-block uppercase tracking-wider">Disponibilité</label>
-                <div className="space-y-2">
-                  <div className="form-check custom-checkbox">
-                    <input className="form-check-input" type="checkbox" defaultChecked />
-                    <label className="form-check-label text-sm text-gray-700">En stock</label>
-                  </div>
-                  <div className="form-check custom-checkbox">
-                    <input className="form-check-input" type="checkbox" />
-                    <label className="form-check-label text-sm text-gray-700">En arrivage</label>
-                  </div>
-                </div>
-              </div>
-
-              <Button className="w-100 mt-4 rounded-xl font-bold py-2 bg-red-600 border-0 shadow-lg text-white hover:brightness-110">
-                Filtrer
-              </Button>
+              <FilterContent />
             </div>
           </Col>
 
-          {/* MAIN Grid */}
+          {/* Offcanvas FILTRES Mobile */}
+          <Offcanvas
+            show={showMobileFilters}
+            onHide={() => setShowMobileFilters(false)}
+            placement="start"
+            className="mobile-filter-offcanvas"
+            style={{ width: '85%', maxWidth: '320px' }}
+          >
+            <Offcanvas.Body className="p-4">
+              <FilterContent />
+            </Offcanvas.Body>
+          </Offcanvas>
+
+          {/* Main Grid Content */}
           <Col lg={9}>
+            {/* Mobile Tool Bar - Only Visible on Small screens */}
+            <div className="d-lg-none mb-4 d-flex gap-2 sticky-top bg-gray-50/80 backdrop-blur-md py-2 px-1" style={{ top: '60px', zIndex: 50 }}>
+              <Button
+                variant="white"
+                className="flex-fill shadow-sm border rounded-xl py-2.5 d-flex align-items-center justify-content-center gap-2 text-sm font-bold text-gray-700 bg-white"
+                onClick={() => setShowMobileFilters(true)}
+              >
+                <FaFilter className="text-blue-600" /> FILTRER
+              </Button>
+              <div className="flex-fill bg-white shadow-sm border rounded-xl px-2">
+                <select
+                  className="form-select border-0 text-sm font-bold h-100 bg-transparent text-gray-700"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="relevance">PERTINENCE</option>
+                  <option value="price-asc">PRIX ↑</option>
+                  <option value="price-desc">PRIX ↓</option>
+                </select>
+              </div>
+            </div>
             {filteredProducts.length === 0 ? (
               <div className="bg-white rounded-2xl p-12 text-center shadow-sm">
                 <div className="text-4xl mb-4">🔍</div>

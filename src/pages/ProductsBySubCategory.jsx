@@ -61,16 +61,117 @@ const ProductsBySubCategory = () => {
   // State pour les filtres
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [selectedBrands, setSelectedBrands] = useState([]);
-  const [availability, setAvailability] = useState([]);
+  const [selectedSpecs, setSelectedSpecs] = useState({}); // { RAM: ['8GB'], Stockage: [] }
   const [sortBy, setSortBy] = useState('relevance');
 
-  // Extraire les marques uniques et le prix max
-  const { brands, maxPrice } = useMemo(() => {
-    if (!allProducts.length) return { brands: [], maxPrice: 2000 };
-    const b = [...new Set(allProducts.map(p => p.brand).filter(Boolean))];
+  // Définir les types de spécifications par thématique de catégorie
+  const specMapping = useMemo(() => {
+    const title = subTitle.toLowerCase();
+    if (title.includes('téléphone') || title.includes('smartphone') || title.includes('pc') || title.includes('ordinateur') || title.includes('portable')) {
+      return ['RAM', 'Stockage', 'Processeur', 'Réseau'];
+    }
+    if (title.includes('tv') || title.includes('téléviseur')) {
+      return ['Taille', 'Résolution', 'Type Ecran'];
+    }
+    if (title.includes('climatiseur') || title.includes('climatisation')) {
+      return ['Puissance', 'Type'];
+    }
+    if (title.includes('machine à laver') || title.includes('lave-linge') || title.includes('réfrigérateur')) {
+      return ['Capacité', 'Classe Energétique'];
+    }
+    if (title.includes('alimentaire') || title.includes('poids') || title.includes('épicerie') || title.includes('lessive')) {
+      return ['Poids', 'Volume'];
+    }
+    return []; // Pas de specs spécifiques pour les autres
+  }, [subTitle]);
+
+  // Extraire les marques et les valeurs de spécifications uniques
+  const { brands, maxPrice, availableSpecs } = useMemo(() => {
+    if (!allProducts.length) return { brands: [], maxPrice: 2000, availableSpecs: {} };
+
+    // Détection des marques améliorée : si p.brand est vide, on prend le premier mot du nom
+    const b = [...new Set(allProducts.map(p => {
+      if (p.brand && p.brand.trim()) return p.brand.trim();
+      return p.name.split(' ')[0]; // ex: "Samsung Galaxy" -> "Samsung"
+    }).filter(Boolean))];
+
     const max = Math.max(...allProducts.map(p => parseFloat(p.price) || 0));
-    return { brands: b.sort(), maxPrice: Math.ceil(max) };
-  }, [allProducts]);
+
+    // Simuler l'extraction de specs depuis le nom ou la description si elles ne sont pas structurées
+    // Dans un vrai projet, ces données viendraient d'un champ "attributes" de l'API
+    const specs = {};
+    specMapping.forEach(spec => {
+      const values = new Set();
+      allProducts.forEach(p => {
+        // Extraction naïve pour la démo (on cherche des motifs comme "8GB", "128GB", "55\"", etc.)
+        const content = (p.name + " " + (p.description || "")).toUpperCase();
+
+        if (spec === 'RAM') {
+          // Support Go et GB avec détection plus fine
+          const ramMatch = content.match(/(\d+)\s?G[BO]\s?RAM/i) || content.match(/RAM\s?:?\s?(\d+)\s?G[BO]/i) || content.match(/\b(4|6|8|12|16|32|64)\s?G[BO]\b/i);
+          if (ramMatch) {
+            const val = ramMatch[0].toUpperCase().replace('RAM', '').replace(/\s/g, '').replace('GO', 'GB');
+            if (parseInt(val) <= 64) values.add(val); // RAM excède rarement 64GB
+          }
+        }
+        else if (spec === 'Stockage') {
+          const storageMatch = content.match(/\b(64|128|256|512)\s?G[BO]\b/i) || content.match(/\b(1|2)\s?T[BO]\b/i);
+          if (storageMatch) values.add(storageMatch[0].toUpperCase().replace(/\s/g, '').replace('GO', 'GB').replace('TO', 'TB'));
+        }
+        else if (spec === 'Taille') {
+          const match = content.match(/\d+(\.\d+)?\s?(POUCES|["''])/i) || content.match(/\d{2}["'']/) || content.match(/\b(32|40|43|50|55|65|75|85)\b/);
+          if (match) {
+            let val = match[0].toUpperCase().replace('POUCES', '"').replace(/\s/g, '');
+            if (!val.includes('"')) val += '"';
+            values.add(val);
+          }
+        }
+        else if (spec === 'Résolution') {
+          if (content.includes('4K') || content.includes('UHD')) values.add('4K UHD');
+          else if (content.includes('FHD') || content.includes('1080P')) values.add('Full HD');
+          else if (content.includes('HD')) values.add('HD Ready');
+        }
+        else if (spec === 'Type Ecran') {
+          if (content.includes('OLED')) values.add('OLED');
+          else if (content.includes('QLED')) values.add('QLED');
+          else if (content.includes('LED')) values.add('LED');
+          if (content.includes('SMART')) values.add('Smart TV');
+          if (content.includes('AMOLED')) values.add('AMOLED');
+        }
+        else if (spec === 'Puissance') {
+          const match = content.match(/\d+\s?BTU/i);
+          if (match) values.add(match[0]);
+        }
+        else if (spec === 'Capacité' || spec === 'Poids' || spec === 'Volume') {
+          const match = content.match(/\d+(\.\d+)?\s?(KG|G|L|ML)\b/i);
+          if (match) values.add(match[0].toUpperCase());
+        }
+        else if (spec === 'Classe Energétique') {
+          const match = content.match(/\b[A-G]\+{0,3}\b/);
+          if (match && content.includes('CLASSE')) values.add('Classe ' + match[0]);
+        }
+        else if (spec === 'Processeur') {
+          if (content.includes('CORE I3')) values.add('Core i3');
+          if (content.includes('CORE I5')) values.add('Core i5');
+          if (content.includes('CORE I7')) values.add('Core i7');
+          if (content.includes('RYZEN 3')) values.add('Ryzen 3');
+          if (content.includes('RYZEN 5')) values.add('Ryzen 5');
+          if (content.includes('RYZEN 7')) values.add('Ryzen 7');
+          if (content.includes('SNAPDRAGON')) values.add('Snapdragon');
+          if (content.includes('M1') || content.includes('M2') || content.includes('M3')) values.add('Apple Silicon (M)');
+          if (content.match(/A(15|16|17|18)/)) values.add('Apple A-Series');
+          if (content.includes('HELIO') || content.includes('DIMENSITY')) values.add('MediaTek');
+        }
+        else if (spec === 'Réseau') {
+          if (content.includes('5G')) values.add('5G');
+          else if (content.includes('4G') || content.includes('LTE')) values.add('4G / LTE');
+        }
+      });
+      if (values.size > 0) specs[spec] = [...values].sort();
+    });
+
+    return { brands: b.sort(), maxPrice: Math.ceil(max), availableSpecs: specs };
+  }, [allProducts, specMapping]);
 
   useEffect(() => {
     setPriceRange([0, maxPrice]);
@@ -78,18 +179,33 @@ const ProductsBySubCategory = () => {
 
   // Logique de filtrage et tri
   const filteredProducts = useMemo(() => {
-    let filtered = allProducts.filter(p => {
+    return allProducts.filter(p => {
       const price = parseFloat(p.price) || 0;
       const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
-      const matchesBrand = selectedBrands.length === 0 || selectedBrands.includes(p.brand);
-      return matchesPrice && matchesBrand;
+      const productBrand = (p.brand && p.brand.trim()) ? p.brand.trim() : p.name.split(' ')[0];
+      const matchesBrand = selectedBrands.length === 0 || selectedBrands.includes(productBrand);
+
+      // Filtrage par specs : Normaliser le contenu pour la comparaison (Go -> GB, To -> TB, pas d'espaces)
+      const rawContent = (p.name + " " + (p.description || "")).toUpperCase();
+      const normalizedContent = rawContent.replace(/\s/g, '').replace(/G[O]/g, 'GB').replace(/T[O]/g, 'TB');
+
+      const matchesSpecs = Object.keys(selectedSpecs).every(specKey => {
+        const activeValues = selectedSpecs[specKey];
+        if (!activeValues || activeValues.length === 0) return true;
+        // Vérifier si au moins une valeur sélectionnée est présente dans le contenu normalisé
+        return activeValues.some(val => {
+          const normalizedVal = val.toUpperCase().replace(/\s/g, '');
+          return normalizedContent.includes(normalizedVal) || rawContent.includes(val.toUpperCase());
+        });
+      });
+
+      return matchesPrice && matchesBrand && matchesSpecs;
+    }).sort((a, b) => {
+      if (sortBy === 'price-asc') return (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0);
+      if (sortBy === 'price-desc') return (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0);
+      return 0;
     });
-
-    if (sortBy === 'price-asc') filtered.sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0));
-    if (sortBy === 'price-desc') filtered.sort((a, b) => (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
-
-    return filtered;
-  }, [allProducts, priceRange, selectedBrands, sortBy]);
+  }, [allProducts, priceRange, selectedBrands, selectedSpecs, sortBy]);
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const currentProducts = filteredProducts.slice(
@@ -101,6 +217,17 @@ const ProductsBySubCategory = () => {
     setSelectedBrands(prev =>
       prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]
     );
+    setCurrentPage(1);
+  };
+
+  const handleSpecChange = (specKey, value) => {
+    setSelectedSpecs(prev => {
+      const currentValues = prev[specKey] || [];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter(v => v !== value)
+        : [...currentValues, value];
+      return { ...prev, [specKey]: newValues };
+    });
     setCurrentPage(1);
   };
 
@@ -234,7 +361,7 @@ const ProductsBySubCategory = () => {
               {brands.length > 0 && (
                 <div className="mb-6">
                   <label className="text-sm font-bold text-gray-600 mb-3 d-block uppercase tracking-wider">Marque</label>
-                  <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                  <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
                     {brands.map(brand => (
                       <div key={brand} className="form-check custom-checkbox">
                         <input
@@ -252,6 +379,29 @@ const ProductsBySubCategory = () => {
                   </div>
                 </div>
               )}
+
+              {/* Filtres Spécifiques (RAM, Stockage, Puissance, etc.) */}
+              {Object.keys(availableSpecs).map(specKey => (
+                <div key={specKey} className="mb-6">
+                  <label className="text-sm font-bold text-gray-600 mb-3 d-block uppercase tracking-wider">{specKey}</label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
+                    {availableSpecs[specKey].map(value => (
+                      <div key={value} className="form-check custom-checkbox">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`spec-${specKey}-${value}`}
+                          checked={(selectedSpecs[specKey] || []).includes(value)}
+                          onChange={() => handleSpecChange(specKey, value)}
+                        />
+                        <label className="form-check-label text-sm text-gray-700" htmlFor={`spec-${specKey}-${value}`}>
+                          {value}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
 
               {/* Disponibilité */}
               <div className="mb-4">
@@ -281,7 +431,7 @@ const ProductsBySubCategory = () => {
                 <div className="text-4xl mb-4">🔍</div>
                 <h3 className="text-lg font-bold text-gray-800">Aucun produit trouvé</h3>
                 <p className="text-gray-500">Essayez de modifier vos filtres pour voir plus de résultats.</p>
-                <Button variant="link" onClick={() => { setPriceRange([0, maxPrice]); setSelectedBrands([]); }} className="text-blue-600 font-bold decoration-none">
+                <Button variant="link" onClick={() => { setPriceRange([0, maxPrice]); setSelectedBrands([]); setSelectedSpecs({}); }} className="text-blue-600 font-bold decoration-none">
                   Réinitialiser les filtres
                 </Button>
               </div>

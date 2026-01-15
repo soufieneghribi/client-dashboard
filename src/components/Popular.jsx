@@ -225,8 +225,13 @@ const Popular = () => {
                             variant="top"
                             src={getProductImageUrl(product)}
                             alt={product.name}
+                            loading="lazy"
+                            decoding="async"
+                            width="280"
+                            height="280"
                             style={{
                               height: "150px",
+                              width: "100%",
                               objectFit: "contain",
                               padding: "10px",
                             }}

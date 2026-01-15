@@ -350,6 +350,10 @@ const FeatureCarousel = () => {
                                 <img
                                     src={feature.image}
                                     alt={feature.title}
+                                    loading="lazy"
+                                    decoding="async"
+                                    width="280"
+                                    height="200"
                                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 />
                                 <div className="feature-card-content">

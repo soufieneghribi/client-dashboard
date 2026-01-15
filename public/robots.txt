@@ -1,0 +1,24 @@
+# robots.txt for TN360 Client Dashboard
+# Allow all crawlers by default
+
+User-agent: *
+# Disallow admin and authentication pages
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /mon-compte/
+Disallow: /panier
+Disallow: /checkout
+
+# Allow public pages
+Allow: /
+Allow: /produits
+Allow: /categories
+Allow: /contact
+
+# Sitemap location
+Sitemap: https://tn360-client-dashboard-122923924979.europe-west1.run.app/sitemap.xml
+
+# Crawl-delay (optional, adjust if needed)
+# Crawl-delay: 1

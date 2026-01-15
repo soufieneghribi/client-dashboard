@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-
 import { API_ENDPOINTS } from '../services/api';
 
 const EmailVerification = () => {
@@ -86,21 +85,10 @@ const EmailVerification = () => {
 
     setIsLoading(true);
 
-    const payload = {
-      email: String(email).trim(),
-      otp: String(verificationCode).trim()
-    };
-
     try {
       const response = await axios.post(
         API_ENDPOINTS.AUTH.VERIFY_EMAIL,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        }
+        { email: String(email).trim(), otp: String(verificationCode).trim() }
       );
 
       if (response.data.message || response.data.is_email_verified) {

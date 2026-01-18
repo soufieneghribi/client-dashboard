@@ -1,268 +1,323 @@
-.profile-container {
+/* Profile Dashboard - Legacy Mode */
+.profile-page-wrapper {
     min-height: 100vh;
-    padding-top: 1.5rem;
-    padding-bottom: 3rem;
     background-color: #f8fafc;
+    padding: 20px;
+    font-family: 'Inter', system-ui, sans-serif;
 }
 
-.profile-loading-container {
-    min-height: 100vh;
+/* --- Banner Header --- */
+.profile-header-banner {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.profile-user-info {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 16px;
 }
 
-.profile-header-card {
+.avatar-circle {
+    width: 64px;
+    height: 64px;
     background: white;
-    border-radius: 20px;
-    border: none;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    overflow: hidden;
-}
-
-.profile-header-card-body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 2rem;
-    color: white;
-}
-
-.profile-avatar {
-    width: 90px;
-    height: 90px;
+    color: #4f46e5;
     border-radius: 50%;
-    background: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #667eea;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    font-size: 2.5rem;
-    font-weight: bold;
+    font-size: 24px;
+    font-weight: 700;
 }
 
-.profile-main-card {
-    border-radius: 20px;
-    border: none;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+.user-text h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.user-text p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-modify {
     background: white;
-    margin-bottom: 1.5rem;
-}
-
-.profile-main-card-body {
-    padding: 2.5rem;
-}
-
-/* Loyalty Card */
-.loyalty-card {
-    border-radius: 20px;
+    color: #4f46e5;
     border: none;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    background: white;
-    margin-bottom: 1.5rem;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s;
 }
 
-.loyalty-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+.btn-modify:hover {
+    background: #f3f4f6;
 }
 
-.loyalty-card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 1.25rem;
+.btn-password {
+    background: rgba(255, 255, 255, 0.2);
     color: white;
-    border-radius: 20px 20px 0 0;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-password:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* --- Main Grid Layout --- */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 992px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Cards Common --- */
+.dashboard-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.card-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+/* --- Info Grid Form --- */
+.info-display-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 600px) {
+    .info-display-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.info-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-field label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.info-field .value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+    min-height: 24px;
+}
+
+.info-field input,
+.info-field select {
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.info-field input:focus,
+.info-field select:focus {
+    border-color: #6366f1;
+    ring: 2px solid #e0e7ff;
+}
+
+/* --- Edit Mode Actions --- */
+.edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #f3f4f6;
+}
+
+.btn-cancel {
+    padding: 8px 20px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    color: #374151;
+    font-weight: 500;
+}
+
+.btn-save {
+    padding: 8px 20px;
+    background: #4f46e5;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* --- Sidebar Widgets --- */
+.loyalty-card-widget {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.loyalty-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    margin-top: 16px;
+    transition: transform 0.2s;
+}
+
+.loyalty-btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Advantages Links */
+.advantages-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.advantage-card {
+    padding: 16px;
+    border-radius: 12px;
+    color: white;
     display: flex;
     align-items: center;
     justify-content: space-between;
-}
-
-.loyalty-card-body {
-    padding: 1.5rem;
-}
-
-.loyalty-badge {
-    background: rgba(255, 255, 255, 0.25);
-    color: white;
-    padding: 0.375rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-}
-
-.loyalty-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.loyalty-label {
-    font-size: 0.75rem;
-    color: #6c757d;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.loyalty-value {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #212529;
-    font-family: monospace;
-    letter-spacing: 0.5px;
-}
-
-.loyalty-balance {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #667eea;
-}
-
-/* Actions */
-.actions-card {
-    border-radius: 20px;
-    border: none;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    background: white;
-    margin-bottom: 1.5rem;
-}
-
-.action-button {
-    border-radius: 16px;
-    border: none;
-    padding: 1rem 1.5rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    width: "100%";
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
     cursor: pointer;
-    background: white;
+    transition: transform 0.2s;
 }
 
-.action-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+.advantage-card:hover {
+    transform: translateX(4px);
 }
 
-.action-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+.advantage-card.orange {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+.advantage-card.blue {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+.advantage-card.green {
+    background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.adv-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 16px;
 }
 
-.profile-button {
-    font-weight: 600;
-    border-radius: 12px;
-    padding: 0.75rem 1.75rem;
-    border: none;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    justify-content: center;
-    transition: all 0.3s ease;
-    font-size: 0.95rem;
-}
-
-.primary-button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.header-primary-button {
-    background: white;
-    color: #667eea;
-    border: none;
-    padding: 0.6rem 1.25rem;
-    border-radius: 10px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-.header-outline-button {
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    padding: 0.6rem 1.25rem;
-    border-radius: 10px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-.profile-form-group {
-    margin-bottom: 1.5rem;
-}
-
-.profile-form-label {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.75rem;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.profile-form-control {
-    border-radius: 12px;
-    border: 1.5px solid #e0e0e0;
-    padding: 0.85rem 1.2rem;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-.section-title {
-    font-size: 1.5rem;
+.adv-content h4 {
+    font-size: 14px;
     font-weight: 700;
-    color: #212529;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    margin: 0;
 }
 
-.profile-info-label {
-    font-size: 0.85rem;
-    color: #6c757d;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.adv-content p {
+    font-size: 11px;
+    margin: 0;
+    opacity: 0.9;
 }
 
-.profile-info-value {
-    font-size: 1.05rem;
-    color: #212529;
-    font-weight: 500;
-    margin-bottom: 0;
+/* Wallet Widget */
+.wallet-widget {
+    text-align: center;
+    padding: 30px 20px;
 }
 
-.wallet-balance-value {
-    font-size: 2.6rem;
-    font-weight: 700;
-    color: #667eea;
-    margin-bottom: 0;
+.wallet-amount {
+    font-size: 32px;
+    font-weight: 800;
+    color: #4f46e5;
+    margin: 10px 0 5px 0;
+}
+
+.wallet-sub {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* Reclamations Empty State */
+.reclamations-empty {
+    text-align: center;
+    padding: 40px 0;
+    color: #9ca3af;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
 }

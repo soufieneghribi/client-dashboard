@@ -1,12 +1,14 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { API_ENDPOINTS } from "../../services/api";
+import { API_ENDPOINTS, getAuthHeaders } from "../../services/api";
 
 export const fetchCategories = createAsyncThunk(
   "categorie/fetchCategories",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(API_ENDPOINTS.CATEGORIES.ALL);
+      const response = await axios.get(API_ENDPOINTS.CATEGORIES.ALL, {
+        headers: getAuthHeaders()
+      });
       return response.data;
     } catch (error) {
 
@@ -35,7 +37,8 @@ const categorieSlice = createSlice({
       })
       .addCase(fetchCategories.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        const payload = action.payload;
+        state.error = (payload && typeof payload === 'object') ? (payload.message || payload.error || JSON.stringify(payload)) : payload;
       });
   }
 });

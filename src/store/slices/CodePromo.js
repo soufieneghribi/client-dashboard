@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { API_ENDPOINTS, getAuthHeaders } from "../../services/api";
+import apiClient, { API_ENDPOINTS } from "../../services/api";
 
 // ==================== ASYNC THUNKS ====================
 
@@ -8,49 +8,23 @@ export const fetchCodePromos = createAsyncThunk(
   "codePromo/fetchCodePromos",
   async ({ page = 1, filters = {} } = {}, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        return rejectWithValue("Non authentifié");
-      }
-
-      // Construction des paramètres
-      const params = new URLSearchParams({
+      const params = {
         page: page.toString(),
         per_page: "20",
-      });
+      };
 
       // Ajouter les filtres supportés
-      if (filters.search) {
-        params.append("search", filters.search);
-      }
-      if (filters.partnerId) {
-        params.append("partnerId", filters.partnerId);
-      }
-      if (filters.offerType) {
-        params.append("offerType", filters.offerType);
-      }
-      if (filters.codeType) {
-        params.append("codeType", filters.codeType);
-      }
+      if (filters.search) params.search = filters.search;
+      if (filters.partnerId) params.partnerId = filters.partnerId;
+      if (filters.offerType) params.offerType = filters.offerType;
+      if (filters.codeType) params.codeType = filters.codeType;
       if (filters.sortBy) {
-        params.append("sortBy", filters.sortBy);
-        params.append("sortDirection", filters.sortDirection || "desc");
+        params.sortBy = filters.sortBy;
+        params.sortDirection = filters.sortDirection || "desc";
       }
 
-      const response = await fetch(
-        `${API_ENDPOINTS.CODE_PROMO.ALL}?${params.toString()}`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(token),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
-      }
-
-      const result = await response.json();
+      const response = await apiClient.get(API_ENDPOINTS.CODE_PROMO.ALL, { params });
+      const result = response.data;
 
       // ✅ Gérer les différents formats de réponse
       let codesData = [];
@@ -104,7 +78,7 @@ export const fetchCodePromos = createAsyncThunk(
         };
       }
     } catch (error) {
-
+      console.error("Erreur fetchCodePromos:", error);
       return rejectWithValue(error.message);
     }
   }
@@ -115,22 +89,8 @@ export const fetchCodePromoDetails = createAsyncThunk(
   "codePromo/fetchCodePromoDetails",
   async (id, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        return rejectWithValue("Non authentifié");
-      }
-
-      const response = await fetch(API_ENDPOINTS.CODE_PROMO.BY_ID(id), {
-        method: "GET",
-        headers: getAuthHeaders(token),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
-      }
-
-      const result = await response.json();
+      const response = await apiClient.get(API_ENDPOINTS.CODE_PROMO.BY_ID(id));
+      const result = response.data;
 
       // Gérer les différents formats
       if (result.success && result.data) {
@@ -142,7 +102,7 @@ export const fetchCodePromoDetails = createAsyncThunk(
         return rejectWithValue("Format de réponse invalide");
       }
     } catch (error) {
-
+      console.error("Erreur fetchCodePromoDetails:", error);
       return rejectWithValue(error.message);
     }
   }
@@ -153,25 +113,8 @@ export const reserveCodePromo = createAsyncThunk(
   "codePromo/reserveCodePromo",
   async (codePromoId, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        return rejectWithValue("Non authentifié");
-      }
-
-      const response = await fetch(
-        API_ENDPOINTS.CODE_PROMO.RESERVE(codePromoId),
-        {
-          method: "POST",
-          headers: getAuthHeaders(token),
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.message || `HTTP ${response.status}`);
-      }
-
-      const result = await response.json();
+      const response = await apiClient.post(API_ENDPOINTS.CODE_PROMO.RESERVE(codePromoId));
+      const result = response.data;
 
       if (result.success) {
         return result.data;
@@ -181,7 +124,7 @@ export const reserveCodePromo = createAsyncThunk(
         return rejectWithValue(result.message || "Erreur de réservation");
       }
     } catch (error) {
-
+      console.error("Erreur reserveCodePromo:", error);
       return rejectWithValue(error.message);
     }
   }
@@ -192,37 +135,16 @@ export const fetchMyCodePromos = createAsyncThunk(
   "codePromo/fetchMyCodePromos",
   async ({ status = null } = {}, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        return rejectWithValue("Non authentifié");
-      }
-
-      const params = new URLSearchParams({
+      const params = {
         per_page: "50",
-      });
+      };
 
       if (status) {
-        params.append("status", status);
+        params.status = status;
       }
 
-
-
-      const response = await fetch(
-        `${API_ENDPOINTS.CODE_PROMO.MY_CODES}?${params.toString()}`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(token),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-
-        throw new Error(errorData.message || `HTTP ${response.status}`);
-      }
-
-      const result = await response.json();
-
+      const response = await apiClient.get(API_ENDPOINTS.CODE_PROMO.MY_CODES, { params });
+      const result = response.data;
 
       // Gérer les différents formats
       let myCodesData = [];
@@ -234,14 +156,12 @@ export const fetchMyCodePromos = createAsyncThunk(
         myCodesData = result.data;
       }
 
-
-
       return {
         data: myCodesData,
         status,
       };
     } catch (error) {
-
+      console.error("Erreur fetchMyCodePromos:", error);
       return rejectWithValue(error.message);
     }
   }

@@ -338,7 +338,7 @@ export const updateCagnotteInDB = createAsyncThunk(
 
       const { data } = await axios.post(
         API_ENDPOINTS.USER.UPDATE_CAGNOTTE,
-        { amount },
+        { cagnotte_balance: amount },
         {
           headers: getAuthHeaders(token),
           timeout: API_TIMEOUT
@@ -566,8 +566,13 @@ const UserSlice = createSlice({
       })
       .addCase(updateCagnotteInDB.fulfilled, (state, action) => {
         state.loading = false;
-        state.Userprofile = action.payload;
-        state.loggedInUser = action.payload;
+        const newBalance = action.payload.new_balance;
+        if (state.Userprofile) {
+          state.Userprofile.cagnotte_balance = newBalance;
+        }
+        if (state.loggedInUser) {
+          state.loggedInUser.cagnotte_balance = newBalance;
+        }
       })
       .addCase(updateCagnotteInDB.rejected, (state, action) => {
         state.loading = false;

@@ -27,11 +27,11 @@ const FeatureCarousel = () => {
 
     const carouselRef = React.useRef(null);
 
-    useEffect(() => {
-        if (isLoggedIn && Userprofile?.ID_client) {
-            dispatch(fetchClientDeals(Userprofile.ID_client));
-        }
-    }, [dispatch, isLoggedIn, Userprofile?.ID_client]);
+    // useEffect(() => {
+    //     if (isLoggedIn && Userprofile?.ID_client) {
+    //         dispatch(fetchClientDeals(Userprofile.ID_client));
+    //     }
+    // }, [dispatch, isLoggedIn, Userprofile?.ID_client]);
 
     const allDeals = [
         ...depense,
@@ -84,7 +84,7 @@ const FeatureCarousel = () => {
             image: gameImg,
             path: '/jeux',
             color: 'from-yellow-400 to-orange-500',
-            requiresAuth: false
+            requiresAuth: true
         }
     ];
 
@@ -93,7 +93,6 @@ const FeatureCarousel = () => {
             navigate('/login');
             return;
         }
-        if (id === 'jeux') return;
         navigate(path);
     };
 

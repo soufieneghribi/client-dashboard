@@ -29,15 +29,14 @@ const DeliveryModeSection = ({
 }) => {
 
     const modes = [
-        { id: 'delivery', label: 'Domicile', icon: FaHome, subtitle: 'Voir prix' },
+        { id: 'delivery', label: 'Domicile', icon: FaHome, subtitle: 'Expédition' },
         { id: 'pickup', label: 'Retrait', icon: FaStore, subtitle: 'Gratuit' },
-        { id: 'relay_point', label: 'Point Relais', icon: FaMapMarkerAlt, subtitle: 'Voir prix' }
+        { id: 'relay_point', label: 'Point Relais', icon: FaMapMarkerAlt, subtitle: 'Éco' }
     ];
 
     const handleModeChange = (modeId) => {
         handleInputChange({ target: { name: 'order_type', value: modeId } });
 
-        // Auto-select the corresponding API mode ID if available
         if (deliveryModes && deliveryModes.length > 0) {
             let targetMode = null;
             if (modeId === 'relay_point') {
@@ -51,7 +50,6 @@ const DeliveryModeSection = ({
                     ['retrait', 'magasin', 'boutique'].includes(m.nom?.toLowerCase())
                 );
             } else {
-                // Default to Domicile/Standard
                 targetMode = deliveryModes.find(m =>
                     !m.code?.includes('POINT_RELAIS') &&
                     !['point relais', 'retrait'].includes(m.nom?.toLowerCase())
@@ -69,21 +67,20 @@ const DeliveryModeSection = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden"
+            className="bg-white rounded-[3rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-slate-50 overflow-hidden"
         >
-            <div className="p-6 sm:p-8">
-                <div className="flex items-center gap-4 mb-8">
-                    <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600">
+            <div className="p-8 sm:p-10">
+                <div className="flex items-center gap-4 mb-10">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
                         <FaTruck size={20} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-slate-900">Mode de livraison</h2>
-                        <p className="text-sm text-slate-400 font-medium">Comment souhaitez-vous recevoir votre commande ?</p>
+                        <h2 className="text-2xl font-black text-[#2D2D5F] tracking-tight">Mode de livraison</h2>
+                        <p className="text-slate-400 font-medium mt-1">Choisissez l'option la plus pratique pour vous.</p>
                     </div>
                 </div>
 
-                {/* Mode Selector Cards */}
-                <div className="grid grid-cols-3 gap-3 mb-8">
+                <div className="grid grid-cols-3 gap-6 mb-10">
                     {modes.map((mode) => {
                         const isSelected = formData.order_type === mode.id;
                         const Icon = mode.icon;
@@ -91,19 +88,16 @@ const DeliveryModeSection = ({
                             <button
                                 key={mode.id}
                                 onClick={() => handleModeChange(mode.id)}
-                                className={`relative flex flex-col items-center justify-center p-4 rounded-3xl transition-all duration-200 border-2 ${isSelected
-                                    ? 'border-slate-900 bg-slate-900 text-white shadow-lg shadow-slate-900/20'
-                                    : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200 hover:bg-slate-50'
+                                className={`group relative flex flex-col items-center justify-center p-6 rounded-[2rem] transition-all duration-300 border-2 ${isSelected
+                                    ? 'border-[#2D2D5F] bg-[#2D2D5F] text-white shadow-2xl shadow-indigo-900/20'
+                                    : 'border-slate-50 bg-slate-50/50 text-slate-400 hover:border-indigo-100 hover:bg-white hover:text-indigo-600'
                                     }`}
                             >
-                                {isSelected && (
-                                    <div className="absolute top-3 right-3 text-white">
-                                        <FaCheckCircle size={16} />
-                                    </div>
-                                )}
-                                <Icon size={24} className={`mb-3 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
-                                <span className="font-bold text-sm mb-1">{mode.label}</span>
-                                <span className={`text-[10px] uppercase font-bold tracking-wider ${isSelected ? 'text-slate-300' : 'text-blue-500'}`}>
+                                <div className={`mb-4 w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${isSelected ? 'bg-white/10' : 'bg-white group-hover:bg-indigo-50 shadow-sm'}`}>
+                                    <Icon size={20} />
+                                </div>
+                                <span className="font-extrabold text-sm mb-1">{mode.label}</span>
+                                <span className={`text-[9px] font-black uppercase tracking-widest ${isSelected ? 'opacity-60' : 'text-slate-300 group-hover:text-indigo-400'}`}>
                                     {mode.subtitle}
                                 </span>
                             </button>
@@ -111,15 +105,14 @@ const DeliveryModeSection = ({
                     })}
                 </div>
 
-                {/* Content Section */}
                 <div className="mt-2">
                     <AnimatePresence mode="wait">
                         {formData.order_type === 'delivery' && (
                             <motion.div
                                 key="delivery"
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20 }}
+                                initial={{ opacity: 0, scale: 0.98 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.98 }}
                             >
                                 <DomicileDeliveryForm
                                     formData={formData}
@@ -138,30 +131,15 @@ const DeliveryModeSection = ({
                         {formData.order_type === 'relay_point' && (
                             <motion.div
                                 key="relay"
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20 }}
+                                initial={{ opacity: 0, scale: 0.98 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.98 }}
                             >
-                                {(() => {
-                                    // Recalculate subtotal from orderDetails to match backend calculation
-                                    const calculatedSubtotal = orderDetails.reduce((t, i) => t + (parseFloat(i.price) * parseInt(i.quantity)), 0);
-                                    console.log("🔍 RelayPointSelector Props:");
-                                    console.log("   cartTotal (calculated from orderDetails):", calculatedSubtotal);
-                                    console.log("   cartTotal (from location.state):", subtotal);
-                                    console.log("   cartItems:", orderDetails);
-                                    console.log("   deliveryModes:", deliveryModes);
-                                    return null;
-                                })()}
                                 <RelayPointSelector
                                     onStoreSelected={(store, fee) => {
-                                        console.log("🏪 Relay Point Selected:", store.name);
-                                        console.log("💵 Relay Point Fee:", fee);
                                         setSelectedRelayPoint(store);
                                         setRelayPointFee(fee);
-                                        setFormData(prev => {
-                                            console.log("📝 Updating formData.delivery_fee to:", fee);
-                                            return { ...prev, delivery_fee: fee };
-                                        });
+                                        setFormData(prev => ({ ...prev, delivery_fee: fee }));
                                     }}
                                     selectedStoreId={selectedRelayPoint?.id}
                                     cartTotal={orderDetails.reduce((t, i) => t + (parseFloat(i.price) * parseInt(i.quantity)), 0)}
@@ -174,9 +152,9 @@ const DeliveryModeSection = ({
                         {(formData.order_type === 'pickup' || formData.order_type === 'store_pickup') && (
                             <motion.div
                                 key="pickup"
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20 }}
+                                initial={{ opacity: 0, scale: 0.98 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.98 }}
                             >
                                 <StorePickupSelector
                                     onStoreSelected={(store) => {
@@ -185,6 +163,7 @@ const DeliveryModeSection = ({
                                         setFormData(prev => ({ ...prev, delivery_fee: 0 }));
                                     }}
                                     selectedStoreId={selectedPickupStore?.id}
+                                    lightMode={true}
                                 />
                             </motion.div>
                         )}

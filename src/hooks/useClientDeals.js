@@ -3,7 +3,6 @@ import { dealApi } from '../services/dealApi';
 import { toast } from 'react-toastify';
 
 export const useClientDeals = (clientId) => {
-    console.log('🎯 useClientDeals called with clientId:', clientId);
 
     const [deals, setDeals] = useState([]);
     const [loading, setLoading] = useState(!!clientId);
@@ -11,10 +10,8 @@ export const useClientDeals = (clientId) => {
     const [pendingRewards, setPendingRewards] = useState(0);
 
     const fetchDeals = useCallback(async () => {
-        console.log('🔄 fetchDeals called, clientId:', clientId);
 
         if (!clientId) {
-            console.log('⚠️ No clientId, skipping fetch');
             setLoading(false);
             return;
         }
@@ -23,15 +20,12 @@ export const useClientDeals = (clientId) => {
         setError(null);
 
         try {
-            console.log('📡 Calling API with clientId:', clientId);
             const response = await dealApi.getClientDeals(clientId, 'all');
-            console.log('✅ API Response:', response);
 
             // Parse V2 response structure
             let dealsData = [];
             if (response.status === 'success' && response.data) {
                 dealsData = Array.isArray(response.data) ? response.data : [];
-                console.log('📊 Deals data array:', dealsData.length, 'deals');
             }
 
             // Filter out expired deals
@@ -41,7 +35,6 @@ export const useClientDeals = (clientId) => {
                 const endDate = new Date(deal.date_fin);
                 return endDate >= now;
             });
-            console.log('✅ Active deals after filtering:', activeDeals.length);
 
             // Categorize deals by type
             const categorizedDeals = {
@@ -63,7 +56,6 @@ export const useClientDeals = (clientId) => {
                 }
             });
 
-            console.log('📦 Final categorized deals:', categorizedDeals);
             setDeals(categorizedDeals);
 
             // Calculate total pending rewards
@@ -71,7 +63,6 @@ export const useClientDeals = (clientId) => {
                 return sum + (deal.amount_earned || 0);
             }, 0);
             setPendingRewards(totalRewards);
-            console.log('💰 Total pending rewards:', totalRewards);
 
         } catch (err) {
             console.error('Error fetching deals:', err);

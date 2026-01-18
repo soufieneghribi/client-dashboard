@@ -203,17 +203,85 @@ const ProductDetails = () => {
               </button>
 
               {isElectronic && unitPrice > 300 && (
-                <button
+                <div
                   onClick={() => navigate('/credit/simulation', { state: { product: displayProduct } })}
-                  className="w-full py-2.5 rounded-xl font-bold text-indigo-600 border-2 border-indigo-500 border-dashed hover:bg-indigo-50 transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2"
-                  style={{ fontSize: '1rem', letterSpacing: '0.025em' }}
+                  className="w-full mt-4 p-4 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-all duration-300 group"
                 >
-                  💰 SIMULER MON CRÉDIT
-                </button>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-gray-900 mb-0.5">Simuler un crédit</h4>
+                      <p className="text-sm text-gray-500 font-medium">Financez cet article par petites mensualités</p>
+                    </div>
+                  </div>
+                  <div className="text-gray-400 group-hover:text-gray-600 transition-colors">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
               )}
             </div>
           </div>
         </div>
+
+        {/* Section Caractéristiques */}
+        {displayProduct.attributes && displayProduct.attributes.length > 0 && (
+          <div className="mt-12 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-8 py-6 border-b border-gray-100 flex items-center gap-4">
+              <div className="bg-blue-50 p-3 rounded-2xl">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 tracking-tight">
+                Caractéristiques
+              </h2>
+            </div>
+
+            <div className="px-4 py-4">
+              <div className="grid grid-cols-1 gap-2">
+                {displayProduct.attributes.map((attr, index) => (
+                  <div
+                    key={index}
+                    className={`flex justify-between items-center px-6 py-4 rounded-2xl transition-all duration-200 hover:scale-[1.01]
+                      ${index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}`}
+                  >
+                    <span className="text-base font-bold text-gray-400 uppercase tracking-widest text-xs">
+                      {attr.name}
+                    </span>
+                    <span className="text-lg font-black text-gray-800 text-right">
+                      {attr.value} {attr.unit && !attr.value.includes(attr.unit) ? attr.unit : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Section Description (si disponible) */}
+        {displayProduct.description && displayProduct.description.length > 100 && (
+          <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                À propos
+              </h2>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                {displayProduct.description}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

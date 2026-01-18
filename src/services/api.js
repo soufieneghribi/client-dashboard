@@ -50,6 +50,7 @@ export const API_ENDPOINTS = {
   CATEGORIES: {
     ALL: `${API_BASE_URL}/categories/article-types`,
     BY_ID: (id) => `${API_BASE_URL}/categories/${id}`,
+    ATTRIBUTES: (id) => `${API_BASE_URL}/categories/article-types/${id}/attributes`,
   },
 
   // ==================== ENSEIGNES ====================
@@ -258,15 +259,16 @@ export const getFullAuthToken = () => {
 export const getAuthHeaders = (token = null) => {
   const authToken = token || getFullAuthToken();
 
-  if (!authToken) {
-
-  }
-
-  return {
-    'Authorization': `Bearer ${authToken}`,
+  const headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
+
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+
+  return headers;
 };
 
 export const getAuthHeadersBinary = (token = null) => {

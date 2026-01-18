@@ -1,15 +1,43 @@
+/* Scrollbar styling */
 .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.05);
     border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(45, 45, 95, 0.1);
     border-radius: 10px;
 }
 
-/* Add any other specific styles for OrderConfirmation here if needed */
+.custom-scrollbar-light::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.custom-scrollbar-light::-webkit-scrollbar-thumb {
+    background: rgba(45, 45, 95, 0.05);
+}
+
+/* Animations */
+@keyframes shine {
+    from {
+        transform: translateX(-100%) skewX(-12deg);
+    }
+
+    to {
+        transform: translateX(200%) skewX(-12deg);
+    }
+}
+
+.animate-shine {
+    animation: shine 2s infinite;
+}
+
+/* Specific component overrides */
+.order-confirmation-container {
+    padding-top: 2rem;
+    padding-bottom: 5rem;
+}

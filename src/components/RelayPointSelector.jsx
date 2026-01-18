@@ -1,15 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStores, selectAllStores, selectStoresLoading, selectStore } from '../store/slices/stores';
 import axios from 'axios';
 import { API_ENDPOINTS, getAuthHeaders } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaMapMarkerAlt, FaStore, FaClock, FaCheck, FaTruck } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaStore, FaCheck, FaSearch, FaInfoCircle } from 'react-icons/fa';
 
-/**
- * RelayPointSelector - Component for selecting a relay point/store
- * Displays list of stores with calculated delivery fees
- */
 const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartItems, deliveryModes }) => {
     const dispatch = useDispatch();
     const stores = useSelector(selectAllStores);
@@ -21,48 +17,28 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
     const [authError, setAuthError] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
 
-    // Fetch stores on mount
     useEffect(() => {
         dispatch(fetchStores());
     }, [dispatch]);
 
-    // Filter stores based on search
     const filteredStores = stores.filter(store =>
         store.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         store.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         store.address?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Calculate fees for a specific store
     const calculateFeeForStore = async (store) => {
-        console.log("🧮 calculateFeeForStore called for:", store.name);
-        console.log("   cartTotal:", cartTotal);
-        console.log("   cartItems:", cartItems);
-        console.log("   deliveryModes:", deliveryModes);
+        if (!cartTotal || !cartItems || cartItems.length === 0 || !deliveryModes) return;
 
-        if (!cartTotal || !cartItems || cartItems.length === 0 || !deliveryModes) {
-            console.warn("⚠️ Missing required data for fee calculation:", {
-                hasCartTotal: !!cartTotal,
-                hasCartItems: !!cartItems,
-                cartItemsLength: cartItems?.length,
-                hasDeliveryModes: !!deliveryModes
-            });
-            return;
-        }
-
-        // Find Point Relais mode ID
         const relayMode = deliveryModes?.find(m =>
             m.code === 'POINT_RELAIS' ||
             ['point relais', 'point-relais', 'relais'].includes(m.nom?.toLowerCase())
         );
 
         const modeId = relayMode ? relayMode.mode_livraison_id : 'POINT_RELAIS';
-        console.log("   Using mode ID:", modeId);
-
         setLoadingFees(prev => ({ ...prev, [store.id]: true }));
 
         const fetchFee = async (useStoreId) => {
-            console.log(`📡 Fetching Fee (Use Store ID: ${useStoreId})...`);
             const deliveryAddress = {
                 ville: store.city || '',
                 gouvernorat: store.gouvernorat || '',
@@ -82,8 +58,6 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                 }))
             };
 
-            console.log("📤 Params:", params);
-
             const response = await axios.post(
                 API_ENDPOINTS.DELIVERY.CALCULATE_FEE,
                 params,
@@ -93,16 +67,11 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
         };
 
         try {
-            // Try with specific store ID first
             let data;
             try {
                 data = await fetchFee(true);
             } catch (error) {
-                console.warn(`⚠️ Fee Calcluation Error (Specific Store): ${error.response?.status}`);
-                // If specific calculation fails (e.g., 400 Bad Request due to missing zone rule),
-                // fallback to default calculation (store_id: null)
                 if (error.response?.status === 400 || error.response?.status === 422) {
-                    console.log("🔄 Retrying with Store ID: NULL...");
                     data = await fetchFee(false);
                 } else {
                     throw error;
@@ -113,27 +82,19 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                 ? data.frais_livraison
                 : (data.delivery_fee !== undefined ? data.delivery_fee : null);
 
-            setStoreFees(prev => ({
-                ...prev,
-                [store.id]: fee
-            }));
+            setStoreFees(prev => ({ ...prev, [store.id]: fee }));
         } catch (error) {
             if (error.response?.status === 401 || error.response?.status === 403) {
                 setAuthError(true);
             }
-            setStoreFees(prev => ({
-                ...prev,
-                [store.id]: null
-            }));
+            setStoreFees(prev => ({ ...prev, [store.id]: null }));
         } finally {
             setLoadingFees(prev => ({ ...prev, [store.id]: false }));
         }
     };
 
-    // Calculate fees for all stores
     useEffect(() => {
         if (authError) return;
-
         if (stores.length > 0 && deliveryModes && deliveryModes.length > 0 && cartTotal > 0) {
             stores.forEach(store => {
                 if (storeFees[store.id] === undefined && !loadingFees[store.id]) {
@@ -152,138 +113,97 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center py-12 px-4 space-y-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] animate-pulse">Chargement des points relais...</p>
+            <div className="flex flex-col items-center justify-center py-10 space-y-3">
+                <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-500 rounded-full animate-spin"></div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Recherche des points relais...</p>
             </div>
         );
     }
-
-    if (stores.length === 0) {
-        return (
-            <div className="bg-slate-50 rounded-[2rem] p-10 text-center border-2 border-dashed border-slate-200">
-                <div className="text-4xl mb-4 opacity-20">📍</div>
-                <p className="text-slate-500 font-bold uppercase tracking-tight">Aucun point relais disponible</p>
-                <p className="text-slate-400 text-xs mt-1">Revenez plus tard.</p>
-            </div>
-        );
-    }
-
-    if (authError) {
-        return (
-            <div className="bg-orange-50 rounded-[2rem] p-10 text-center border-2 border-orange-200">
-                <div className="text-4xl mb-4">⚠️</div>
-                <p className="text-orange-700 font-bold uppercase tracking-tight">Session expirée</p>
-                <p className="text-orange-500 text-xs mt-1">Veuillez vous reconnecter.</p>
-            </div>
-        );
-    }
-
 
     return (
-        <div className="mt-3 bg-blue-50 rounded-2xl border-2 border-blue-200 overflow-hidden">
-            {/* Header */}
-            <div className="px-4 py-3 flex items-center gap-3">
-                <FaMapMarkerAlt className="text-blue-600 text-lg" />
-                <h3 className="text-sm font-bold text-blue-800">
-                    Sélectionnez un point de relai
-                </h3>
+        <div className="mt-6 space-y-6">
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 shadow-sm border border-indigo-100/50">
+                        <FaMapMarkerAlt size={14} />
+                    </div>
+                    <div>
+                        <h3 className="text-[10px] font-black text-[#2D2D5F] uppercase tracking-widest">Points Relais</h3>
+                        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Économisez sur les frais de port</p>
+                    </div>
+                </div>
             </div>
 
-            <div className="h-px bg-blue-200"></div>
-
-            {/* Search Bar */}
-            <div className="px-4 pt-4 pb-2">
+            {/* Search Input */}
+            <div className="relative group">
+                <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-slate-300 group-focus-within:text-indigo-500 transition-colors">
+                    <FaSearch size={14} />
+                </div>
                 <input
                     type="text"
-                    placeholder="Rechercher un point relais (ville, nom...)"
+                    placeholder="Chercher par ville ou nom..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-blue-100 text-sm font-medium focus:ring-2 focus:ring-blue-300 focus:border-blue-300 placeholder:text-slate-400 transition-all"
+                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-100 transition-all font-bold text-slate-700 text-sm placeholder:text-slate-300 placeholder:font-medium"
                 />
             </div>
 
-            {/* Store List */}
-            <div className="px-2 pb-2">
-                <div className="max-h-[280px] overflow-y-auto custom-scrollbar">
-                    <AnimatePresence>
-                        {filteredStores.map((store, index) => {
-                            const isSelected = selectedId === store.id;
-                            const isLoadingFee = loadingFees[store.id];
-                            const fee = storeFees[store.id];
-                            const isFree = fee !== undefined && fee === 0;
+            {/* Store Grid */}
+            <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar custom-scrollbar-light">
+                <AnimatePresence>
+                    {filteredStores.map((store, index) => {
+                        const isSelected = selectedId === store.id;
+                        const isLoadingFee = loadingFees[store.id];
+                        const fee = storeFees[store.id];
+                        const isFree = fee !== undefined && fee === 0;
 
-                            return (
-                                <React.Fragment key={store.id}>
-                                    {index > 0 && <div className="h-px bg-blue-100 mx-2"></div>}
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        onClick={() => handleStoreSelect(store)}
-                                        className={`cursor-pointer transition-all ${isSelected ? 'bg-blue-100' : 'bg-transparent hover:bg-white'
-                                            }`}
-                                    >
-                                        <div className="px-3 py-3 flex items-center gap-3">
-                                            {/* Store Icon */}
-                                            <div
-                                                className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${isSelected
-                                                        ? 'bg-blue-600 bg-opacity-20'
-                                                        : 'bg-slate-200'
-                                                    }`}
-                                            >
-                                                <FaStore
-                                                    className={`text-lg ${isSelected ? 'text-blue-600' : 'text-slate-600'
-                                                        }`}
-                                                />
-                                            </div>
-
-                                            {/* Store Info */}
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-semibold text-slate-900 truncate">
-                                                    {store.name}
-                                                </p>
-                                                {(store.address || store.city) && (
-                                                    <p className="text-xs text-slate-600 truncate mt-0.5">
-                                                        {[store.address, store.city].filter(Boolean).join(', ')}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {/* Price Tag */}
-                                            <div className="flex items-center gap-2">
-                                                {isLoadingFee ? (
-                                                    <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                                                ) : fee !== undefined && fee !== null ? (
-                                                    <div
-                                                        className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase ${isFree
-                                                                ? 'bg-green-100 text-green-700'
-                                                                : 'bg-orange-100 text-orange-700'
-                                                            }`}
-                                                    >
-                                                        {isFree ? 'Gratuit' : `${Number(fee).toFixed(2)} DT`}
-                                                    </div>
-                                                ) : null}
-
-                                                {/* Selection Indicator */}
-                                                <div
-                                                    className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${isSelected
-                                                            ? 'bg-blue-600 border-blue-600'
-                                                            : 'border-slate-400'
-                                                        }`}
-                                                >
-                                                    {isSelected && (
-                                                        <FaCheck className="text-white text-[10px]" />
-                                                    )}
-                                                </div>
-                                            </div>
+                        return (
+                            <motion.div
+                                key={store.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.03 }}
+                                onClick={() => handleStoreSelect(store)}
+                                className={`relative flex items-center justify-between p-5 rounded-[1.75rem] cursor-pointer transition-all border-2 ${isSelected
+                                    ? 'border-[#2D2D5F] bg-white shadow-xl shadow-indigo-900/5'
+                                    : 'border-slate-50 bg-slate-50/50 hover:border-slate-100 hover:bg-white'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-4 flex-1 min-w-0">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg transition-all ${isSelected ? 'bg-[#2D2D5F] text-white shadow-lg' : 'bg-white text-slate-300 shadow-sm'}`}>
+                                        <FaStore />
+                                    </div>
+                                    <div className="min-w-0 pr-4">
+                                        <div className="flex items-center gap-2">
+                                            <p className={`font-black text-sm tracking-tight truncate ${isSelected ? 'text-[#2D2D5F]' : 'text-slate-700'}`}>
+                                                {store.name}
+                                            </p>
                                         </div>
-                                    </motion.div>
-                                </React.Fragment>
-                            );
-                        })}
-                    </AnimatePresence>
-                </div>
+                                        <p className="text-[10px] text-slate-400 font-bold truncate uppercase tracking-tighter mt-0.5">
+                                            {[store.address, store.city].filter(Boolean).join(', ')}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col items-end gap-2 shrink-0">
+                                    {isLoadingFee ? (
+                                        <div className="w-4 h-4 border-2 border-slate-200 border-t-indigo-500 rounded-full animate-spin"></div>
+                                    ) : fee !== undefined && fee !== null ? (
+                                        <div className={`px-4 py-1.5 rounded-2xl text-[10px] font-black tracking-widest uppercase border ${isFree ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-600 border-slate-100'}`}>
+                                            {isFree ? 'Gratuit' : `${Number(fee).toFixed(2)} DT`}
+                                        </div>
+                                    ) : (
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-200"></div>
+                                    )}
+
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${isSelected ? 'border-[#2D2D5F] bg-[#2D2D5F] shadow-lg shadow-indigo-500/20' : 'border-slate-200 bg-white'}`}>
+                                        {isSelected && <FaCheck className="text-white text-[10px]" />}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </AnimatePresence>
             </div>
         </div>
     );

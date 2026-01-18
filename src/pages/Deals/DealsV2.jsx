@@ -21,21 +21,11 @@ const DealsV2 = () => {
     // Load user profile if not already loaded
     useEffect(() => {
         if (isLoggedIn && !Userprofile) {
-            console.log('� Loading user profile...');
             dispatch(fetchUserProfile());
         }
     }, [isLoggedIn, Userprofile, dispatch]);
 
-    console.log('�🔐 DealsV2 - Auth State:', { isLoggedIn, hasProfile: !!Userprofile, clientId: Userprofile?.ID_client });
-
     const { deals, loading, error, pendingRewards, transferDeal, refresh } = useClientDeals(Userprofile?.ID_client);
-
-    console.log('📋 DealsV2 - Deals State:', {
-        dealsObject: deals,
-        loading,
-        error,
-        pendingRewards
-    });
 
     const [transferring, setTransferring] = useState(null);
 
@@ -58,10 +48,8 @@ const DealsV2 = () => {
 
         if (result.success) {
             // Show success message or toast
-            console.log('Transfer successful:', result.data);
         } else {
             // Show error message
-            console.error('Transfer failed:', result.error);
         }
     };
 

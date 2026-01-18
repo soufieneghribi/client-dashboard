@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { FaSpinner, FaTimesCircle, FaClock, FaCheckCircle } from "react-icons/fa";
 
-import { API_ENDPOINTS, getAuthHeaders, handleApiError } from "../../services/api";
+import { API_ENDPOINTS, getAuthHeaders, handleApiError, default as apiClient } from "../../services/api";
 import { fetchUserProfile } from "../../store/slices/user";
 import { isExpired, formatDate, getQRCodeUrl, downloadQRCode } from "./giftUtils";
 
@@ -34,35 +34,35 @@ const Gifts = () => {
     }, [dispatch, isLoggedIn]);
 
     useEffect(() => {
-        fetchAcquisitions();
-    }, [selectedTab]);
+        if (Userprofile) {
+            fetchAcquisitions();
+        }
+    }, [selectedTab, Userprofile]);
 
     const fetchAcquisitions = async () => {
         const token = localStorage.getItem("token");
         if (!token) {
-            // 
             navigate("/login");
             return;
         }
 
         setLoading(true);
         try {
+            // Revert to original endpoint /customer/mes-cadeaux
             let url = API_ENDPOINTS.CADEAUX.MY_ACQUISITIONS;
-            if (selectedTab !== "all") url += `?statut=${selectedTab}`;
 
-            const response = await fetch(url, {
-                method: "GET",
-                headers: getAuthHeaders(token)
-            });
+            const params = {};
+            if (selectedTab !== "all") params.statut = selectedTab;
 
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const result = await response.json();
+            const response = await apiClient.get(url, { params });
+            const result = response.data;
 
             if (result.success) setAcquisitions(result.data || []);
             else setAcquisitions([]);
         } catch (error) {
-
-            // );
+            console.error("Erreur chargement cadeaux:", error);
+            // Fallback to empty list to avoid UI crash
+            setAcquisitions([]);
         } finally {
             setLoading(false);
         }

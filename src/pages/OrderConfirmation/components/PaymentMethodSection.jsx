@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaCreditCard, FaMoneyBillWave } from "react-icons/fa";
+import { FaCreditCard, FaMoneyBillWave, FaWallet } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 const PaymentMethodSection = ({ formData, handleInputChange }) => {
@@ -8,53 +8,58 @@ const PaymentMethodSection = ({ formData, handleInputChange }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden"
+            className="bg-white rounded-[3rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-slate-50 overflow-hidden mb-12"
         >
-            <div className="p-6 sm:p-8">
-                <div className="flex items-center gap-4 mb-8">
-                    <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600">
-                        <FaCreditCard size={20} />
+            <div className="p-8 sm:p-10">
+                <div className="flex items-center gap-4 mb-10">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
+                        <FaWallet size={20} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-slate-900">Moyen de paiement</h2>
-                        <p className="text-sm text-slate-400 font-medium">Choisissez comment vous souhaitez régler</p>
+                        <h2 className="text-2xl font-black text-[#2D2D5F] tracking-tight">Moyen de paiement</h2>
+                        <p className="text-slate-400 font-medium mt-1">Sélectionnez votre mode de règlement préféré.</p>
                     </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {[
-                        { id: 'cash', label: 'Paiement à la livraison', icon: <FaMoneyBillWave />, desc: 'Payez en espèces lors de la réception' },
-                        { id: 'card', label: 'Carte Bancaire', icon: <FaCreditCard />, desc: 'Paiement sécurisé en ligne' }
-                    ].map((method) => (
-                        <label
-                            key={method.id}
-                            className={`flex items-center p-6 rounded-[1.5rem] border-2 cursor-pointer transition-all hover:shadow-md ${formData.payment_method === method.id
-                                ? 'border-orange-500 bg-orange-50 font-bold'
-                                : 'border-slate-50 bg-slate-50 text-slate-500'
-                                }`}
-                        >
-                            <input
-                                type="radio"
-                                name="payment_method"
-                                value={method.id}
-                                checked={formData.payment_method === method.id}
-                                onChange={handleInputChange}
-                                className="hidden"
-                            />
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl mr-4 ${formData.payment_method === method.id ? 'bg-orange-500 text-white' : 'bg-white text-slate-300 shadow-sm'
-                                }`}>
-                                {method.icon}
-                            </div>
-                            <div className="flex-1">
-                                <div className={`text-lg ${formData.payment_method === method.id ? 'text-slate-900' : 'text-slate-500'}`}>{method.label}</div>
-                                <div className="text-xs font-semibold opacity-60 uppercase tracking-wide mt-0.5">{method.desc}</div>
-                            </div>
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${formData.payment_method === method.id ? 'border-orange-500 bg-orange-500' : 'border-slate-200'
-                                }`}>
-                                {formData.payment_method === method.id && <div className="w-2 h-2 bg-white rounded-full"></div>}
-                            </div>
-                        </label>
-                    ))}
+                        { id: 'cash', label: 'Espèces', icon: <FaMoneyBillWave />, desc: 'Paiement à la livraison', activeColor: 'amber' },
+                        { id: 'card', label: 'Carte Bancaire', icon: <FaCreditCard />, desc: 'Paiement en ligne sécurisé', activeColor: 'indigo' }
+                    ].map((method) => {
+                        const isSelected = formData.payment_method === method.id;
+                        return (
+                            <label
+                                key={method.id}
+                                className={`relative flex flex-col p-8 rounded-[2rem] border-2 cursor-pointer transition-all duration-300 ${isSelected
+                                    ? `border-[#2D2D5F] bg-white shadow-2xl shadow-indigo-900/10`
+                                    : 'border-slate-100 bg-slate-50/30 text-slate-400 hover:border-slate-200 hover:bg-white'
+                                    }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="payment_method"
+                                    value={method.id}
+                                    checked={isSelected}
+                                    onChange={handleInputChange}
+                                    className="hidden"
+                                />
+
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all ${isSelected ? 'bg-[#2D2D5F] text-white shadow-lg' : 'bg-white text-slate-300 shadow-sm'}`}>
+                                        {method.icon}
+                                    </div>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-[#2D2D5F] bg-[#2D2D5F]' : 'border-slate-200'}`}>
+                                        {isSelected && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div className={`text-lg font-black tracking-tight ${isSelected ? 'text-[#2D2D5F]' : 'text-slate-600'}`}>{method.label}</div>
+                                    <div className={`text-xs font-bold mt-1 uppercase tracking-widest ${isSelected ? 'text-indigo-400' : 'text-slate-400'}`}>{method.desc}</div>
+                                </div>
+                            </label>
+                        );
+                    })}
                 </div>
             </div>
         </motion.div>

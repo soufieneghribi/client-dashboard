@@ -138,7 +138,18 @@ const GiftsCatalogue = () => {
     };
 
     const userCagnotte = parseFloat(Userprofile?.cagnotte_balance || 0);
-    const cadeauxFiltres = selectedCategorie === "Tous" ? cadeaux : cadeaux.filter(c => c.categorie === selectedCategorie);
+    // Filter by category and create a new array to avoid mutating state
+    let filteredList = selectedCategorie === "Tous" ? [...cadeaux] : cadeaux.filter(c => c.categorie === selectedCategorie);
+
+    // Sort: Affordable items first
+    const cadeauxFiltres = filteredList.sort((a, b) => {
+        const canAffordA = userCagnotte >= parseFloat(a.prix_cagnotte || 0);
+        const canAffordB = userCagnotte >= parseFloat(b.prix_cagnotte || 0);
+
+        if (canAffordA && !canAffordB) return -1;
+        if (!canAffordA && canAffordB) return 1;
+        return 0;
+    });
     const availableCount = cadeaux.filter(c => c.quantite_disponible > 0 && new Date(c.date_fin_validite) >= new Date()).length;
 
     if (loading || userLoading) {
@@ -217,14 +228,16 @@ const GiftsCatalogue = () => {
                 </div>
             </div>
 
-            <ExchangeConfirmationModal
-                show={showConfirmModal}
-                onClose={closeModal}
-                selectedCadeau={selectedCadeau}
-                userCagnotte={userCagnotte}
-                exchangeLoading={exchangeLoading}
-                echangerCadeau={echangerCadeau}
-            />
+            {showConfirmModal && selectedCadeau && (
+                <ExchangeConfirmationModal
+                    show={showConfirmModal}
+                    onClose={closeModal}
+                    selectedCadeau={selectedCadeau}
+                    userCagnotte={userCagnotte}
+                    exchangeLoading={exchangeLoading}
+                    echangerCadeau={echangerCadeau}
+                />
+            )}
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { API_ENDPOINTS, getAuthHeaders } from "../services/api";
+import apiClient, { API_ENDPOINTS } from "../services/api";
 
 import {
   FaSpinner,
@@ -41,14 +41,8 @@ const GratuiteDetails = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(API_ENDPOINTS.FREE_PRODUCTS.BY_ID(id), {
-        method: "GET",
-        headers: getAuthHeaders(token),
-      });
-
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const result = await response.json();
+      const response = await apiClient.get(API_ENDPOINTS.FREE_PRODUCTS.BY_ID(id));
+      const result = response.data;
 
       if (result.success) {
         const offerData = result.data;
@@ -63,12 +57,10 @@ const GratuiteDetails = () => {
           }
         }
       } else {
-        // 
         navigate("/gratuite");
       }
     } catch (error) {
-
-      // 
+      console.error("Error fetching offer:", error);
       navigate("/gratuite");
     } finally {
       setLoading(false);
@@ -80,22 +72,16 @@ const GratuiteDetails = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(
-        `${API_ENDPOINTS.FREE_PRODUCTS.MY_RESERVATIONS}?per_page=50`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(token),
-        }
-      );
+      const response = await apiClient.get(API_ENDPOINTS.FREE_PRODUCTS.MY_RESERVATIONS, {
+        params: { per_page: 50 },
+      });
+      const result = response.data;
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          setMyReservations(result.data || []);
-        }
+      if (result.success) {
+        setMyReservations(result.data || []);
       }
     } catch (error) {
-
+      console.error("Error fetching my reservations:", error);
     }
   };
 
@@ -175,31 +161,23 @@ const GratuiteDetails = () => {
     if (!offer || !selectedMode) return;
 
     if (selectedMode === "pickup" && !selectedStoreId) {
-      // 
       return;
     }
 
     setReserving(true);
-    const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch(API_ENDPOINTS.FREE_PRODUCTS.RESERVE(id), {
-        method: "POST",
-        headers: getAuthHeaders(token),
-        body: JSON.stringify({
-          mode: selectedMode,
-          store_id: selectedMode === "pickup" ? selectedStoreId : null,
-          quantity: quantity,
-        }),
-      });
+      const payload = {
+        mode: selectedMode,
+        store_id: selectedMode === "pickup" ? selectedStoreId : null,
+        quantity: quantity,
+      };
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const result = await response.json();
+      const response = await apiClient.post(API_ENDPOINTS.FREE_PRODUCTS.RESERVE(id), payload);
+      const result = response.data;
 
       if (result.success) {
         const pickupCode = result.data?.pickup_code;
-
 
         // Navigate to success page
         navigate("/gratuite/success", {
@@ -213,12 +191,9 @@ const GratuiteDetails = () => {
                 : null,
           },
         });
-      } else {
-
       }
     } catch (error) {
-
-      // 
+      console.error("Reservation Error:", error);
     } finally {
       setReserving(false);
     }

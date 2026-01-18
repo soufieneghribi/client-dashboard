@@ -1,7 +1,7 @@
 import React from 'react';
 import Modal from "react-modal";
 import { motion } from "framer-motion";
-import { FaCheckCircle } from "react-icons/fa";
+import { FaCheckCircle, FaShoppingBag, FaArrowRight, FaCreditCard, FaMoneyBillWave } from "react-icons/fa";
 
 const SuccessModal = ({ isOpen, closeModal, formData, totalAmount }) => {
     return (
@@ -10,66 +10,66 @@ const SuccessModal = ({ isOpen, closeModal, formData, totalAmount }) => {
             onRequestClose={closeModal}
             contentLabel="Confirmation de commande"
             className="outline-none"
-            overlayClassName="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+            overlayClassName="fixed inset-0 bg-[#2D2D5F]/60 backdrop-blur-xl z-[100] flex items-center justify-center p-4"
         >
             <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                initial={{ scale: 0.9, opacity: 0, y: 40 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                className="bg-white rounded-[3.5rem] p-10 sm:p-14 w-full max-w-xl text-center shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] relative overflow-hidden border border-slate-100"
+                className="bg-white rounded-[3.5rem] p-8 sm:p-12 w-full max-w-md text-center shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] relative overflow-hidden"
             >
-                {/* Decorative Elements */}
-                <div className="absolute top-0 left-0 w-full h-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"></div>
-                <div className="absolute -top-24 -right-24 w-64 h-64 bg-green-500/5 blur-[80px] rounded-full"></div>
-                <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full"></div>
+                {/* Decorative gradients */}
+                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 via-indigo-500 to-emerald-400"></div>
+                <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-50 blur-[60px] rounded-full opacity-50"></div>
+                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-50 blur-[60px] rounded-full opacity-50"></div>
 
-                <div className="relative mb-10">
-                    <div className="w-24 h-24 bg-green-50 rounded-[2rem] flex items-center justify-center text-green-500 mx-auto shadow-inner border border-green-100/50">
-                        <FaCheckCircle size={48} className="drop-shadow-sm" />
-                    </div>
-                    {/* Pulsing rings around success icon */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-2 border-green-500/10 rounded-full animate-ping pointer-events-none"></div>
+                <div className="relative mb-8">
+                    <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                        className="w-20 h-20 bg-emerald-500 rounded-3xl flex items-center justify-center text-white mx-auto shadow-2xl shadow-emerald-200"
+                    >
+                        <FaCheckCircle size={40} />
+                    </motion.div>
                 </div>
 
-                <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tighter">Merci ! 🥳</h2>
-                <p className="text-slate-500 font-bold mb-10 leading-relaxed text-sm max-w-[280px] mx-auto">
-                    Votre commande a été confirmée. <br />
-                    Elle est en cours de préparation.
+                <h2 className="text-4xl font-black text-[#2D2D5F] mb-3 tracking-tight">Merci ! 🥳</h2>
+                <p className="text-slate-400 font-bold mb-10 leading-relaxed text-sm max-w-[280px] mx-auto">
+                    Votre commande est validée ! Nous préparons vos produits avec soin.
                 </p>
 
-                <div className="bg-slate-50/80 backdrop-blur-sm rounded-[2.5rem] p-8 mb-10 space-y-5 text-left border border-slate-200/50 shadow-sm">
-                    <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Paiement</span>
-                        <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-xl border border-slate-200 shadow-sm">
-                            <span className="text-xs font-black text-slate-900">
-                                {formData.payment_method === "cash" ? "💰 ESPÈCES" : "💳 CARTE BANCAIRE"}
-                            </span>
+                <div className="bg-slate-50/50 rounded-[2.5rem] p-8 mb-10 space-y-5 text-left border border-slate-100/50">
+                    <div className="flex justify-between items-center text-xs">
+                        <span className="font-black uppercase tracking-widest text-slate-400">Paiement</span>
+                        <div className="flex items-center gap-2 font-black text-[#2D2D5F]">
+                            {formData.payment_method === "cash" ? <FaMoneyBillWave className="text-amber-500" /> : <FaCreditCard className="text-indigo-500" />}
+                            <span>{formData.payment_method === "cash" ? "En espèces" : "Par carte"}</span>
                         </div>
                     </div>
 
-                    {formData.cagnotte_deduction > 0 && (
-                        <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cagnotte</span>
-                            <span className="text-sm font-black text-blue-600">-{parseFloat(formData.cagnotte_deduction).toFixed(2)} DT</span>
-                        </div>
-                    )}
+                    <div className="h-px bg-slate-200/30 w-full"></div>
 
-                    <div className="pt-5 border-t border-slate-200/80 flex justify-between items-end">
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total payé</span>
-                            <span className="text-3xl font-black text-slate-900 tracking-tighter">{totalAmount.toFixed(2)} <span className="text-sm font-black text-slate-400 uppercase">DT</span></span>
+                    <div className="flex justify-between items-end">
+                        <div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Total payé</span>
+                            <div className="flex items-baseline gap-1 mt-0.5">
+                                <span className="text-3xl font-black text-[#2D2D5F] tracking-tighter">{totalAmount.toFixed(2)}</span>
+                                <span className="text-xs font-black text-indigo-500">DT</span>
+                            </div>
                         </div>
-                        <div className="px-4 py-2 bg-green-500/10 text-green-600 rounded-2xl text-[10px] font-black uppercase tracking-wider border border-green-500/20">
-                            Validé
+                        <div className="px-4 py-2 bg-emerald-500/10 text-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">
+                            Confirmé
                         </div>
                     </div>
                 </div>
 
                 <button
                     onClick={closeModal}
-                    className="w-full py-5.5 bg-slate-900 hover:bg-[#0f172a] text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] transition-all duration-300 shadow-2xl shadow-slate-900/20 active:scale-[0.98] relative overflow-hidden group"
+                    className="group w-full py-5 bg-[#2D2D5F] hover:bg-[#1a1a3a] text-white rounded-[1.75rem] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-indigo-900/10 flex items-center justify-center gap-3 active:scale-95"
                 >
-                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/[0.05] to-transparent -skew-x-12 -translate-x-full group-hover:animate-shine"></div>
-                    <span className="relative z-10">Voir mes commandes</span>
+                    <FaShoppingBag size={14} />
+                    <span>Mes Commandes</span>
+                    <FaArrowRight className="group-hover:translate-x-1 transition-transform" size={12} />
                 </button>
             </motion.div>
         </Modal>

@@ -15,8 +15,8 @@ const UserMenu = ({ auth, handleLogout }) => {
                         <strong>{auth.user?.nom_et_prenom?.split(' ')[0] || "Utilisateur"}</strong>
                     </Dropdown.Header>
                     <Dropdown.Divider />
-                    <Dropdown.Item as={Link} to="/profile"><i className="fas fa-user me-2"></i> Mon Profil</Dropdown.Item>
-                    <Dropdown.Item as={Link} to="/settings"><i className="fas fa-cog me-2"></i> Paramètres</Dropdown.Item>
+                    <Dropdown.Item as={Link} to="/profile"><i className="fas fa-user me-2"></i> Paramètres</Dropdown.Item>
+
                     <Dropdown.Item as={Link} to="/Mes-Commandes"><i className="fas fa-shopping-bag me-2"></i> Mes Commandes</Dropdown.Item>
                     <Dropdown.Item as={Link} to="/credit"><i className="fas fa-credit-card me-2"></i> Voir mes crédits</Dropdown.Item>
                     <Dropdown.Item as={Link} to="/reclamations"><i className="fas fa-exclamation-circle me-2"></i> Réclamations</Dropdown.Item>

@@ -15,30 +15,32 @@ const DomicileDeliveryForm = ({
     DEFAULT_LOCATION
 }) => {
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between gap-4 py-4 px-6 bg-slate-50 rounded-2xl border border-slate-100">
+        <div className="space-y-8 mt-6">
+            <div className="flex items-center justify-between gap-4 py-5 px-8 bg-slate-50/50 rounded-[2rem] border border-slate-50">
                 <div className="flex items-center gap-3">
-                    <FaMapMarkerAlt className="text-blue-500" />
-                    <span className="font-bold text-slate-700 uppercase tracking-wider text-xs">Vérification de position</span>
+                    <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-indigo-500 shadow-sm">
+                        <FaMapMarkerAlt size={14} />
+                    </div>
+                    <span className="font-extrabold text-[#2D2D5F] uppercase tracking-widest text-[10px]">Vérification de position</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                     {geolocationStatus === 'loading' && (
-                        <div className="flex items-center gap-3 text-blue-600 text-sm font-bold">
-                            <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                        <div className="flex items-center gap-3 text-indigo-500 text-[10px] font-black uppercase tracking-widest">
+                            <div className="animate-spin h-3 w-3 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
                             <span>Détection...</span>
                         </div>
                     )}
                     {geolocationStatus === 'success' && (
-                        <span className="text-green-600 text-sm font-bold flex items-center gap-1 bg-green-50 px-3 py-1 rounded-full">
-                            <FaCheckCircle /> Position OK
+                        <span className="text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100">
+                            <FaCheckCircle /> Position Validée
                         </span>
                     )}
                     {(geolocationStatus === 'error' || geolocationStatus === 'denied') && (
                         <button
                             type="button"
                             onClick={handleRetryGeolocation}
-                            className="text-orange-600 text-sm font-black flex items-center gap-1 hover:bg-orange-50 px-3 py-1 rounded-full transition-all"
+                            className="text-amber-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-amber-50 px-4 py-2 rounded-full transition-all border border-amber-100"
                         >
                             <FaSyncAlt /> RÉESSAYER
                         </button>
@@ -46,9 +48,8 @@ const DomicileDeliveryForm = ({
                 </div>
             </div>
 
-
             {/* Address Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[
                     { name: 'rue', label: 'Rue & Numéro *', placeholder: 'Ex: 12 Rue des Oliviers' },
                     { name: 'ville', label: 'Ville *', placeholder: 'Ex: Tunis' },
@@ -56,14 +57,14 @@ const DomicileDeliveryForm = ({
                     { name: 'code_postal', label: 'Code Postal', placeholder: '1000' }
                 ].map((field) => (
                     <div key={field.name} className="space-y-2">
-                        <label className="text-sm font-bold text-slate-700 ml-1">{field.label}</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">{field.label}</label>
                         <input
                             type="text"
                             name={field.name}
                             value={formData[field.name]}
                             onChange={handleInputChange}
                             placeholder={field.placeholder}
-                            className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-100 transition-all font-medium placeholder:text-slate-300"
+                            className="w-full px-6 py-5 bg-slate-50/50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-indigo-100 transition-all font-bold text-slate-700 placeholder:text-slate-300 placeholder:font-medium"
                             required={field.name !== 'code_postal'}
                         />
                     </div>
@@ -72,18 +73,18 @@ const DomicileDeliveryForm = ({
 
             {/* Additional info */}
             <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">Détails d'accès (Optionnel)</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Détails d'accès (Optionnel)</label>
                 <textarea
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
                     placeholder="Étage, code porte, sonnerie, point de repère..."
-                    className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-100 transition-all font-medium min-h-[100px] placeholder:text-slate-300"
+                    className="w-full px-6 py-5 bg-slate-50/50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-indigo-100 transition-all font-bold text-slate-700 min-h-[120px] placeholder:text-slate-300 placeholder:font-medium"
                 />
             </div>
 
             {/* Google Map */}
-            <div className="mt-8 rounded-[2rem] overflow-hidden border-4 border-slate-100 shadow-inner relative" style={{ height: '450px' }}>
+            <div className="mt-8 rounded-[3rem] overflow-hidden border-8 border-slate-50 shadow-2xl relative group" style={{ height: '450px' }}>
                 <GoogleMapReact
                     bootstrapURLKeys={{ key: GOOGLE_MAPS_API_KEY, libraries: ['places'] }}
                     center={{
@@ -101,24 +102,22 @@ const DomicileDeliveryForm = ({
                             className="relative flex flex-col items-center"
                             style={{ transform: 'translate(-50%, -100%)' }}
                         >
-                            <div className="absolute -top-16 bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-xl whitespace-nowrap mb-2 flex items-center gap-2 border-2 border-white">
-                                <span>📦 LIVRAISON ICI</span>
-                                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-blue-600 absolute -bottom-2 left-1/2 -ml-2"></div>
+                            <div className="absolute -top-16 bg-[#2D2D5F] text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl whitespace-nowrap mb-2 flex items-center gap-2 border-2 border-white/20 backdrop-blur-sm">
+                                <FaMapMarkerAlt className="text-amber-400" />
+                                <span>LIVRAISON ICI</span>
+                                <div className="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-[#2D2D5F] absolute -bottom-2 left-1/2 -ml-2"></div>
                             </div>
-                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg border-4 border-blue-600">
-                                <FaMapMarkerAlt className="text-blue-600 text-xl" />
+                            <div className="w-12 h-12 bg-white rounded-3xl flex items-center justify-center shadow-2xl border-[6px] border-[#2D2D5F] group-hover:scale-110 transition-transform duration-500">
+                                <div className="w-2 h-2 bg-[#2D2D5F] rounded-full"></div>
                             </div>
-                            <div className="w-2 h-2 bg-blue-600 rounded-full blur-[2px] mt-2 animate-ping"></div>
                         </div>
                     )}
                 </GoogleMapReact>
 
-                <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-2">
-                    <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-xl flex items-center justify-between border border-blue-50/50">
-                        <div className="flex items-center gap-3">
-                            <FaInfoCircle className="text-blue-500" />
-                            <span className="text-xs font-bold text-slate-700">Cliquez sur la carte pour ajuster votre position</span>
-                        </div>
+                <div className="absolute top-6 left-6">
+                    <div className="bg-[#2D2D5F]/90 backdrop-blur-xl px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10">
+                        <FaInfoCircle className="text-amber-400" size={14} />
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest">Précision requise pour la livraison</span>
                     </div>
                 </div>
             </div>

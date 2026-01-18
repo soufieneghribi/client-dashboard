@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 
 import { useSelector, useDispatch } from "react-redux";
 import axios from 'axios';
-import { fetchUserProfile } from "../../store/slices/user";
+import { fetchUserProfile, updateUserLocal } from "../../store/slices/user";
 import { logout, refreshAuth } from "../../store/slices/authSlice";
 import {
     fetchAvailableModes,
@@ -17,7 +17,7 @@ import {
     selectDeliveryCalculating,
 } from "../../store/slices/delivery";
 import store from "../../store";
-import apiConfig from "../../services/api";
+import { API_BASE_URL } from "../../services/api";
 import { motion } from "framer-motion";
 import { FaBoxOpen } from "react-icons/fa";
 
@@ -33,7 +33,6 @@ import './OrderConfirmation.css';
 
 // Constants
 const GOOGLE_MAPS_API_KEY = "AIzaSyAFwGAsC3VUZYdxkEwB43DEf5tpSx4hAZg";
-const API_BASE_URL = apiConfig.API_BASE_URL;
 const DEFAULT_LOCATION = { lat: 36.8065, lng: 10.1815 };
 const PICKUP_DELIVERY_FEE = 0;
 
@@ -365,22 +364,18 @@ const OrderConfirmation = () => {
     const calculateOrderAmount = () => {
         const sub = orderDetails.reduce((t, i) => t + (parseFloat(i.price) * parseInt(i.quantity)), 0);
         const fee = parseFloat(formData.delivery_fee) || 0;
-        const ded = parseFloat(formData.cagnotte_deduction) || 0;
-        const total = Math.max(0, parseFloat((sub + fee - ded).toFixed(2)));
 
-        console.log("💰 Order Amount Calculation:");
-        console.log("   Subtotal (calculated from orderDetails):", sub);
-        console.log("   Subtotal (from location.state):", subtotal);
-        console.log("   Delivery Fee (formData):", fee);
-        console.log("   Cagnotte Deduction:", ded);
-        console.log("   Final Total:", total);
+        // Sécurité Web: La déduction ne peut pas dépasser le solde réel actuel du profil
+        const currentBalance = parseFloat(Userprofile?.cagnotte_balance) || 0;
+        const ded = Math.min(parseFloat(formData.cagnotte_deduction) || 0, currentBalance);
+
+        const total = Math.max(0, parseFloat((sub + fee - ded).toFixed(2)));
 
         return total;
     };
 
     const prepareOrder = async (orderData) => {
         try {
-            console.log("📋 Preparing order with backend...");
             const response = await axios.post(
                 `${API_BASE_URL}/customer/order/prepare`,
                 orderData,
@@ -393,14 +388,8 @@ const OrderConfirmation = () => {
                 }
             );
 
-            console.log("✅ Prepare Response:", response.data);
-
             if (response.status === 200 && response.data.success) {
                 const data = response.data.data;
-                console.log("=== SERVER OFFICIAL VALUES ===");
-                console.log("   Server Total:", data.total_amount);
-                console.log("   Server Delivery:", data.delivery_fee);
-                console.log("   Server Cagnotte:", data.cagnotte_deduction);
                 return data;
             }
 
@@ -434,6 +423,18 @@ const OrderConfirmation = () => {
                 setIsSubmitting(false);
                 return;
             }
+        } else if (formData.order_type === 'relay_point') {
+            if (!selectedRelayPoint) {
+                toast.error("Veuillez sélectionner un point relais");
+                setIsSubmitting(false);
+                return;
+            }
+        } else if (formData.order_type === 'pickup' || formData.order_type === 'store_pickup') {
+            if (!selectedPickupStore) {
+                toast.error("Veuillez sélectionner un magasin pour le retrait");
+                setIsSubmitting(false);
+                return;
+            }
         }
 
         const auth_token = getAuthToken();
@@ -447,7 +448,7 @@ const OrderConfirmation = () => {
         const amount = calculateOrderAmount();
         const orderData = {
             order_amount: amount,
-            cagnotte_deduction: parseFloat(formData.cagnotte_deduction) || 0,
+            cagnotte_deduction: Math.min(parseFloat(formData.cagnotte_deduction) || 0, parseFloat(Userprofile?.cagnotte_balance) || 0),
             delivery_fee: parseFloat(formData.delivery_fee) || 0,
             contact_person_name: contact_person_name.trim(),
             contact_person_number: contact_person_number.trim(),
@@ -506,8 +507,6 @@ const OrderConfirmation = () => {
                 cagnotte_deduction: preparedData.cagnotte_deduction || 0
             };
 
-            console.log("🚀 Submitting Order (With Verified Values):", finalOrderData);
-
             // -----------------------------------------------------------------------
             // STEP 3: PLACE ORDER (With Verified Values)
             // -----------------------------------------------------------------------
@@ -517,8 +516,13 @@ const OrderConfirmation = () => {
             });
 
             if (response.status === 200 || response.status === 201) {
-                console.log("✅ Order Submission Success");
                 toast.success("Commande passée avec succès !");
+
+                // Mettre à jour le solde dans l'interface immédiatement (Web-only fix)
+                const currentBalance = parseFloat(Userprofile?.cagnotte_balance) || 0;
+                const deduction = parseFloat(formData.cagnotte_deduction) || 0;
+                dispatch(updateUserLocal({ cagnotte_balance: Math.max(0, currentBalance - deduction) }));
+
                 setModalIsOpen(true);
                 // Clear cart from both localStorage and cookies after successful order
                 localStorage.removeItem("cart");
@@ -546,16 +550,21 @@ const OrderConfirmation = () => {
     if (!authChecked) return <div className="min-h-screen flex items-center justify-center">Chargement...</div>;
 
     return (
-        <div className="min-h-screen bg-slate-50 py-12">
-            <div className="max-w-7xl mx-auto px-4">
-                <div className="mb-8 flex items-center justify-between">
+        <div className="min-h-screen bg-[#F8FAFC] pt-12 pb-24">
+            <div className="max-w-6xl mx-auto px-6">
+                <div className="mb-12 flex items-end justify-between">
                     <div>
-                        <h1 className="text-4xl font-black text-slate-900">Finaliser votre commande</h1>
-                        <p className="mt-2 text-slate-500 font-medium">Vérifiez vos informations</p>
+                        <h1 className="text-4xl font-black text-[#2D2D5F] tracking-tight">Finaliser la commande</h1>
+                        <p className="mt-2 text-slate-400 font-bold uppercase text-[10px] tracking-widest pl-1">Vérifiez vos informations avant de confirmer</p>
                     </div>
-                    <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white rounded-2xl shadow-sm font-bold">
-                        <FaBoxOpen className="text-blue-500" />
-                        <span>{orderDetails.length} articles</span>
+                    <div className="hidden md:flex items-center gap-3 px-6 py-3 bg-white rounded-[1.5rem] shadow-sm border border-slate-100/50">
+                        <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500">
+                            <FaBoxOpen size={18} />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Panier</span>
+                            <span className="text-sm font-black text-[#2D2D5F]">{orderDetails.length} articles</span>
+                        </div>
                     </div>
                 </div>
 
@@ -605,11 +614,11 @@ const OrderConfirmation = () => {
 
             <SuccessModal
                 isOpen={modalIsOpen}
-                closeModal={() => { setModalIsOpen(false); navigate("/Mes-Commandes"); }}
+                closeModal={() => { setModalIsOpen(false); navigate("/Mes-Commandes", { replace: true }); }}
                 formData={formData}
                 totalAmount={calculateOrderAmount()}
             />
-        </div>
+        </div >
     );
 };
 

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
-import { API_ENDPOINTS } from '../services/api';
+
+import { authService } from '../services/api';
 
 const EmailVerification = () => {
   const navigate = useNavigate();
@@ -86,10 +86,10 @@ const EmailVerification = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(
-        API_ENDPOINTS.AUTH.VERIFY_EMAIL,
-        { email: String(email).trim(), otp: String(verificationCode).trim() }
-      );
+      const response = await authService.verifyEmail({
+        email: String(email).trim(),
+        otp: String(verificationCode).trim()
+      });
 
       if (response.data.message || response.data.is_email_verified) {
         // 
@@ -132,16 +132,7 @@ const EmailVerification = () => {
     setIsResending(true);
 
     try {
-      const response = await axios.post(
-        API_ENDPOINTS.AUTH.RESEND_OTP,
-        { email: email },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        }
-      );
+      const response = await authService.resendOtp({ email: email });
 
       if (response.data.success || response.data.message) {
         // 

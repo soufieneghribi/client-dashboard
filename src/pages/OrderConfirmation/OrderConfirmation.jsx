@@ -18,7 +18,7 @@ import {
 } from "../../store/slices/delivery";
 import store from "../../store";
 import { API_BASE_URL } from "../../services/api";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { FaBoxOpen } from "react-icons/fa";
 
 // Sub-components
@@ -27,6 +27,8 @@ import DeliveryModeSection from './components/DeliveryModeSection';
 import PaymentMethodSection from './components/PaymentMethodSection';
 import OrderSummarySection from './components/OrderSummarySection';
 import SuccessModal from './components/SuccessModal';
+import StepProgress from './components/StepProgress';
+import StepNavigation from './components/StepNavigation';
 
 // Styles
 import './OrderConfirmation.css';
@@ -166,6 +168,43 @@ const OrderConfirmation = () => {
     const [selectedRelayPoint, setSelectedRelayPoint] = useState(null);
     const [pickupStoreFee, setPickupStoreFee] = useState(0);
     const [relayPointFee, setRelayPointFee] = useState(0);
+    const [placedOrderAmount, setPlacedOrderAmount] = useState(0);
+    const [lastOrderId, setLastOrderId] = useState(null);
+
+    // NEW: Step Management
+    const [currentStep, setCurrentStep] = useState(1);
+    const [completedSteps, setCompletedSteps] = useState([]);
+
+    // Validation for steps
+    const isStep1Valid = formData.contact_person_name?.length >= 3 && formData.contact_person_number?.length >= 8;
+    const isStep2Valid = !!formData.order_type;
+    const isStep3Valid = formData.order_type === 'delivery'
+        ? !!formData.address
+        : formData.order_type === 'pickup'
+            ? !!selectedPickupStore
+            : !!selectedRelayPoint;
+    const isStep4Valid = !!formData.payment_method;
+
+    const canContinue = () => {
+        if (currentStep === 1) return isStep1Valid;
+        if (currentStep === 2) return isStep2Valid;
+        if (currentStep === 3) return isStep3Valid;
+        if (currentStep === 4) return isStep4Valid;
+        return false;
+    };
+
+    const nextStep = () => {
+        if (canContinue()) {
+            setCompletedSteps(prev => [...new Set([...prev, currentStep])]);
+            setCurrentStep(prev => prev + 1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    const prevStep = () => {
+        setCurrentStep(prev => Math.max(1, prev - 1));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     useEffect(() => {
         if (authChecked && tokenValid) return;
@@ -257,14 +296,16 @@ const OrderConfirmation = () => {
     }, [formData, selectedMode, orderDetails, dispatch, deliveryModes]);
 
     useEffect(() => {
-        if (calculatedFee !== null && formData.order_type === 'delivery') {
-            setFormData(prev => ({ ...prev, delivery_fee: calculatedFee }));
+        if (formData.order_type === 'delivery') {
+            if (calculatedFee !== null) {
+                setFormData(prev => ({ ...prev, delivery_fee: calculatedFee }));
+            }
+        } else if (formData.order_type === 'relay_point') {
+            setFormData(prev => ({ ...prev, delivery_fee: relayPointFee || 0 }));
         } else if (formData.order_type === 'pickup' || formData.order_type === 'store_pickup') {
-            setFormData(prev => ({ ...prev, delivery_fee: PICKUP_DELIVERY_FEE }));
+            setFormData(prev => ({ ...prev, delivery_fee: pickupStoreFee || 0 }));
         }
-        // For relay_point, delivery_fee is set manually when a relay point is selected
-        // in DeliveryModeSection, so we don't override it here
-    }, [calculatedFee, formData.order_type]);
+    }, [calculatedFee, formData.order_type, relayPointFee, pickupStoreFee]);
 
     useEffect(() => {
         if (!authChecked || formData.order_type !== 'delivery') {
@@ -362,7 +403,11 @@ const OrderConfirmation = () => {
     };
 
     const calculateOrderAmount = () => {
-        const sub = orderDetails.reduce((t, i) => t + (parseFloat(i.price) * parseInt(i.quantity)), 0);
+        // Use the subtotal from state if available, as it's the source of truth for promos
+        const sub = (subtotal !== undefined && subtotal > 0)
+            ? parseFloat(subtotal)
+            : orderDetails.reduce((t, i) => t + (parseFloat(i.price) * parseInt(i.quantity)), 0);
+
         const fee = parseFloat(formData.delivery_fee) || 0;
 
         // Sécurité Web: La déduction ne peut pas dépasser le solde réel actuel du profil
@@ -462,20 +507,36 @@ const OrderConfirmation = () => {
                 id: parseInt(item.id),
                 quantity: parseInt(item.quantity),
                 price: parseFloat(item.price || 0),
+                initial_price: parseFloat(item.Initialprice || item.price || 0),
+                promo_price: item.isPromotion ? parseFloat(item.price || 0) : null,
                 ...(item.isPromotion && item.promo_id && { promo_id: parseInt(item.promo_id) })
             }))
         };
 
         if (formData.order_type === 'delivery') {
             orderData.address = [formData.rue, formData.ville, formData.gouvernorat, formData.code_postal, formData.address].filter(Boolean).join(', ');
-            if (latitude && longitude && validateCoordinates(latitude, longitude)) {
-                orderData.latitude = parseFloat(latitude);
-                orderData.longitude = parseFloat(longitude);
+            orderData.delivery_address = {
+                rue: formData.rue || "",
+                ville: formData.ville || "",
+                gouvernorat: formData.gouvernorat || "",
+                code_postal: formData.code_postal || "",
+                latitude: !isNaN(parseFloat(formData.latitude)) ? parseFloat(formData.latitude) : null,
+                longitude: !isNaN(parseFloat(formData.longitude)) ? parseFloat(formData.longitude) : null,
+            };
+            if (formData.latitude && formData.longitude && validateCoordinates(formData.latitude, formData.longitude)) {
+                orderData.latitude = parseFloat(formData.latitude);
+                orderData.longitude = parseFloat(formData.longitude);
             }
         } else if (formData.order_type === 'relay_point') {
             if (selectedRelayPoint) {
                 orderData.address = `Point Relais: ${selectedRelayPoint.name}, ${selectedRelayPoint.address || ''}, ${selectedRelayPoint.city || ''}`;
                 orderData.store_id = selectedRelayPoint.id;
+                orderData.delivery_address = {
+                    ville: selectedRelayPoint.city || "",
+                    gouvernorat: selectedRelayPoint.gouvernorat || "",
+                    latitude: !isNaN(parseFloat(selectedRelayPoint.latitude)) ? parseFloat(selectedRelayPoint.latitude) : null,
+                    longitude: !isNaN(parseFloat(selectedRelayPoint.longitude)) ? parseFloat(selectedRelayPoint.longitude) : null,
+                };
                 // Ensure the correct mode ID is sent if available
                 if (selectedMode) orderData.mode_livraison_id = selectedMode;
             } else {
@@ -486,6 +547,12 @@ const OrderConfirmation = () => {
             if (selectedPickupStore) {
                 orderData.address = `Retrait Magasin: ${selectedPickupStore.name}`;
                 orderData.store_id = selectedPickupStore.id;
+                orderData.delivery_address = {
+                    ville: selectedPickupStore.city || "",
+                    gouvernorat: selectedPickupStore.gouvernorat || "",
+                    latitude: !isNaN(parseFloat(selectedPickupStore.latitude)) ? parseFloat(selectedPickupStore.latitude) : null,
+                    longitude: !isNaN(parseFloat(selectedPickupStore.longitude)) ? parseFloat(selectedPickupStore.longitude) : null,
+                };
             } else {
                 orderData.address = 'Emporté en magasin';
             }
@@ -523,6 +590,11 @@ const OrderConfirmation = () => {
                 const deduction = parseFloat(formData.cagnotte_deduction) || 0;
                 dispatch(updateUserLocal({ cagnotte_balance: Math.max(0, currentBalance - deduction) }));
 
+                // Utiliser le montant exact que l'utilisateur a vu et validé (amount)
+                // au lieu du montant potentiellement recalculé par le serveur
+                // pour garantir une cohérence visuelle immédiate.
+                setPlacedOrderAmount(amount);
+                setLastOrderId(response.data?.id || response.data?.order_id || null);
                 setModalIsOpen(true);
                 // Clear cart from both localStorage and cookies after successful order
                 localStorage.removeItem("cart");
@@ -547,79 +619,184 @@ const OrderConfirmation = () => {
         }
     };
 
-    if (!authChecked) return <div className="min-h-screen flex items-center justify-center">Chargement...</div>;
+    if (!authChecked) return <div className="min-h-screen flex items-center justify-center bg-gray-50">Chargement...</div>;
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] pt-12 pb-24">
-            <div className="max-w-6xl mx-auto px-6">
-                <div className="mb-12 flex items-end justify-between">
-                    <div>
-                        <h1 className="text-4xl font-black text-[#2D2D5F] tracking-tight">Finaliser la commande</h1>
-                        <p className="mt-2 text-slate-400 font-bold uppercase text-[10px] tracking-widest pl-1">Vérifiez vos informations avant de confirmer</p>
-                    </div>
-                    <div className="hidden md:flex items-center gap-3 px-6 py-3 bg-white rounded-[1.5rem] shadow-sm border border-slate-100/50">
-                        <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500">
-                            <FaBoxOpen size={18} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Panier</span>
-                            <span className="text-sm font-black text-[#2D2D5F]">{orderDetails.length} articles</span>
-                        </div>
-                    </div>
+        <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Header Section */}
+                <div className="mb-6 sm:mb-10">
+                    <motion.h1
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="text-2xl sm:text-4xl font-black text-[#2D2D5F] tracking-tight"
+                    >
+                        Finaliser ma commande
+                    </motion.h1>
+                    <motion.p
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="text-xs sm:text-sm text-slate-400 font-bold uppercase tracking-widest mt-2"
+                    >
+                        {currentStep === 1 && "Étape 1 : Vos coordonnées personnelles"}
+                        {currentStep === 2 && "Étape 2 : Mode de réception de votre colis"}
+                        {currentStep === 3 && "Étape 3 : Précisions sur la livraison"}
+                        {currentStep === 4 && "Étape 4 : Paiement et récapitulatif"}
+                    </motion.p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    <div className="lg:col-span-8 space-y-6">
-                        <PersonalInfoSection formData={formData} handleInputChange={handleInputChange} />
+                {/* Progress Tracker */}
+                <StepProgress currentStep={currentStep} completedSteps={completedSteps} />
 
-                        <DeliveryModeSection
-                            formData={formData}
-                            handleInputChange={handleInputChange}
-                            deliveryModes={deliveryModes}
-                            selectedMode={selectedMode}
-                            setSelectedMode={(id) => dispatch(setSelectedMode(id))}
-                            subtotal={subtotal}
-                            orderDetails={orderDetails}
-                            setFormData={setFormData}
-                            geolocationStatus={geolocationStatus}
-                            handleRetryGeolocation={() => setRetryCount(prev => prev + 1)}
-                            handleMapClick={handleMapClick}
-                            GOOGLE_MAPS_API_KEY={GOOGLE_MAPS_API_KEY}
-                            DEFAULT_LOCATION={DEFAULT_LOCATION}
-                            selectedRelayPoint={selectedRelayPoint}
-                            setSelectedRelayPoint={setSelectedRelayPoint}
-                            relayPointFee={relayPointFee}
-                            setRelayPointFee={setRelayPointFee}
-                            selectedPickupStore={selectedPickupStore}
-                            setSelectedPickupStore={setSelectedPickupStore}
-                            setPickupStoreFee={setPickupStoreFee}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Main Content - Left Side */}
+                    <div className="lg:col-span-2">
+                        <AnimatePresence mode="wait">
+                            {currentStep === 1 && (
+                                <motion.div
+                                    key="step1"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                >
+                                    <PersonalInfoSection formData={formData} handleInputChange={handleInputChange} />
+                                </motion.div>
+                            )}
+
+                            {currentStep === 2 && (
+                                <motion.div
+                                    key="step2"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                >
+                                    <DeliveryModeSection
+                                        formData={formData}
+                                        handleInputChange={handleInputChange}
+                                        deliveryModes={deliveryModes}
+                                        selectedMode={selectedMode}
+                                        setSelectedMode={(id) => dispatch(setSelectedMode(id))}
+                                        subtotal={subtotal}
+                                        orderDetails={orderDetails}
+                                        setFormData={setFormData}
+                                        onlyCards={true}
+                                    />
+                                </motion.div>
+                            )}
+
+                            {currentStep === 3 && (
+                                <motion.div
+                                    key="step3"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                >
+                                    <DeliveryModeSection
+                                        formData={formData}
+                                        handleInputChange={handleInputChange}
+                                        deliveryModes={deliveryModes}
+                                        selectedMode={selectedMode}
+                                        setSelectedMode={(id) => dispatch(setSelectedMode(id))}
+                                        subtotal={subtotal}
+                                        orderDetails={orderDetails}
+                                        setFormData={setFormData}
+                                        geolocationStatus={geolocationStatus}
+                                        handleRetryGeolocation={() => setRetryCount(prev => prev + 1)}
+                                        handleMapClick={handleMapClick}
+                                        GOOGLE_MAPS_API_KEY={GOOGLE_MAPS_API_KEY}
+                                        DEFAULT_LOCATION={DEFAULT_LOCATION}
+                                        selectedRelayPoint={selectedRelayPoint}
+                                        setSelectedRelayPoint={setSelectedRelayPoint}
+                                        relayPointFee={relayPointFee}
+                                        setRelayPointFee={setRelayPointFee}
+                                        selectedPickupStore={selectedPickupStore}
+                                        setSelectedPickupStore={setSelectedPickupStore}
+                                        setPickupStoreFee={setPickupStoreFee}
+                                        onlyDetails={true}
+                                    />
+                                </motion.div>
+                            )}
+
+                            {currentStep === 4 && (
+                                <motion.div
+                                    key="step4"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    className="space-y-6"
+                                >
+                                    <PaymentMethodSection formData={formData} handleInputChange={handleInputChange} />
+
+                                    {/* Mobile Summary Visibility (shown on final step) */}
+                                    <div className="lg:hidden">
+                                        <OrderSummarySection
+                                            orderDetails={orderDetails}
+                                            subtotal={subtotal}
+                                            deliveryFee={formData.delivery_fee}
+                                            cagnotteDeduction={formData.cagnotte_deduction}
+                                            totalAmount={calculateOrderAmount()}
+                                            isCalculatingFee={isCalculatingFee}
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <StepNavigation
+                            currentStep={currentStep}
+                            totalSteps={4}
+                            onPrevious={prevStep}
+                            onNext={nextStep}
+                            onSubmit={handleSubmit}
+                            isSubmitting={isSubmitting}
+                            canProceed={canContinue()}
+                            isLastStep={currentStep === 4}
                         />
-
-                        <PaymentMethodSection formData={formData} handleInputChange={handleInputChange} />
                     </div>
 
-                    <OrderSummarySection
-                        orderDetails={orderDetails}
-                        subtotal={subtotal}
-                        formData={formData}
-                        isCalculatingFee={isCalculatingFee}
-                        totalAmount={calculateOrderAmount()}
-                        handleSubmit={handleSubmit}
-                        isSubmitting={isSubmitting}
-                        tokenValid={tokenValid}
-                        geolocationStatus={geolocationStatus}
-                    />
+                    {/* Desktop Side Summary (Visible on all steps, or hidden on mobile steps < 4) */}
+                    <div className={`lg:col-span-1 ${currentStep < 4 ? 'hidden lg:block' : ''}`}>
+                        <div className="sticky top-8">
+                            <OrderSummarySection
+                                orderDetails={orderDetails}
+                                subtotal={subtotal}
+                                deliveryFee={formData.delivery_fee}
+                                cagnotteDeduction={formData.cagnotte_deduction}
+                                totalAmount={calculateOrderAmount()}
+                                isCalculatingFee={isCalculatingFee}
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <SuccessModal
                 isOpen={modalIsOpen}
-                closeModal={() => { setModalIsOpen(false); navigate("/Mes-Commandes", { replace: true }); }}
+                closeModal={() => {
+                    setModalIsOpen(false);
+                    if (lastOrderId) {
+                        const finalAmount = placedOrderAmount !== undefined ? placedOrderAmount : calculateOrderAmount();
+                        navigate(`/order/${lastOrderId}`, {
+                            state: {
+                                confirmedTotal: finalAmount,
+                                confirmedDeliveryFee: parseFloat(formData.delivery_fee) || 0,
+                                confirmedCagnotte: parseFloat(formData.cagnotte_deduction) || 0,
+                                confirmedItemsTotal: subtotal,
+                                fromCheckout: true
+                            },
+                            replace: true
+                        });
+                    } else {
+                        navigate("/Mes-Commandes", { replace: true });
+                    }
+                }}
                 formData={formData}
-                totalAmount={calculateOrderAmount()}
+                totalAmount={placedOrderAmount !== undefined ? placedOrderAmount : calculateOrderAmount()}
             />
-        </div >
+        </div>
     );
 };
 
 export default OrderConfirmation;
+

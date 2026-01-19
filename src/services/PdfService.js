@@ -53,10 +53,16 @@ class PdfService {
 
             // --- SECTION INFOS ---
             const client = orderData.client || {};
-            const clientName = client.nom_et_prenom || client.name || 'N/A';
-            const clientPhone = client.tel || client.phone || 'N/A';
+            const clientName = orderData.contact_person_name && orderData.contact_person_name !== "N/A"
+                ? orderData.contact_person_name
+                : (client.nom_et_prenom && client.nom_et_prenom !== "N/A" ? client.nom_et_prenom : 'Client de la commande');
+
+            const clientPhone = orderData.contact_person_number && orderData.contact_person_number !== "N/A"
+                ? orderData.contact_person_number
+                : (client.tel && client.tel !== "N/A" ? client.tel : 'N/A');
+
             const clientEmail = client.email || '';
-            const clientAddress = client.address || '';
+            const clientAddress = orderData.address || client.address || '';
 
             // Boîte Client
             doc.setDrawColor(200, 200, 200);
@@ -91,9 +97,30 @@ class PdfService {
                 const article = item.article || {};
                 const name = article.name || item.article_name || 'Article Inconnu';
                 const qty = item.quantity || 0;
-                const price = parseFloat(item.price || item.unit_price || 0);
-                const total = price * qty;
-                return [name, qty.toString(), `${price.toFixed(2)} DT`, `${total.toFixed(2)} DT`];
+
+                // Déterminer les prix (promo vs normal) avec une priorité au prix promo
+                let actualPrice = parseFloat(item.promo_price || item.price || item.unit_price || 0);
+
+                // Ajustement de cohérence : si on a un seul article et que le sous-total global (order_amount) diffère,
+                // c'est que le prix unitaire doit être ajusté (cas des promos non renvoyées par le serveur dans les détails)
+                if (items.length === 1 && orderData.order_amount !== undefined) {
+                    const forcedSubtotal = parseFloat(orderData.order_amount) || 0;
+                    if (forcedSubtotal > 0 && Math.abs(forcedSubtotal - (actualPrice * qty)) > 0.01) {
+                        actualPrice = forcedSubtotal / qty;
+                    }
+                }
+
+                const originalPrice = parseFloat(item.initial_price || item.Initialprice || (parseFloat(item.promo_price) && parseFloat(item.price) > parseFloat(item.promo_price) ? item.price : null) || actualPrice);
+                const isPromo = item.promo_id || item.is_promotion || item.isPromotion || item.has_promotion || (originalPrice > actualPrice);
+
+                const total = actualPrice * qty;
+
+                const nameWithPromo = isPromo ? `${name} (PROMO)` : name;
+                const priceDisplay = isPromo && originalPrice > actualPrice
+                    ? `${actualPrice.toFixed(2)} DT (au lieu de ${originalPrice.toFixed(2)} DT)`
+                    : `${actualPrice.toFixed(2)} DT`;
+
+                return [nameWithPromo, qty.toString(), priceDisplay, `${total.toFixed(2)} DT`];
             });
 
             autoTable(doc, {
@@ -113,10 +140,34 @@ class PdfService {
 
             // --- TOTAUX ---
             const finalY = (doc).lastAutoTable.finalY + 10;
-            const orderAmount = parseFloat(orderData.order_amount || orderData.total_amount || 0);
+            const subtotalSumOfItems = items.reduce((sum, item) => {
+                const actualPrice = parseFloat(item.promo_price || item.price || item.unit_price || 0);
+                const qty = item.quantity || 0;
+                return sum + (actualPrice * qty);
+            }, 0);
+
+            // On fait confiance à order_amount s'il est fourni (sous-total promo forcé par OrderDetails)
+            const subtotalFromItems = (orderData.order_amount !== undefined && Math.abs(parseFloat(orderData.order_amount) - subtotalSumOfItems) > 0.01)
+                ? parseFloat(orderData.order_amount)
+                : subtotalSumOfItems;
+
             const deliveryFee = parseFloat(orderData.delivery_fee || orderData.delivery_charge || 0);
             const cagnotteDeduction = parseFloat(orderData.cagnotte_deduction || 0);
-            const totalAmount = orderAmount + deliveryFee - cagnotteDeduction;
+            const serverTotal = parseFloat(orderData.order_amount || orderData.total_amount || 0);
+
+            // Robust calculation: Subtotal + Delivery - Cagnotte
+            const calculatedTotal = Math.max(0, subtotalFromItems + deliveryFee - cagnotteDeduction);
+
+            // usually if serverTotal matches subtotal but there ARE deductions, the server total is wrong.
+            // also if serverTotal and calculatedTotal differ significantly and we have deductions, trust calculated total.
+            const isServerTotalIncorrect = (Math.abs(serverTotal - subtotalFromItems) < 0.1 || Math.abs(serverTotal - calculatedTotal) > 0.1) && (deliveryFee > 0 || cagnotteDeduction > 0);
+
+            const totalAmount = orderData.total_amount !== undefined && !isServerTotalIncorrect
+                ? parseFloat(orderData.total_amount)
+                : calculatedTotal;
+
+            // Le sous-total affiché doit être la somme des articles
+            const orderAmount = subtotalFromItems;
 
             const totalX = pageWidth - margin - 60;
             doc.setFontSize(10);

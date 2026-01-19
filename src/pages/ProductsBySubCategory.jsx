@@ -35,7 +35,10 @@ const ProductsBySubCategory = () => {
   const itemsPerPage = 12;
 
   // New states for server-side filters
+  const [tempPriceRange, setTempPriceRange] = useState([0, 5000]);
   const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [showAllAttributes, setShowAllAttributes] = useState(false);
+  const [expandedValues, setExpandedValues] = useState({}); // { attrId: boolean }
   const [selectedAttributes, setSelectedAttributes] = useState({}); // { attrId: [val1, val2] }
   const [isAvailable, setIsAvailable] = useState(true);
   const [sortBy, setSortBy] = useState('relevance');
@@ -74,6 +77,14 @@ const ProductsBySubCategory = () => {
     }
   }, [dispatch, subId, categories, location.state]);
 
+  // Debounce price filter
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setPriceRange(tempPriceRange);
+    }, 800);
+    return () => clearTimeout(handler);
+  }, [tempPriceRange]);
+
   // Handle product fetching when filters or page change
   useEffect(() => {
     if (subId && isInitialized) {
@@ -81,9 +92,10 @@ const ProductsBySubCategory = () => {
         page: currentPage,
         min_price: priceRange[0],
         max_price: priceRange[1],
+        price_min: priceRange[0], // Alias for backend consistency
+        price_max: priceRange[1], // Alias for backend consistency
         is_available: isAvailable ? 1 : 0,
         attributes: selectedAttributes,
-        // Sort might need mapping
       };
 
       dispatch(fetchProduct({ id_type: subId, params }));
@@ -95,15 +107,21 @@ const ProductsBySubCategory = () => {
   // No changes needed to the helper, but we might want to use backend's max price
   const maxPrice = 5000; // Default or from API if possible
 
-  // Logique de tri (si toujours faite en local, sinon passée en param)
+  // Logique de filtrage et tri (en local pour garantir le prix)
   const filteredProducts = useMemo(() => {
-    // In this new version, products are already filtered by the API
-    // We only handle local sorting if the API doesn't support it or for fine-tuning
-    let sorted = [...allProducts];
-    if (sortBy === 'price-asc') sorted.sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0));
-    if (sortBy === 'price-desc') sorted.sort((a, b) => (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
-    return sorted;
-  }, [allProducts, sortBy]);
+    let result = [...allProducts];
+
+    // Filtrage par prix explicitement en local
+    result = result.filter(p => {
+      const pPrice = parseFloat(p.price) || 0;
+      return pPrice >= priceRange[0] && pPrice <= priceRange[1];
+    });
+
+    if (sortBy === 'price-asc') result.sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0));
+    if (sortBy === 'price-desc') result.sort((a, b) => (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
+
+    return result;
+  }, [allProducts, sortBy, priceRange]);
 
   const totalPages = product.data?.last_page || product.last_page || Math.ceil((product.data?.total || product.total || filteredProducts.length) / itemsPerPage);
 
@@ -116,19 +134,23 @@ const ProductsBySubCategory = () => {
 
   const handleAttributeChange = (attrId, value) => {
     setSelectedAttributes(prev => {
-      // Helper to toggle attributes (unchanged)
       const currentValues = prev[attrId] || [];
-      // Support single select for certain attributes if needed, but array for robust handling
       const newValues = currentValues.includes(value)
         ? currentValues.filter(v => v !== value)
         : [...currentValues, value];
 
       const newState = { ...prev, [attrId]: newValues };
-      // Remove empty attributes
       if (newValues.length === 0) delete newState[attrId];
       return newState;
     });
     setCurrentPage(1);
+  };
+
+  const toggleExpandValues = (attrId) => {
+    setExpandedValues(prev => ({
+      ...prev,
+      [attrId]: !prev[attrId]
+    }));
   };
 
   const handlePageClick = (page) => setCurrentPage(page);
@@ -177,7 +199,7 @@ const ProductsBySubCategory = () => {
 
     return (
       <>
-        <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-b lg:d-none">
+        <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom d-lg-none">
           <div className="d-flex align-items-center gap-2">
             <h3 className="text-lg font-bold text-gray-800 mb-0">Filtrer</h3>
             {activeFiltersCount > 0 && (
@@ -197,17 +219,36 @@ const ProductsBySubCategory = () => {
           <div className="d-flex justify-content-between align-items-center mb-2">
             <label className="text-sm font-bold text-gray-800">Gamme de prix</label>
             <span className="text-xs font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded-lg">
-              {priceRange[0]} - {priceRange[1]} DT
+              {tempPriceRange[0]} - {tempPriceRange[1]} DT
             </span>
+          </div>
+          <div className="d-flex gap-2 align-items-center mb-3">
+            <input
+              type="number"
+              className="form-control form-control-sm rounded-lg text-xs"
+              placeholder="Min"
+              value={tempPriceRange[0]}
+              onChange={(e) => setTempPriceRange([parseInt(e.target.value) || 0, tempPriceRange[1]])}
+              style={{ padding: '8px' }}
+            />
+            <span className="text-gray-400">-</span>
+            <input
+              type="number"
+              className="form-control form-control-sm rounded-lg text-xs"
+              placeholder="Max"
+              value={tempPriceRange[1]}
+              onChange={(e) => setTempPriceRange([tempPriceRange[0], parseInt(e.target.value) || 0])}
+              style={{ padding: '8px' }}
+            />
           </div>
           <input
             type="range"
             className="form-range"
             min="0"
-            max={maxPrice}
-            step="1"
-            value={priceRange[1]}
-            onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+            max={Math.max(tempPriceRange[1], 5000)}
+            step="10"
+            value={tempPriceRange[1]}
+            onChange={(e) => setTempPriceRange([tempPriceRange[0], parseInt(e.target.value)])}
           />
         </div>
         {/* Catégories */}
@@ -222,40 +263,36 @@ const ProductsBySubCategory = () => {
 
         {/* Attributs dynamiques - Style Chips avec formatage amélioré */}
         {
-          availableAttributes.map(attr => {
-            // Trier les valeurs intelligemment (numériques d'abord, puis alphabétiques)
+          availableAttributes.slice(0, showAllAttributes ? undefined : 4).map(attr => {
             const sortedValues = [...(attr.possible_values || [])].sort((a, b) => {
               const numA = parseFloat(a);
               const numB = parseFloat(b);
-              if (!isNaN(numA) && !isNaN(numB)) {
-                return numA - numB;
-              }
+              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
               return String(a).localeCompare(String(b));
             });
 
-            // Fonction pour formater la valeur avec l'unité si nécessaire
             const formatValue = (val) => {
               const unit = attr.unit || '';
-              // Si la valeur contient déjà l'unité, ne pas la dupliquer
-              if (unit && !String(val).includes(unit)) {
-                return `${val} ${unit}`;
-              }
+              if (unit && !String(val).includes(unit)) return `${val} ${unit}`;
               return val;
             };
 
+            const isExpanded = expandedValues[attr.id];
+            const visibleValues = isExpanded ? sortedValues : sortedValues.slice(0, 6);
+
             return (
-              <div key={attr.id} className="mb-6">
+              <div key={attr.id} className="mb-6 animate-fade-in">
                 <label className="text-base font-bold text-gray-800 mb-3 d-block">
                   {attr.attribute_name || attr.title || attr.name}
                 </label>
                 <div className="d-flex flex-wrap gap-2">
-                  {sortedValues.map(val => {
+                  {visibleValues.map(val => {
                     const isSelected = (selectedAttributes[attr.id] || []).includes(val);
                     return (
                       <button
                         key={val}
                         onClick={() => handleAttributeChange(attr.id, val)}
-                        className={`btn btn-sm text-sm font-medium rounded-xl px-4 py-2 transition-all
+                        className={`btn btn-sm text-sm font-medium rounded-xl px-3 py-2 transition-all
                       ${isSelected
                             ? 'bg-blue-900 text-white border-blue-900 shadow-md'
                             : 'bg-gray-50 text-gray-700 border-0 hover:bg-gray-100'
@@ -266,11 +303,37 @@ const ProductsBySubCategory = () => {
                       </button>
                     );
                   })}
+                  {!isExpanded && sortedValues.length > 6 && (
+                    <button
+                      onClick={() => toggleExpandValues(attr.id)}
+                      className="btn btn-sm text-xs font-bold text-blue-600 border-0 bg-transparent p-2 hover:underline"
+                    >
+                      + {sortedValues.length - 6} de plus
+                    </button>
+                  )}
+                  {isExpanded && sortedValues.length > 6 && (
+                    <button
+                      onClick={() => toggleExpandValues(attr.id)}
+                      className="btn btn-sm text-xs font-bold text-blue-600 border-0 bg-transparent p-2 hover:underline"
+                    >
+                      Réduire
+                    </button>
+                  )}
                 </div>
               </div>
             );
           })
         }
+
+        {availableAttributes.length > 4 && (
+          <Button
+            variant="link"
+            className="w-100 mb-4 text-blue-700 font-black tracking-wider uppercase text-[10px] decoration-none hover:bg-gray-50 py-2 rounded-xl"
+            onClick={() => setShowAllAttributes(!showAllAttributes)}
+          >
+            {showAllAttributes ? "Afficher moins d'options" : `Voir ${availableAttributes.length - 4} autres filtres`}
+          </Button>
+        )}
 
         {/* Disponibilité - Style Toggle Switch */}
         <div className="mb-6 d-flex justify-content-between align-items-center">
@@ -291,6 +354,7 @@ const ProductsBySubCategory = () => {
             variant="light"
             onClick={() => {
               setPriceRange([0, 5000]);
+              setTempPriceRange([0, 5000]);
               setSelectedAttributes({});
               setIsAvailable(true);
             }}
@@ -311,6 +375,7 @@ const ProductsBySubCategory = () => {
           variant="link"
           onClick={() => {
             setPriceRange([0, 5000]);
+            setTempPriceRange([0, 5000]);
             setSelectedAttributes({});
             setIsAvailable(true);
           }}

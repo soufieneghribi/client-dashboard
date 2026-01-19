@@ -126,6 +126,9 @@ export const authService = {
   updateProfile: (data) => apiClient.post('/auth/profile/update', data),
   changePassword: (data) => apiClient.post('/auth/change-password', data),
   logout: () => apiClient.post('/auth/logout'),
+  verifyEmail: (data) => apiClient.post('/auth/verify-email', data),
+  resendOtp: (data) => apiClient.post('/auth/resend-otp', data),
+  checkVerificationStatus: () => apiClient.post('/auth/check-verification-status'),
 };
 
 export const productService = {
@@ -228,6 +231,9 @@ export const API_ENDPOINTS = {
     CHANGE_PASSWORD: `${API_BASE_URL}/auth/change-password`,
     PROFILE_UPDATE: `${API_BASE_URL}/auth/profile/update`,
     LOGOUT: `${API_BASE_URL}/auth/logout`,
+    VERIFY_EMAIL: `${API_BASE_URL}/auth/verify-email`,
+    RESEND_OTP: `${API_BASE_URL}/auth/resend-otp`,
+    CHECK_VERIFICATION: `${API_BASE_URL}/auth/check-verification-status`,
   },
   USER: {
     PROFILE: `${API_BASE_URL}/customer/info1`,
@@ -297,6 +303,7 @@ export const API_ENDPOINTS = {
     LIST: `${API_BASE_URL}/customer/order/list`,
     PLACE: `${API_BASE_URL}/customer/order/place`,
     PREPARE: `${API_BASE_URL}/customer/order/prepare`,
+    BY_ID: (id) => `${API_BASE_URL}/customer/order/order_details/${id}`,
   },
   OFFERS: {
     ALL: `${API_BASE_URL}/offre`,

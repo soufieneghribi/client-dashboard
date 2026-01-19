@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   FaArrowLeft,
   FaDownload,
@@ -20,23 +20,18 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 import axios from "axios";
-import { API_ENDPOINTS, getAuthHeaders, getAuthHeadersBinary } from "../services/api";
+import { API_ENDPOINTS, API_BASE_URL, getAuthHeaders, getAuthHeadersBinary } from "../services/api";
 import PdfService from "../services/PdfService";
 
-/**
- * ✅ OrderDetails Component - Affichage détaillé de la commande AMÉLIORÉ
- * 
- * Améliorations:
- * 1. ✅ Meilleure gestion des erreurs
- * 2. ✅ Affichage du magasin pour pickup
- * 3. ✅ Timeline de statut
- * 4. ✅ Bouton d'annulation de commande
- * 5. ✅ Design moderne amélioré
- * 6. ✅ Gestion complète des types de livraison
- */
+
 const OrderDetails = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const confirmedTotalFromState = location.state?.confirmedTotal;
+  const confirmedDeliveryFeeFromState = location.state?.confirmedDeliveryFee;
+  const confirmedCagnotteFromState = location.state?.confirmedCagnotte;
+  const confirmedItemsTotalFromState = location.state?.confirmedItemsTotal;
 
   // États
   const [order, setOrder] = useState(null);
@@ -55,7 +50,6 @@ const OrderDetails = () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      // 
       navigate("/login");
       return;
     }
@@ -64,36 +58,42 @@ const OrderDetails = () => {
     setError(null);
 
     try {
-      // Récupérer toutes les commandes
+      // ✅ Use the dedicated details API instead of filtering the list
+      // This ensures we get the most accurate and fresh data for this specific order
       const response = await axios.get(
-        API_ENDPOINTS.ORDERS.LIST,
-        { headers: getAuthHeaders(token) }
+        API_ENDPOINTS.ORDERS.BY_ID(orderId),
+        { headers: getAuthHeaders() }
       );
 
-      // Chercher la commande spécifique
-      const orders = response.data?.data || response.data || [];
-      const foundOrder = Array.isArray(orders)
-        ? orders.find(o => o.id === parseInt(orderId))
-        : null;
+      const foundOrder = response.data?.data || response.data;
 
-      if (!foundOrder) {
-        setError("Commande introuvable");
-        // 
-        return;
+      if (!foundOrder || (typeof foundOrder === 'object' && Object.keys(foundOrder).length === 0)) {
+        // Fallback to list if details API fails or returns empty
+        const listResponse = await axios.get(
+          API_ENDPOINTS.ORDERS.LIST,
+          { headers: getAuthHeaders() }
+        );
+        const orders = listResponse.data?.data || listResponse.data || [];
+        const orderFromList = Array.isArray(orders)
+          ? orders.find(o => o.id === parseInt(orderId))
+          : null;
+
+        if (orderFromList) {
+          setOrder(orderFromList);
+        } else {
+          setError("Commande introuvable");
+        }
+      } else {
+        setOrder(foundOrder);
       }
 
-      setOrder(foundOrder);
-
     } catch (err) {
-
-
+      console.error("❌ Error fetching order details:", err);
       if (err.response?.status === 401 || err.response?.status === 403) {
-        // 
         localStorage.removeItem("token");
         navigate("/login");
       } else {
-        setError("Erreur de chargement");
-        // 
+        setError("Erreur de chargement des détails");
       }
     } finally {
       setLoading(false);
@@ -112,12 +112,38 @@ const OrderDetails = () => {
     // 
 
     try {
+      // Calculer les montants cohérents avec la vue
+      const itemsTotal = confirmedItemsTotalFromState !== undefined
+        ? parseFloat(confirmedItemsTotalFromState)
+        : order.details
+          ? order.details.reduce((sum, item) => {
+            const actualPrice = parseFloat(item.promo_price || item.price || 0);
+            return sum + (actualPrice * parseInt(item.quantity));
+          }, 0)
+          : 0;
+
+      const deliveryFee = confirmedDeliveryFeeFromState !== undefined
+        ? parseFloat(confirmedDeliveryFeeFromState)
+        : (parseFloat(order.delivery_fee) || 0);
+
+      const cagnotte = confirmedCagnotteFromState !== undefined
+        ? parseFloat(confirmedCagnotteFromState)
+        : (parseFloat(order.cagnotte_deduction) || 0);
+
+      const confirmedTotal = confirmedTotalFromState
+        ? parseFloat(confirmedTotalFromState)
+        : Math.max(0, itemsTotal + deliveryFee - cagnotte);
+
       // ✅ Génération locale (découplée du serveur)
-      // On prépare l'objet avec les détails et le client pour le PdfService
       const fullOrderData = {
         ...order,
-        details: order.details, // Use details property which contains the articles
-        client: order.client || {}
+        details: order.details,
+        client: order.client || {},
+        // Forcer les montants pour la facture PDF
+        order_amount: itemsTotal, // Le sous-total réel
+        delivery_fee: deliveryFee,
+        cagnotte_deduction: cagnotte,
+        total_amount: confirmedTotal
       };
 
       PdfService.generateOrderPdf(fullOrderData);
@@ -420,6 +446,14 @@ const OrderDetails = () => {
               <FaCalendarAlt className="text-slate-300" />
               Générée le {formatDate(order.created_at)}
             </p>
+            <div className="mt-2 flex items-center gap-3">
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+                Ref: #{order.id}
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+                Type: {getOrderTypeLabel(order.order_type)}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
@@ -533,6 +567,11 @@ const OrderDetails = () => {
                           <span className="text-[10px] font-black text-slate-400 bg-white px-2 py-0.5 rounded-lg border border-slate-100 tracking-widest uppercase">
                             Qté: {item.quantity}
                           </span>
+                          {(item.promo_id || item.is_promotion || item.isPromotion || item.has_promotion) && (
+                            <span className="text-[10px] font-black text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100 tracking-widest uppercase">
+                              Promotion
+                            </span>
+                          )}
                           <span className="text-[10px] font-black text-slate-300">
                             Ref: #{item.article_id}
                           </span>
@@ -541,12 +580,40 @@ const OrderDetails = () => {
 
                       {/* Pricing */}
                       <div className="flex items-end justify-between sm:flex-col sm:items-end gap-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                          {parseFloat(item.price).toFixed(2)} DT / unité
-                        </p>
-                        <p className="text-lg font-black text-slate-900 tracking-tight">
-                          {(parseFloat(item.price) * parseInt(item.quantity)).toFixed(2)} <span className="text-xs">DT</span>
-                        </p>
+                        {(() => {
+                          const actualPrice = parseFloat(item.promo_price || item.price || 0);
+                          const originalPrice = parseFloat(item.initial_price || item.Initialprice || (parseFloat(item.promo_price) && parseFloat(item.price) > parseFloat(item.promo_price) ? item.price : null) || actualPrice);
+                          const hasPromo = (item.promo_id || item.is_promotion || item.isPromotion || item.has_promotion) || (originalPrice > actualPrice);
+
+                          return (
+                            <>
+                              {hasPromo ? (
+                                <div className="flex flex-col items-end">
+                                  <span className="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded mb-1 uppercase tracking-widest">
+                                    Promo
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    {originalPrice > actualPrice && (
+                                      <p className="text-[10px] font-bold text-slate-300 line-through uppercase tracking-tighter">
+                                        {originalPrice.toFixed(2)} DT
+                                      </p>
+                                    )}
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                      {actualPrice.toFixed(2)} DT / unité
+                                    </p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                  {actualPrice.toFixed(2)} DT / unité
+                                </p>
+                              )}
+                              <p className="text-lg font-black text-slate-900 tracking-tight">
+                                {(actualPrice * parseInt(item.quantity)).toFixed(2)} <span className="text-xs">DT</span>
+                              </p>
+                            </>
+                          );
+                        })()}
                       </div>
                     </motion.div>
                   ))}
@@ -568,37 +635,80 @@ const OrderDetails = () => {
               <h2 className="text-lg font-black uppercase tracking-widest mb-8 text-slate-400">Résumé du règlement</h2>
 
               <div className="space-y-4 mb-8">
-                <div className="flex justify-between items-center text-slate-400 font-bold uppercase tracking-tighter text-xs">
-                  <span>Sous-total</span>
-                  <span className="text-white">
-                    {order.details
-                      ? order.details.reduce((sum, item) =>
-                        sum + (parseFloat(item.price) * parseInt(item.quantity)), 0
-                      ).toFixed(2)
-                      : "0.00"} DT
-                  </span>
-                </div>
+                {/* Manual Totals Calculation for absolute mathematical consistency */}
+                {(() => {
+                  const itemsTotal = confirmedItemsTotalFromState !== undefined
+                    ? parseFloat(confirmedItemsTotalFromState)
+                    : order.details
+                      ? order.details.reduce((sum, item) => {
+                        const actualPrice = parseFloat(item.promo_price || item.price || 0);
+                        return sum + (actualPrice * parseInt(item.quantity));
+                      }, 0)
+                      : 0;
 
-                {order.delivery_fee > 0 && (
-                  <div className="flex justify-between items-center text-slate-400 font-bold uppercase tracking-tighter text-xs">
-                    <span>Livraison</span>
-                    <span className="text-blue-400">+{parseFloat(order.delivery_fee).toFixed(2)} DT</span>
-                  </div>
-                )}
+                  // Priority: Use the fee and deduction the user actually saw and confirmed
+                  const deliveryFee = confirmedDeliveryFeeFromState !== undefined
+                    ? parseFloat(confirmedDeliveryFeeFromState)
+                    : (parseFloat(order.delivery_fee) || 0);
 
-                {order.cagnotte_deduction > 0 && (
-                  <div className="flex justify-between items-center text-slate-400 font-bold uppercase tracking-tighter text-xs">
-                    <span>Déd. Cagnotte</span>
-                    <span className="text-green-400">-{parseFloat(order.cagnotte_deduction).toFixed(2)} DT</span>
-                  </div>
-                )}
+                  const cagnotte = confirmedCagnotteFromState !== undefined
+                    ? parseFloat(confirmedCagnotteFromState)
+                    : (parseFloat(order.cagnotte_deduction) || 0);
 
-                <div className="pt-6 mt-6 border-t border-slate-800 flex justify-between items-center">
-                  <span className="font-black uppercase tracking-[0.2em] text-[10px] text-slate-500">Total TTC</span>
-                  <span className="text-3xl font-black tracking-tighter">
-                    {parseFloat(order.order_amount).toFixed(2)} <span className="text-sm">DT</span>
-                  </span>
-                </div>
+                  // Priority: If the serve total (order_amount) seems logical, we use it.
+                  // Special Case: If we just came from checkout, we use the confirmedTotalFromState.
+                  const calculatedTotal = Math.max(0, itemsTotal + deliveryFee - cagnotte);
+                  const serverTotal = parseFloat(order.order_amount) || 0;
+
+                  // Use confirmedTotalFromState if available (means we just placed the order)
+                  // Regularization logic: 
+                  // 1. If server total is exactly subtotal but there are deductions, server total is wrong.
+                  // 2. If server total and calculated total differ significantly and we have deductions, trust calculated total.
+                  const isServerTotalIncorrect = (Math.abs(serverTotal - itemsTotal) < 0.1 || Math.abs(serverTotal - calculatedTotal) > 0.1) && (deliveryFee > 0 || cagnotte > 0);
+
+                  const finalTotal = confirmedTotalFromState !== undefined
+                    ? parseFloat(confirmedTotalFromState)
+                    : isServerTotalIncorrect
+                      ? calculatedTotal
+                      : serverTotal;
+
+                  return (
+                    <>
+                      <div className="flex justify-between items-center text-slate-400 font-bold uppercase tracking-tighter text-xs">
+                        <span>Sous-total</span>
+                        <span className="text-white">{itemsTotal.toFixed(2)} DT</span>
+                      </div>
+
+                      {deliveryFee > 0 && (
+                        <div className="flex justify-between items-center text-slate-400 font-bold uppercase tracking-tighter text-xs">
+                          <span>Livraison</span>
+                          <span className="text-blue-400">+{deliveryFee.toFixed(2)} DT</span>
+                        </div>
+                      )}
+
+                      {cagnotte > 0 && (
+                        <div className="flex justify-between items-center text-slate-400 font-bold uppercase tracking-tighter text-xs">
+                          <span>Déd. Cagnotte</span>
+                          <span className="text-green-400">-{cagnotte.toFixed(2)} DT</span>
+                        </div>
+                      )}
+
+                      <div className="pt-6 mt-6 border-t border-slate-800 flex justify-between items-center">
+                        <span className="font-black uppercase tracking-[0.2em] text-[10px] text-slate-500">Total TTC</span>
+                        <div className="text-right">
+                          <span className="text-3xl font-black tracking-tighter">
+                            {finalTotal.toFixed(2)} <span className="text-sm">DT</span>
+                          </span>
+                          {Math.abs(finalTotal - parseFloat(order.order_amount)) > 0.1 && !confirmedTotalFromState && (
+                            <p className="text-[10px] text-slate-500 font-bold italic mt-1 opacity-50">
+                              (Régularisé)
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               <div className={`p-4 rounded-2xl flex items-center gap-3 ${order.payment_status === "paid" ? "bg-green-500/10 text-green-400" : "bg-orange-500/10 text-orange-400"
@@ -639,9 +749,20 @@ const OrderDetails = () => {
                     <p className="text-xs text-slate-600 font-medium leading-relaxed">{deliveryInfo.address}</p>
                   </div>
                 ) : order.order_type === "pickup" && order.store ? (
-                  <div className="bg-orange-50/50 p-5 rounded-[1.5rem] border border-orange-100">
-                    <p className="text-xs font-black text-slate-800 mb-1">{order.store.name || "Magasin Selectionné"}</p>
-                    <p className="text-[11px] text-slate-500 font-medium leading-relaxed italic">{order.store.address}</p>
+                  <div className="bg-emerald-50/50 p-5 rounded-[1.5rem] border border-emerald-100 flex gap-3">
+                    <FaStore className="text-emerald-500 mt-1 flex-shrink-0" size={16} />
+                    <div>
+                      <p className="text-xs font-black text-slate-800 mb-1">{order.store.name || "Magasin sélectionné"}</p>
+                      <p className="text-[11px] text-slate-500 font-medium leading-relaxed italic">{order.store.address}</p>
+                    </div>
+                  </div>
+                ) : order.order_type === "relay_point" ? (
+                  <div className="bg-amber-50/50 p-5 rounded-[1.5rem] border border-amber-100 flex gap-3">
+                    <FaMapMarkerAlt className="text-amber-500 mt-1 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-black text-slate-800 mb-1">Point Relais</p>
+                      <p className="text-[11px] text-slate-500 font-medium leading-relaxed italic">{order.address || "Adresse point relais"}</p>
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -654,12 +775,18 @@ const OrderDetails = () => {
                   </div>
                   <div>
                     <h3 className="text-sm font-black text-slate-800 tracking-tight">Destinataire</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{order.client?.nom_et_prenom || "N/A"}</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                      {order.contact_person_name && order.contact_person_name !== "N/A"
+                        ? order.contact_person_name
+                        : order.client?.nom_et_prenom && order.client.nom_et_prenom !== "N/A"
+                          ? order.client.nom_et_prenom
+                          : "Client de la commande"}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-slate-600 font-bold text-xs bg-slate-50 p-4 rounded-2xl w-fit">
                   <FaPhone className="text-indigo-400" />
-                  <span>{order.client?.tel || "N/A"}</span>
+                  <span>{order.contact_person_number && order.contact_person_number !== "N/A" ? order.contact_person_number : order.client?.tel || "N/A"}</span>
                 </div>
               </div>
 
@@ -680,8 +807,8 @@ const OrderDetails = () => {
             </motion.div>
           </div>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

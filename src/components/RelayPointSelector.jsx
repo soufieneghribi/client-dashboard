@@ -164,40 +164,38 @@ const RelayPointSelector = ({ onStoreSelected, selectedStoreId, cartTotal, cartI
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.03 }}
                                 onClick={() => handleStoreSelect(store)}
-                                className={`relative flex items-center justify-between p-5 rounded-[1.75rem] cursor-pointer transition-all border-2 ${isSelected
+                                className={`relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-5 rounded-2xl sm:rounded-[1.75rem] cursor-pointer transition-all border-2 gap-3 sm:gap-4 ${isSelected
                                     ? 'border-[#2D2D5F] bg-white shadow-xl shadow-indigo-900/5'
                                     : 'border-slate-50 bg-slate-50/50 hover:border-slate-100 hover:bg-white'
                                     }`}
                             >
-                                <div className="flex items-center gap-4 flex-1 min-w-0">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg transition-all ${isSelected ? 'bg-[#2D2D5F] text-white shadow-lg' : 'bg-white text-slate-300 shadow-sm'}`}>
+                                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full">
+                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-base sm:text-lg shrink-0 transition-all ${isSelected ? 'bg-[#2D2D5F] text-white shadow-lg' : 'bg-white text-slate-300 shadow-sm'}`}>
                                         <FaStore />
                                     </div>
-                                    <div className="min-w-0 pr-4">
-                                        <div className="flex items-center gap-2">
-                                            <p className={`font-black text-sm tracking-tight truncate ${isSelected ? 'text-[#2D2D5F]' : 'text-slate-700'}`}>
-                                                {store.name}
-                                            </p>
-                                        </div>
-                                        <p className="text-[10px] text-slate-400 font-bold truncate uppercase tracking-tighter mt-0.5">
+                                    <div className="min-w-0 pr-2">
+                                        <p className={`font-black text-xs sm:text-sm tracking-tight truncate ${isSelected ? 'text-[#2D2D5F]' : 'text-slate-700'}`}>
+                                            {store.name}
+                                        </p>
+                                        <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold truncate uppercase tracking-tighter mt-0.5">
                                             {[store.address, store.city].filter(Boolean).join(', ')}
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col items-end gap-2 shrink-0">
+                                <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-0 border-slate-100/50">
                                     {isLoadingFee ? (
                                         <div className="w-4 h-4 border-2 border-slate-200 border-t-indigo-500 rounded-full animate-spin"></div>
                                     ) : fee !== undefined && fee !== null ? (
-                                        <div className={`px-4 py-1.5 rounded-2xl text-[10px] font-black tracking-widest uppercase border ${isFree ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-600 border-slate-100'}`}>
+                                        <div className={`px-3 py-1 sm:px-4 sm:py-1.5 rounded-full sm:rounded-2xl text-[9px] sm:text-[10px] font-black tracking-widest uppercase border ${isFree ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-600 border-slate-100'}`}>
                                             {isFree ? 'Gratuit' : `${Number(fee).toFixed(2)} DT`}
                                         </div>
                                     ) : (
-                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-200"></div>
+                                        <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-slate-200"></div>
                                     )}
 
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${isSelected ? 'border-[#2D2D5F] bg-[#2D2D5F] shadow-lg shadow-indigo-500/20' : 'border-slate-200 bg-white'}`}>
-                                        {isSelected && <FaCheck className="text-white text-[10px]" />}
+                                    <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center border-2 transition-all ${isSelected ? 'border-[#2D2D5F] bg-[#2D2D5F] shadow-lg shadow-indigo-500/20' : 'border-slate-200 bg-white'}`}>
+                                        {isSelected && <FaCheck className="text-white text-[8px] sm:text-[10px]" />}
                                     </div>
                                 </div>
                             </motion.div>

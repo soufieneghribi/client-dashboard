@@ -2,8 +2,7 @@ import React from "react";
 
 const UniverseSelector = ({ selectedUniverse, setSelectedUniverse }) => {
     const universes = [
-        { id: null, label: "Tous", desc: "Toutes les catégories", emoji: "🏪", colorClass: "purple" },
-        { id: 1, label: "Épicerie", desc: "Alimentation & Maison", emoji: "🛒", colorClass: "green" },
+        { id: null, label: "Épicerie", desc: "Alimentation & Maison", emoji: "🛒", colorClass: "emerald" },
         { id: 2, label: "Électronique", desc: "High-Tech & Électroménager", emoji: "📱", colorClass: "blue" },
     ];
 

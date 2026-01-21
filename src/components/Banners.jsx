@@ -1,13 +1,36 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { fetchBanners } from "../store/slices/banners";
 import { getImageUrl } from "../utils/imageHelper";
+
+import lloydBanner from "../assets/images/lloyd_banner.jpg";
+import visionBanner from "../assets/images/vision_banner.png";
 
 const Banners = () => {
   const { banners = [], loading, error } = useSelector((state) => state.banners);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerSlide, setItemsPerSlide] = useState(window.innerWidth >= 1024 ? 2 : 1);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  // Bannières manuelles (Statiques)
+  const staticBanners = [
+    {
+      id: "manual-lloyd",
+      title: "Lloyd Assurance",
+      image_final: lloydBanner,
+      link: "/code-promo/6",
+      isStatic: true
+    },
+    {
+      id: "manual-vision",
+      title: "Vision Voyages",
+      image_final: visionBanner,
+      link: "/code-promo/7",
+      isStatic: true
+    }
+  ];
 
   useEffect(() => {
     dispatch(fetchBanners());
@@ -21,15 +44,30 @@ const Banners = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Create slides based on itemsPerSlide
+  // Fusionner les bannières statiques et dynamiques
+  const allBanners = useMemo(() => {
+    return [...staticBanners, ...banners];
+  }, [banners]);
+
   const slides = useMemo(() => {
-    if (!banners || banners.length === 0) return [];
+    if (!allBanners || allBanners.length === 0) return [];
     const result = [];
-    for (let i = 0; i < banners.length; i += itemsPerSlide) {
-      result.push(banners.slice(i, i + itemsPerSlide));
+    for (let i = 0; i < allBanners.length; i += itemsPerSlide) {
+      result.push(allBanners.slice(i, i + itemsPerSlide));
     }
     return result;
-  }, [banners, itemsPerSlide]);
+  }, [allBanners, itemsPerSlide]);
+
+  const handleBannerClick = (banner) => {
+    if (banner.isStatic) {
+      navigate(banner.link);
+      return;
+    }
+
+    // Logique pour les bannières dynamiques
+    const promoId = banner.code_promo_id || banner.link_id || banner.id;
+
+  };
 
   const getBannerImageUrl = (b) => getImageUrl(b, 'banner');
 
@@ -47,18 +85,17 @@ const Banners = () => {
     return () => clearInterval(timer);
   }, [currentIndex, slides.length]);
 
-  // Reset index if slides length changes due to resize
   useEffect(() => {
     setCurrentIndex(0);
   }, [slides.length]);
 
-  if (loading) return (
+  if (loading && allBanners.length === 0) return (
     <div className="w-full h-48 sm:h-64 bg-gray-100 animate-pulse rounded-2xl flex items-center justify-center">
       <p className="text-gray-400 font-medium tracking-wide">Chargement des bannières...</p>
     </div>
   );
 
-  if (error || slides.length === 0) return null;
+  if (allBanners.length === 0) return null;
 
   return (
     <div className="relative w-full group">
@@ -72,27 +109,26 @@ const Banners = () => {
               {slide.map((banner, idx) => (
                 <div
                   key={banner.id || idx}
-                  className={`relative flex-1 ${itemsPerSlide > 1 ? 'aspect-[16/9]' : 'aspect-auto'}`}
+                  className={`relative flex-1 ${itemsPerSlide > 1 ? 'aspect-[16/9]' : 'aspect-auto'} cursor-pointer group/banner overflow-hidden`}
                   style={{ height: itemsPerSlide > 1 ? 'auto' : 'clamp(200px, 40vw, 400px)' }}
+                  onClick={() => handleBannerClick(banner)}
                 >
                   <img
-                    src={getBannerImageUrl(banner)}
+                    src={banner.image_final || getBannerImageUrl(banner)}
                     alt={banner.title || banner.name || "Banner"}
                     fetchpriority={slideIdx === 0 ? "high" : "auto"}
                     loading={slideIdx === 0 ? "eager" : "lazy"}
                     decoding="async"
                     width={itemsPerSlide > 1 ? "600" : "1200"}
                     height="400"
-                    className="w-full h-full object-cover rounded-xl bg-gray-50"
+                    className="w-full h-full object-cover rounded-xl bg-gray-50 transition-transform duration-700 group-hover/banner:scale-105"
                     onError={(e) => {
                       e.target.src = 'https://placehold.co/800x450?text=Image+Indisponible';
                     }}
                   />
-                  {/* Subtle overlay for better depth */}
-                  <div className="absolute inset-0 bg-black/5 pointer-events-none rounded-xl"></div>
+                  <div className="absolute inset-0 bg-black/5 group-hover/banner:bg-black/0 transition-colors pointer-events-none rounded-xl"></div>
                 </div>
               ))}
-              {/* Fill empty space if last slide has fewer items than itemsPerSlide */}
               {itemsPerSlide > 1 && slide.length < itemsPerSlide && (
                 <div className="flex-1 invisible" />
               )}
@@ -101,25 +137,22 @@ const Banners = () => {
         </div>
       </div>
 
-      {/* Navigation Controls - Only show if more than 1 slide */}
       {slides.length > 1 && (
         <>
           <button
             onClick={prevSlide}
-            className="absolute top-1/2 left-4 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition-all duration-300 transform opacity-0 group-hover:opacity-100 hover:scale-110 z-20 hidden md:block"
+            className="absolute top-1/2 left-2 sm:left-4 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-2 sm:p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-20"
             aria-label="Précédent"
           >
-            <span className="text-xl">❮</span>
+            <span className="text-lg sm:text-xl">❮</span>
           </button>
           <button
             onClick={nextSlide}
-            className="absolute top-1/2 right-4 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition-all duration-300 transform opacity-0 group-hover:opacity-100 hover:scale-110 z-20 hidden md:block"
+            className="absolute top-1/2 right-2 sm:right-4 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-2 sm:p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-20"
             aria-label="Suivant"
           >
-            <span className="text-xl">❯</span>
+            <span className="text-lg sm:text-xl">❯</span>
           </button>
-
-          {/* Indicators */}
           <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex gap-2.5">
             {slides.map((_, index) => (
               <button

@@ -29,79 +29,176 @@ const getAuthToken = () => {
 // Dans Popular.js - Modifier fetchPopularWithPromotions
 export const fetchPopularWithPromotions = createAsyncThunk(
   "popular/fetchPopularWithPromotions",
-  async (clientId = null, { rejectWithValue }) => {
+  async ({ clientId = null, universeId = null }, { rejectWithValue, getState }) => {
     try {
+      let state = getState();
+      let categories = state.categorie?.categories || [];
+
+      // Si les catégories ne sont pas chargées, on essaie de les récupérer
+      if (categories.length === 0) {
+        try {
+          const catResponse = await axios.get(API_ENDPOINTS.CATEGORIES.ALL, { timeout: 5000 });
+          if (catResponse.data) {
+            categories = catResponse.data;
+          }
+        } catch (e) {
+          console.error("Erreur thunk Popular:", e);
+        }
+      }
+
+      // Helper to identify if a product belongs to the universe
+      const belongsToUniverse = (product, uniId) => {
+        const catId = product.category_id || product.id_type || product.ID_type;
+        const cat = categories.find(c => c.id === parseInt(catId));
+        const pName = (product.name || product.title || "").toLowerCase();
+        const catTitle = (cat?.title || cat?.name || "").toLowerCase();
+
+        // Mots-clés Électronique (Marques + Types)
+        const electronicsKeywords = [
+          'informatique', 'téléphonie', 'télévision', 'tv', 'gaming', 'électroménager', 'électronique',
+          'high-tech', 'pc', 'ordinateur', 'smartphone', 'climatiseur', 'climatisation', 'split',
+          'réfrigérateur', 'frigo', 'congélateur', 'lave-linge', 'machine à laver', 'lave-vaisselle',
+          'samsung', 'lg', 'asus', 'hp', 'dell', 'lenovo', 'apple', 'huawei', 'xiaomi', 'oppo',
+          'infinix', 'sony', 'whirlpool', 'beko', 'haier', 'tcl', 'condor', 'coala', 'moulinex'
+        ];
+
+        // Mots-clés Épicerie / Produits à EXCLURE de l'électronique
+        const groceryKeywords = [
+          'judy', 'lilas', 'javel', 'lessive', 'vaisselle', 'savon', 'shampoing', 'couche',
+          'huile', 'sucre', 'tomate', 'pâte', 'couscous', 'thon', 'yaourt', 'lait', 'fromage',
+          'boisson', 'jus', 'eau', 'biscuit', 'chocolat', 'café', 'thé', 'sauce', 'algérienne',
+          'mayonnaise', 'ketchup', 'harissa', 'épice', 'sel', 'poivre', 'riz', 'farine', 'semoule',
+          'pates', 'conserves', 'jadida', 'nejma', 'sicam', 'le moulin', 'delice', 'danone'
+        ];
+
+        if (uniId === 2) { // Électronique
+          if (product.universe_id === 2 || cat?.universe_id === 2 || product.universe_id === "2") return true;
+          const electronicsCategoryIds = [144, 2, 3, 4, 5, 23, 24, 25, 26];
+          if (electronicsCategoryIds.includes(parseInt(catId)) ||
+            electronicsCategoryIds.includes(parseInt(product.parent_category_id)) ||
+            electronicsCategoryIds.includes(parseInt(cat?.parent_id))) {
+            if (groceryKeywords.some(kw => pName.includes(kw))) return false;
+            return true;
+          }
+          const hasElecKeyword = electronicsKeywords.some(kw => pName.includes(kw) || catTitle.includes(kw));
+          const hasGroceryKeyword = groceryKeywords.some(kw => pName.includes(kw));
+          return hasElecKeyword && !hasGroceryKeyword;
+        }
+
+        // Mode Épicerie par défaut (null)
+        if (electronicsKeywords.some(kw => pName.includes(kw)) && !groceryKeywords.some(kw => pName.includes(kw))) {
+          return false; // On évite de polluer l'épicerie avec du high-tech pur
+        }
+        return true;
+      };
+
       let articles = [];
       let hasPromotions = false;
       let promotionsData = null;
 
-      // Si clientId est fourni, essayer de récupérer les promotions SPÉCIFIQUES
-      if (clientId) {
-        try {
-          const token = getAuthToken();
-          const promoResponse = await axios.get(
-            API_ENDPOINTS.PROMOTIONS.BY_CLIENT(clientId),
-            {
-              timeout: API_TIMEOUT,
-              headers: getAuthHeaders(token)
-            }
-          );
+      // 1. Logique spéciale pour ÉLECTRONIQUE (2) : TOUJOURS 12 articles aléatoires
+      if (universeId === 2) {
+        const allProductsResponse = await axios.get(API_ENDPOINTS.PRODUCTS.ALL, {
+          timeout: 20000,
+          headers: { 'Content-Type': 'application/json' }
+        });
 
-          if (promoResponse.data && promoResponse.data.success && promoResponse.data.data) {
-            // ✅ FILTRER LES PROMOTIONS ACTIVES ET VALIDES
-            const validPromotions = promoResponse.data.data.filter(promo => {
-              const isActive = new Date(promo.start_date) <= new Date() &&
-                new Date(promo.end_date) >= new Date();
-              const hasValidArticles = promo.articles && Array.isArray(promo.articles) && promo.articles.length > 0;
-              return isActive && hasValidArticles;
+        const data = allProductsResponse.data;
+        let pList = [];
+        if (Array.isArray(data)) pList = data;
+        else if (data?.products && Array.isArray(data.products)) pList = data.products;
+        else if (data?.data && Array.isArray(data.data)) pList = data.data;
+        else if (data?.data?.data && Array.isArray(data.data.data)) pList = data.data.data;
+
+        if (pList && pList.length > 0) {
+          // Filtrage STRICT
+          const electronicsProducts = pList.filter(p => belongsToUniverse(p, 2));
+
+          let finalSelection = electronicsProducts;
+          if (finalSelection.length < 5) {
+            finalSelection = pList.filter(p => {
+              const name = (p.name || "").toLowerCase();
+              return !groceryKeywords.some(kw => name.includes(kw));
             });
+          }
 
-            // Extraire les articles des promotions VALIDES
-            articles = validPromotions.reduce((acc, promo) => {
-              if (promo.articles && Array.isArray(promo.articles)) {
+          const shuffled = [...finalSelection].sort(() => 0.5 - Math.random());
+          articles = shuffled.slice(0, 12).map(product => ({
+            ...product,
+            id: product.id || product.ID,
+            isPromotion: false
+          }));
+
+          hasPromotions = false;
+        }
+      }
+      // 2. Pour ÉPICERIE (null) : Promotions en priorité
+      else {
+        if (clientId) {
+          try {
+            const token = getAuthToken();
+            const promoResponse = await axios.get(
+              API_ENDPOINTS.PROMOTIONS.BY_CLIENT(clientId),
+              {
+                timeout: API_TIMEOUT,
+                headers: getAuthHeaders(token)
+              }
+            );
+
+            if (promoResponse.data && promoResponse.data.success && promoResponse.data.data) {
+              const validPromotions = promoResponse.data.data.filter(promo => {
+                const isActive = new Date(promo.start_date) <= new Date() &&
+                  new Date(promo.end_date) >= new Date();
+                const hasValidArticles = promo.articles && Array.isArray(promo.articles) && promo.articles.length > 0;
+                return isActive && hasValidArticles;
+              });
+
+              articles = validPromotions.reduce((acc, promo) => {
                 return [...acc, ...promo.articles.map(article => ({
                   ...article,
-                  id: article.id || article.ID || article.product_id, // Normalize ID
+                  id: article.id || article.ID || article.product_id,
                   promo_name: promo.name,
                   promo_id: promo.id,
                   promo_discount: promo.discount_value,
                   promo_start: promo.start_date,
                   promo_end: promo.end_date,
-                  promo_client_id: clientId, // ✅ IMPORTANT : Stocker l'ID client de la promotion
+                  promo_client_id: clientId,
                   isPromotion: true
                 }))];
-              }
-              return acc;
-            }, []);
+              }, []);
 
-            hasPromotions = articles.length > 0;
-            promotionsData = promoResponse.data;
-          }
-        } catch (promoError) {
-          // Continuer avec les produits aléatoires en cas d'erreur
+              // Filtrer par univers
+              articles = articles.filter(article => belongsToUniverse(article, null));
+
+              hasPromotions = articles.length > 0;
+              promotionsData = promoResponse.data;
+            }
+          } catch (promoError) { }
         }
-      }
 
-      // Si pas de promotions POUR CE CLIENT, charger 6 produits aléatoires
-      if (!hasPromotions) {
-        const allProductsResponse = await axios.get(API_ENDPOINTS.PRODUCTS.ALL, {
-          timeout: API_TIMEOUT,
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+        // Fallback si pas de promotions
+        if (!hasPromotions) {
+          const allProductsResponse = await axios.get(API_ENDPOINTS.PRODUCTS.ALL, {
+            timeout: 20000,
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          const data = allProductsResponse.data;
+          let pList = [];
+          if (Array.isArray(data)) pList = data;
+          else if (data?.products && Array.isArray(data.products)) pList = data.products;
+          else if (data?.data && Array.isArray(data.data)) pList = data.data;
+
+          if (pList && pList.length > 0) {
+            const filteredProducts = pList.filter(p => belongsToUniverse(p, null));
+
+            const shuffled = [...filteredProducts].sort(() => 0.5 - Math.random());
+            articles = shuffled.slice(0, 6).map(product => ({
+              ...product,
+              id: product.id || product.ID,
+              isPromotion: false
+            }));
           }
-        });
-
-        if (allProductsResponse.data && allProductsResponse.data.products) {
-          const allProducts = allProductsResponse.data.products;
-
-          // Mélanger et prendre 6 produits aléatoires
-          const shuffled = [...allProducts].sort(() => 0.5 - Math.random());
-          articles = shuffled.slice(0, 6).map(product => ({
-            ...product,
-            id: product.id || product.ID, // Normalize ID
-            isPromotion: false // ✅ FORCER à false car pas de promotion pour ce client
-          }));
         }
       }
 
@@ -109,7 +206,8 @@ export const fetchPopularWithPromotions = createAsyncThunk(
         products: articles,
         hasPromotions,
         promotionsData,
-        clientId
+        clientId,
+        universeId
       };
 
     } catch (error) {

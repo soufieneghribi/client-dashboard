@@ -1,8 +1,8 @@
 import React from 'react';
-import { FaMoneyBillWave, FaCreditCard, FaLock, FaShieldAlt, FaCheckCircle } from "react-icons/fa";
+import { FaMoneyBillWave, FaCreditCard, FaLock, FaShieldAlt, FaCheckCircle, FaPiggyBank, FaWallet, FaTag } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-const PaymentMethodSection = ({ formData, handleInputChange }) => {
+const PaymentMethodSection = ({ formData, handleInputChange, userProfile, setFormData }) => {
     const paymentMethods = [
         {
             id: 'cash',
@@ -87,6 +87,78 @@ const PaymentMethodSection = ({ formData, handleInputChange }) => {
                     );
                 })}
             </div>
+
+            {/* Cagnotte Section */}
+            {userProfile && parseFloat(userProfile.cagnotte_balance) > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-white rounded-2xl border-2 border-gray-100 p-6 shadow-sm space-y-4"
+                >
+                    <div className="flex items-center gap-3 pb-4 border-b border-gray-50">
+                        <div className="p-2.5 bg-pink-50 rounded-xl text-pink-600">
+                            <FaPiggyBank size={20} />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900">Ma Cagnotte</h3>
+                            <p className="text-sm text-gray-500 font-medium">Réduisez le montant de votre commande</p>
+                        </div>
+                    </div>
+
+                    <div className={`p-5 rounded-2xl border-2 transition-all ${formData.cagnotte_deduction > 0
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-green-50/50 border-green-100/50'
+                        }`}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${formData.cagnotte_deduction > 0 ? 'bg-green-500 text-white' : 'bg-white text-green-600'
+                                    }`}>
+                                    <FaWallet size={20} />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-green-900">Cagnotte disponible</p>
+                                    <p className={`text-lg font-black ${formData.cagnotte_deduction > 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                                        {parseFloat(userProfile.cagnotte_balance).toFixed(2)} DT
+                                    </p>
+                                    <p className="text-xs text-green-600/70 font-semibold">disponible</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const isApplied = formData.cagnotte_deduction > 0;
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        cagnotte_deduction: isApplied ? 0 : parseFloat(userProfile.cagnotte_balance)
+                                    }));
+                                }}
+                                className={`px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm ${formData.cagnotte_deduction > 0
+                                    ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                                    : 'bg-white text-green-600 border border-green-100 hover:bg-green-50'
+                                    }`}
+                            >
+                                {formData.cagnotte_deduction > 0 ? 'Retirer' : '+ Appliquer'}
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
+            {/* Savings Note if no promotions */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                className="bg-white rounded-2xl border border-gray-200 p-5 flex items-center gap-4"
+            >
+                <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400">
+                    <FaTag size={20} />
+                </div>
+                <div>
+                    <h4 className="text-lg font-bold text-gray-800">Aucune économie</h4>
+                    <p className="text-sm text-gray-500">Ajoutez des articles en promotion pour économiser plus</p>
+                </div>
+            </motion.div>
 
             {/* Security Notice */}
             <motion.div

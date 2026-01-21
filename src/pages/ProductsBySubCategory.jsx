@@ -191,7 +191,15 @@ const ProductsBySubCategory = () => {
     Cookies.set("cart", JSON.stringify(cart), { expires: 7 });
   };
 
-  const FilterContent = () => {
+  // Local state for manual inputs to prevent auto-refresh while typing
+  const [manualPrices, setManualPrices] = useState([0, 5000]);
+
+  // Sync manual inputs when tempPriceRange changes (e.g. via slider or reset)
+  useEffect(() => {
+    setManualPrices(tempPriceRange);
+  }, [tempPriceRange]);
+
+  const renderFilterContent = () => {
     // Calculer le nombre de filtres actifs
     const activeFiltersCount = Object.keys(selectedAttributes).reduce((count, attrId) => {
       return count + (selectedAttributes[attrId]?.length || 0);
@@ -214,7 +222,6 @@ const ProductsBySubCategory = () => {
         </div>
 
         {/* Prix */}
-        {/* Prix */}
         <div className="mb-6">
           <div className="d-flex justify-content-between align-items-center mb-2">
             <label className="text-sm font-bold text-gray-800">Gamme de prix</label>
@@ -227,8 +234,28 @@ const ProductsBySubCategory = () => {
               type="number"
               className="form-control form-control-sm rounded-lg text-xs"
               placeholder="Min"
-              value={tempPriceRange[0]}
-              onChange={(e) => setTempPriceRange([parseInt(e.target.value) || 0, tempPriceRange[1]])}
+              min="0"
+              max={manualPrices[1]}
+              value={manualPrices[0]}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const val = parseInt(e.target.value) || 0;
+                  if (val <= manualPrices[1]) {
+                    setTempPriceRange([val, manualPrices[1]]);
+                  }
+                }
+              }}
+              onBlur={(e) => {
+                const val = parseInt(e.target.value) || 0;
+                if (val <= manualPrices[1]) {
+                  setTempPriceRange([val, manualPrices[1]]);
+                } else {
+                  setManualPrices([tempPriceRange[0], manualPrices[1]]);
+                }
+              }}
+              onChange={(e) => {
+                setManualPrices([parseInt(e.target.value) || 0, manualPrices[1]])
+              }}
               style={{ padding: '8px' }}
             />
             <span className="text-gray-400">-</span>
@@ -236,8 +263,28 @@ const ProductsBySubCategory = () => {
               type="number"
               className="form-control form-control-sm rounded-lg text-xs"
               placeholder="Max"
-              value={tempPriceRange[1]}
-              onChange={(e) => setTempPriceRange([tempPriceRange[0], parseInt(e.target.value) || 0])}
+              min={manualPrices[0]}
+              max="5000"
+              value={manualPrices[1]}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const val = parseInt(e.target.value) || 0;
+                  if (val >= manualPrices[0]) {
+                    setTempPriceRange([manualPrices[0], val]);
+                  }
+                }
+              }}
+              onBlur={(e) => {
+                const val = parseInt(e.target.value) || 0;
+                if (val >= manualPrices[0]) {
+                  setTempPriceRange([manualPrices[0], val]);
+                } else {
+                  setManualPrices([manualPrices[0], tempPriceRange[1]]);
+                }
+              }}
+              onChange={(e) => {
+                setManualPrices([manualPrices[0], parseInt(e.target.value) || 0])
+              }}
               style={{ padding: '8px' }}
             />
           </div>
@@ -245,10 +292,15 @@ const ProductsBySubCategory = () => {
             type="range"
             className="form-range"
             min="0"
-            max={Math.max(tempPriceRange[1], 5000)}
+            max="5000"
             step="10"
             value={tempPriceRange[1]}
-            onChange={(e) => setTempPriceRange([tempPriceRange[0], parseInt(e.target.value)])}
+            onChange={(e) => {
+              const val = parseInt(e.target.value);
+              if (val >= tempPriceRange[0]) {
+                setTempPriceRange([tempPriceRange[0], val]);
+              }
+            }}
           />
         </div>
         {/* Catégories */}
@@ -458,7 +510,7 @@ const ProductsBySubCategory = () => {
                   </Badge>
                 )}
               </div>
-              <FilterContent />
+              {renderFilterContent()}
             </div>
           </Col>
 
@@ -471,7 +523,7 @@ const ProductsBySubCategory = () => {
             style={{ width: '85%', maxWidth: '320px' }}
           >
             <Offcanvas.Body className="p-4">
-              <FilterContent />
+              {renderFilterContent()}
             </Offcanvas.Body>
           </Offcanvas>
 
@@ -521,7 +573,11 @@ const ProductsBySubCategory = () => {
                 <Row xs={2} sm={2} md={3} lg={3} xl={4} className="g-3 g-md-4 mb-4">
                   {currentProducts.map((p) => (
                     <Col key={p.id}>
-                      <Card className="h-100 shadow-sm border-0 product-card-premium overflow-hidden">
+                      <Card
+                        className="h-100 shadow-sm border-0 product-card-premium overflow-hidden"
+                        onClick={() => handleDetails(p.id, subId)}
+                        style={{ cursor: 'pointer' }}
+                      >
                         <div className="position-relative bg-white p-3">
                           <Card.Img
                             variant="top"
@@ -535,7 +591,10 @@ const ProductsBySubCategory = () => {
 
                           {/* Wishlist floating */}
                           <div className="position-absolute top-0 end-0 m-2" style={{ zIndex: 10 }}>
-                            <div className="bg-white/90 backdrop-blur-md shadow-sm rounded-full p-1 border border-gray-100">
+                            <div
+                              className="bg-white/90 backdrop-blur-md shadow-sm rounded-full p-1 border border-gray-100"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <WishlistButton productId={p.id} size="small" />
                             </div>
                           </div>
@@ -563,7 +622,7 @@ const ProductsBySubCategory = () => {
                             </div>
 
                             <Button
-                              onClick={() => handleDetails(p.id, subId)}
+                              onClick={(e) => { e.stopPropagation(); handleDetails(p.id, subId); }}
                               className="w-100 py-2 border-0 rounded-xl font-bold transition-all duration-300 shadow-sm hover:brightness-110"
                               style={{
                                 fontSize: '0.75rem',
@@ -579,7 +638,7 @@ const ProductsBySubCategory = () => {
                                 variant="outline-primary"
                                 size="sm"
                                 className="mt-2 w-100 py-1.5 font-bold transition-all duration-300 hover:bg-blue-50 border-2"
-                                onClick={() => navigate('/credit/simulation', { state: { product: p } })}
+                                onClick={(e) => { e.stopPropagation(); navigate('/credit/simulation', { state: { product: p } }); }}
                                 style={{ fontSize: '0.65rem', borderRadius: '10px', color: '#4F46E5', borderColor: '#4F46E5' }}
                               >
                                 💰 SIMULER CRÉDIT

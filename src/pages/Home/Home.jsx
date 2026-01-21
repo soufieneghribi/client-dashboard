@@ -64,8 +64,8 @@ const Home = () => {
 
     const filteredCategories = categories.filter((category) => {
         if (selectedUniverse === 2) return category.parent_id === 144;
-        if (selectedUniverse === 1) return category.parent_id === 0 && category.id !== 1 && category.universe_id === 1;
-        return category.parent_id === 0 && category.id !== 1;
+        // Si c'est Épicerie (null)
+        return category.parent_id === 0 && category.id !== 1 && (category.universe_id === 1 || !category.universe_id);
     });
 
     const slides = filteredCategories.reduce((acc, cat, i) => {
@@ -154,11 +154,7 @@ const Home = () => {
                 />
 
                 <section>
-                    <div className="text-center mb-8">
-                        <h1 className="text-3xl font-black text-gray-800 mb-3 tracking-tight"> Vos Promotions Exclusives </h1>
-                        <p className="text-gray-600 max-w-2xl mx-auto"> Économisez avec nos meilleures offres </p>
-                    </div>
-                    <Popular />
+                    <Popular selectedUniverse={selectedUniverse} />
                 </section>
 
                 <section className="px-2">

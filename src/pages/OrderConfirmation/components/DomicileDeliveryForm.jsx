@@ -88,8 +88,8 @@ const DomicileDeliveryForm = ({
                 <GoogleMapReact
                     bootstrapURLKeys={{ key: GOOGLE_MAPS_API_KEY, libraries: ['places'] }}
                     center={{
-                        lat: parseFloat(formData.latitude) || DEFAULT_LOCATION.lat,
-                        lng: parseFloat(formData.longitude) || DEFAULT_LOCATION.lng
+                        lat: parseFloat(formData.latitude) || DEFAULT_LOCATION?.lat || 36.8065,
+                        lng: parseFloat(formData.longitude) || DEFAULT_LOCATION?.lng || 10.1815
                     }}
                     zoom={15}
                     onClick={handleMapClick}

@@ -23,7 +23,7 @@ import Cookies from "js-cookie";
 import WishlistButton from "./WishlistButton";
 import { getImageUrl, handleImageError } from "../utils/imageHelper";
 
-const Popular = () => {
+const Popular = ({ selectedUniverse = null }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -45,8 +45,8 @@ const Popular = () => {
   const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide());
 
   useEffect(() => {
-    dispatch(fetchPopularWithPromotions(clientId));
-  }, [dispatch, clientId]);
+    dispatch(fetchPopularWithPromotions({ clientId, universeId: selectedUniverse }));
+  }, [dispatch, clientId, selectedUniverse]);
 
   useEffect(() => {
     const handleResize = () => setItemsPerSlide(getItemsPerSlide());
@@ -172,36 +172,45 @@ const Popular = () => {
       {/* Header avec icône */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div className="d-flex align-items-center gap-3">
-          {hasPromotions ? (
-            <>
-
-            </>
-          ) : (
-            <>
-              <div>
-                <h3 className="fw-bold mb-0" style={{ color: "#0A1E3C" }}>
-                  Produits Populaires
-                </h3>
-                <p className="text-muted small mb-0">
-                  Tendances & meilleures ventes
-                </p>
-              </div>
-            </>
-          )}
+          <div className="p-2 rounded-lg" style={{
+            background: '#F0F4F8',
+            color: (selectedUniverse === 2 || !hasPromotions) ? '#4F46E5' : '#ef4444'
+          }}>
+            {(selectedUniverse === 2 || !hasPromotions) ? <FaStar size={20} /> : <FaTag size={20} />}
+          </div>
+          <div>
+            <h3 className="fw-bold mb-0" style={{ color: "#0A1E3C", fontSize: '1.25rem' }}>
+              {(selectedUniverse === 2 || !hasPromotions) ? "Articles suggérés" : "Promotions"}
+            </h3>
+            <p className="text-muted small mb-0">
+              {(selectedUniverse === 2 || !hasPromotions) ? "Sélection personnalisée pour vous" : "Découvrez nos offres spéciales"}
+            </p>
+          </div>
         </div>
 
-        {/* Bouton Voir Plus */}
-        <Button
-          onClick={() => navigate("/promotions")}
-          className="py-2 px-4 rounded-xl font-semibold text-white shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
-          style={{
-            background: "linear-gradient(90deg, #4F46E5, #6366F1)", // Indigo dégradé
-            border: "none",
-            fontSize: "0.9rem",
-          }}
-        >
-          Voir Plus
-        </Button>
+        {/* Bouton ou Badge */}
+        {(selectedUniverse === 2 || !hasPromotions) ? (
+          <div
+            className="py-2 px-3 rounded-pill font-semibold text-white shadow-sm"
+            style={{
+              background: "#32357C",
+              fontSize: "0.85rem",
+            }}
+          >
+            Suggérés
+          </div>
+        ) : (
+          <Button
+            onClick={() => navigate("/promotions")}
+            className="py-2 px-3 rounded-pill font-semibold text-white shadow-sm transition-all duration-300 transform hover:scale-105 border-0"
+            style={{
+              background: "#32357C",
+              fontSize: "0.85rem",
+            }}
+          >
+            Voir tout &gt;
+          </Button>
+        )}
 
       </div>
 
@@ -218,7 +227,11 @@ const Popular = () => {
                 const imageUrl = getImageUrl(product);
                 return (
                   <Col key={product.id} xs={6} sm={4} md={3} lg={2}>
-                    <Card className="h-100 shadow-sm border-0 product-card">
+                    <Card
+                      className="h-100 shadow-sm border-0 product-card"
+                      onClick={() => handleProductClick(product)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <div className="position-relative">
                         {imageUrl && (
                           <Card.Img
@@ -241,7 +254,10 @@ const Popular = () => {
 
                         {/* Wishlist Button (Top Right Floating) */}
                         <div className="position-absolute top-0 end-0 m-2" style={{ zIndex: 10 }}>
-                          <div className="transition-all duration-300 hover:scale-110 bg-white/80 backdrop-blur-md shadow-sm rounded-full p-1 border border-white/50">
+                          <div
+                            className="transition-all duration-300 hover:scale-110 bg-white/80 backdrop-blur-md shadow-sm rounded-full p-1 border border-white/50"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <WishlistButton productId={product.id} size="small" />
                           </div>
                         </div>
@@ -286,7 +302,7 @@ const Popular = () => {
                         {/* Actions Area (Friendly IHM) */}
                         <div className="d-flex gap-2">
                           <Button
-                            onClick={() => handleProductClick(product)}
+                            onClick={(e) => { e.stopPropagation(); handleProductClick(product); }}
                             className="flex-grow-1 border-0 shadow-sm transition-all duration-300 hover:brightness-110 text-white"
                             style={{
                               fontSize: "0.75rem",
@@ -309,13 +325,13 @@ const Popular = () => {
                               background: '#ffffff',
                               border: '1.5px solid #4F46E5',
                               width: '28px',
-                              height: '38px',
-                              color: '#4F46E5',
-                              padding: '0'
+                              height: '28px',
+                              padding: '0',
+                              color: '#4F46E5'
                             }}
                             title="Ajouter au panier"
                           >
-                            <FaPlus size={16} />
+                            <i className="fa fa-shopping-cart" style={{ fontSize: '12px' }}></i>
                           </Button>
                         </div>
 

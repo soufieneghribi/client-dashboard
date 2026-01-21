@@ -141,6 +141,7 @@ const OrderConfirmation = () => {
     const [formData, setFormData] = useState({
         contact_person_name: "",
         contact_person_number: "",
+        email: "",
         rue: "",
         ville: "",
         gouvernorat: "",
@@ -177,13 +178,13 @@ const OrderConfirmation = () => {
 
     // Validation for steps
     const isStep1Valid = formData.contact_person_name?.length >= 3 && formData.contact_person_number?.length >= 8;
-    const isStep2Valid = !!formData.order_type;
-    const isStep3Valid = formData.order_type === 'delivery'
-        ? !!formData.address
+    const isStep2Valid = formData.order_type === 'delivery'
+        ? !!(formData.rue && formData.ville && formData.gouvernorat) || (formData.latitude && formData.longitude)
         : formData.order_type === 'pickup'
             ? !!selectedPickupStore
             : !!selectedRelayPoint;
-    const isStep4Valid = !!formData.payment_method;
+    const isStep3Valid = !!formData.payment_method;
+    const isStep4Valid = true;
 
     const canContinue = () => {
         if (currentStep === 1) return isStep1Valid;
@@ -248,14 +249,18 @@ const OrderConfirmation = () => {
     }, [orderDetails, navigate]);
 
     useEffect(() => {
-        if (Userprofile && authChecked) {
-            setFormData(prev => ({
-                ...prev,
-                contact_person_name: Userprofile.nom_et_prenom || "",
-                contact_person_number: Userprofile.tel || "",
-            }));
+        if (authChecked) {
+            const profile = Userprofile || auth.user;
+            if (profile) {
+                setFormData(prev => ({
+                    ...prev,
+                    contact_person_name: prev.contact_person_name || profile.nom_et_prenom || profile.name || "",
+                    contact_person_number: prev.contact_person_number || profile.tel || profile.phone || "",
+                    email: prev.email || profile.email || "",
+                }));
+            }
         }
-    }, [Userprofile, authChecked]);
+    }, [Userprofile, auth.user, authChecked]);
 
     useEffect(() => {
         if (authChecked) dispatch(fetchAvailableModes());
@@ -493,6 +498,7 @@ const OrderConfirmation = () => {
         const amount = calculateOrderAmount();
         const orderData = {
             order_amount: amount,
+            email: formData.email,
             cagnotte_deduction: Math.min(parseFloat(formData.cagnotte_deduction) || 0, parseFloat(Userprofile?.cagnotte_balance) || 0),
             delivery_fee: parseFloat(formData.delivery_fee) || 0,
             contact_person_name: contact_person_name.trim(),
@@ -640,9 +646,9 @@ const OrderConfirmation = () => {
                         className="text-xs sm:text-sm text-slate-400 font-bold uppercase tracking-widest mt-2"
                     >
                         {currentStep === 1 && "Étape 1 : Vos coordonnées personnelles"}
-                        {currentStep === 2 && "Étape 2 : Mode de réception de votre colis"}
-                        {currentStep === 3 && "Étape 3 : Précisions sur la livraison"}
-                        {currentStep === 4 && "Étape 4 : Paiement et récapitulatif"}
+                        {currentStep === 2 && "Étape 2 : Mode et détails de livraison"}
+                        {currentStep === 3 && "Étape 3 : Mode de paiement et cagnotte"}
+                        {currentStep === 4 && "Étape 4 : Récapitulatif et validation"}
                     </motion.p>
                 </div>
 
@@ -670,6 +676,7 @@ const OrderConfirmation = () => {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -20 }}
+                                    className="space-y-6"
                                 >
                                     <DeliveryModeSection
                                         formData={formData}
@@ -682,16 +689,6 @@ const OrderConfirmation = () => {
                                         setFormData={setFormData}
                                         onlyCards={true}
                                     />
-                                </motion.div>
-                            )}
-
-                            {currentStep === 3 && (
-                                <motion.div
-                                    key="step3"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -20 }}
-                                >
                                     <DeliveryModeSection
                                         formData={formData}
                                         handleInputChange={handleInputChange}
@@ -718,6 +715,23 @@ const OrderConfirmation = () => {
                                 </motion.div>
                             )}
 
+                            {currentStep === 3 && (
+                                <motion.div
+                                    key="step3"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    className="space-y-6"
+                                >
+                                    <PaymentMethodSection
+                                        formData={formData}
+                                        handleInputChange={handleInputChange}
+                                        userProfile={Userprofile}
+                                        setFormData={setFormData}
+                                    />
+                                </motion.div>
+                            )}
+
                             {currentStep === 4 && (
                                 <motion.div
                                     key="step4"
@@ -726,9 +740,17 @@ const OrderConfirmation = () => {
                                     exit={{ opacity: 0, y: -20 }}
                                     className="space-y-6"
                                 >
-                                    <PaymentMethodSection formData={formData} handleInputChange={handleInputChange} />
+                                    <div className="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm text-center">
+                                        <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-600">
+                                            <FaBoxOpen size={40} />
+                                        </div>
+                                        <h3 className="text-2xl font-black text-[#2D2D5F] mb-4">Prêt à confirmer ?</h3>
+                                        <p className="text-slate-500 max-w-md mx-auto mb-8">
+                                            Vérifiez les détails de votre commande dans le récapitulatif à droite avant de valider.
+                                        </p>
+                                    </div>
 
-                                    {/* Mobile Summary Visibility (shown on final step) */}
+                                    {/* Mobile Summary Visibility */}
                                     <div className="lg:hidden">
                                         <OrderSummarySection
                                             orderDetails={orderDetails}

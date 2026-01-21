@@ -83,8 +83,14 @@ const Deals = () => {
                     amount: highestGain,
                 })
             ).unwrap();
+
             setCongratsData({ amount: highestGain, type: deal.type });
             setShowCongrats(true);
+
+            // Rafraîchir la page automatiquement après 1 seconde (comme Ctrl+R)
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         } catch (error) {
             setLocalTransferredDeals((prev) =>
                 prev.filter((id) => id !== `${deal.type}_${deal.ID}`)

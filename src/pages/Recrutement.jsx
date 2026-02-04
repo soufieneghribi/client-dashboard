@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Form, Badge } from 'react-bootstrap';
+import { toast } from 'react-hot-toast';
 import RECRUITMENT_BG from "../assets/images/recruitment_hero.png";
 
 const Recrutement = () => {
@@ -105,13 +106,14 @@ const Recrutement = () => {
                                         <p className="text-muted">Remplissez ce formulaire pour rejoindre notre base de talents.</p>
                                     </div>
 
-                                    <Form>
+                                    <Form onSubmit={(e) => { e.preventDefault(); toast.success("Candidature envoyée avec succès !"); }}>
                                         <Row className="g-4">
                                             <Col md={12}>
                                                 <Form.Group>
                                                     <Form.Label className="small text-muted fw-bold mb-2 tracking-wide uppercase">Nom Complet</Form.Label>
                                                     <Form.Control
                                                         type="text"
+                                                        required
                                                         placeholder="Ahmed Ben Ali"
                                                         className="form-control-lg border-2 border-light bg-light focus-bg-white px-4 py-3"
                                                     />
@@ -122,6 +124,7 @@ const Recrutement = () => {
                                                     <Form.Label className="small text-muted fw-bold mb-2 tracking-wide uppercase">Adresse Email</Form.Label>
                                                     <Form.Control
                                                         type="email"
+                                                        required
                                                         placeholder="ahmed.benali@email.com"
                                                         className="form-control-lg border-2 border-light bg-light focus-bg-white px-4 py-3"
                                                     />
@@ -133,6 +136,7 @@ const Recrutement = () => {
                                                     <div className="position-relative">
                                                         <Form.Control
                                                             type="file"
+                                                            required
                                                             className="form-control-lg border-2 border-dashed border-light bg-light focus-bg-white px-4 py-3"
                                                         />
                                                     </div>
@@ -140,6 +144,7 @@ const Recrutement = () => {
                                             </Col>
                                             <Col md={12} className="pt-4">
                                                 <Button
+                                                    type="submit"
                                                     variant="primary"
                                                     size="lg"
                                                     className="w-100 fw-bold py-4 shadow-xl border-0 bg-gradient-brand hover-scale transition-all"

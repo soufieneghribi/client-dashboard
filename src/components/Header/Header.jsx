@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { SearchProduct as searchProduct, clearSearch } from "../../store/slices/search";
 import { fetchWishlist, selectWishlistCount } from "../../store/slices/wishlist";
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import COMPANY_LOGO from "../../assets/images/logo_0.png";
+import MG_LOGO_OFFICIAL from "../../assets/images/mg_logo_official.png";
 import { Navbar, Nav, Container, Button, Badge, NavDropdown } from 'react-bootstrap';
 import debounce from 'lodash.debounce';
 import Cookies from "js-cookie";
@@ -22,7 +22,9 @@ const NAV_LINKS = [
     { path: "/MesDeals", label: "Deals", icon: "fa-tag" },
     { path: "/recipes", label: "Recettes", icon: "fa-utensils" },
     { path: "/promotions", label: "Catalogue", icon: "fa-book" },
-    { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" }
+    { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" },
+    { path: "/recrutement", label: "Recrutement", icon: "fa-user-tie" },
+    { path: "/espace-presse", label: "Presse", icon: "fa-newspaper" }
 ];
 
 const Header = () => {
@@ -150,19 +152,24 @@ const Header = () => {
 
     return (
         <>
-            <Navbar bg="white" expand="lg" sticky="top" className="shadow-sm border-bottom py-2.5">
+            <Navbar bg="white" expand="lg" sticky="top" className="shadow-sm border-bottom py-1">
                 <Container fluid className="px-3 px-lg-4">
                     <Button variant="link" className="d-lg-none text-secondary p-0 border-0 me-3" onClick={() => setShowMobileMenu(true)}>
                         <i className="fas fa-bars fs-4"></i>
                     </Button>
 
-                    <Navbar.Brand as={Link} to="/" className="me-lg-4">
-                        <img src={COMPANY_LOGO} height="26" width="75" alt="Logo" />
+                    <Navbar.Brand as={Link} to="/" className="me-lg-5">
+                        <img src={MG_LOGO_OFFICIAL} height="32" className="d-inline-block align-top" alt="MG Logo" />
                     </Navbar.Brand>
 
-                    <Nav className="d-none d-lg-flex me-auto align-items-center">
+                    <Nav className="d-none d-lg-flex me-auto align-items-center gap-2">
                         {NAV_LINKS.map((link) => (
-                            <Nav.Link key={link.path} as={Link} to={link.path} className="fw-medium px-2 text-dark text-sm hover:text-blue-600 transition-colors">
+                            <Nav.Link
+                                key={link.path}
+                                as={Link}
+                                to={link.path}
+                                className="fw-bold px-3 text-dark hover:text-primary transition-all position-relative nav-link-custom"
+                            >
                                 {link.label}
                             </Nav.Link>
                         ))}
@@ -208,7 +215,7 @@ const Header = () => {
             <MobileMenu
                 show={showMobileMenu}
                 onHide={() => setShowMobileMenu(false)}
-                COMPANY_LOGO={COMPANY_LOGO}
+                COMPANY_LOGO={MG_LOGO_OFFICIAL}
                 handleSearchSubmit={handleSearchSubmit}
                 searchQuery={searchQuery}
                 handleSearchChange={handleSearchChange}
@@ -217,6 +224,26 @@ const Header = () => {
                 handleLogout={handleLogout}
                 cartCount={cartCount}
             />
+            <style>{`
+                .nav-link-custom {
+                    font-size: 0.95rem;
+                    letter-spacing: 0.01em;
+                }
+                .nav-link-custom::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 50%;
+                    width: 0;
+                    height: 2px;
+                    background: #0056b3;
+                    transition: all 0.3s ease;
+                    transform: translateX(-50%);
+                }
+                .nav-link-custom:hover::after {
+                    width: 100%;
+                }
+            `}</style>
         </>
     );
 };

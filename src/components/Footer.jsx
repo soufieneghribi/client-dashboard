@@ -1,109 +1,89 @@
-import React from 'react';
-import COMPANY_LOGO from "../assets/images/logo_0.png";
+import MG_LOGO_OFFICIAL from "../assets/images/mg_logo_official.png";
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-900 text-white">
-      {/* Section principale */}
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-gray-900 text-white border-t border-gray-800">
+      <div className="container mx-auto px-4 py-10">
+        {/* Main Sections - Combined & Simplified */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 mb-10">
 
-          {/* Logo et description */}
-          <div className="md:col-span-1">
-            <div className="flex items-center mb-4">
-              <img src={COMPANY_LOGO} alt="TN360" className="h-14 w-auto object-contain bg-white rounded-xl px-4 py-2 shadow-sm" />
+          <div className="col-span-2 lg:col-span-1">
+            <img src={MG_LOGO_OFFICIAL} alt="MG Logo" className="h-8 mb-4 bg-white rounded p-1" />
+            <div className="space-y-2 text-xs text-gray-400">
+              <p><i className="fas fa-phone-alt me-2"></i> +216 50963367</p>
+              <div className="flex gap-3 mt-4">
+                <a href="#" className="hover:text-primary"><i className="fab fa-facebook-f"></i></a>
+                <a href="#" className="hover:text-primary"><i className="fab fa-instagram"></i></a>
+                <a href="#" className="hover:text-primary"><i className="fab fa-twitter"></i></a>
+              </div>
             </div>
-            <p className="text-gray-300 text-sm leading-relaxed">
-              Votre destination shopping préférée. Des produits de qualité, un service exceptionnel.
-            </p>
           </div>
 
-          {/* Liens rapides */}
+          {/* Navigation */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Navigation</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="/" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  Accueil
-                </a>
-              </li>
-              <li>
-                <a href="/products" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  Produits
-                </a>
-              </li>
-              <li>
-                <a href="/categories" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  Catégories
-                </a>
-              </li>
-              <li>
-                <a href="/about" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  À propos
-                </a>
-              </li>
+            <h4 className="text-sm font-bold mb-4 uppercase text-gray-200">Navigation</h4>
+            <ul className="space-y-2 text-xs text-gray-400">
+              <li><a href="/" className="hover:text-white">Accueil</a></li>
+              <li><a href="/products" className="hover:text-white">Produits</a></li>
+              <li><a href="/recrutement" className="hover:text-white">Recrutement</a></li>
+              <li><a href="/espace-presse" className="hover:text-white">Presse</a></li>
+            </ul>
+          </div>
+
+          {/* Bien Manger & Être */}
+          <div>
+            <h4 className="text-sm font-bold mb-4 uppercase text-gray-200">Univers MG</h4>
+            <ul className="space-y-2 text-xs text-gray-400">
+              <li><a href="#" className="hover:text-white">Bien Manger</a></li>
+              <li><a href="#" className="hover:text-white">Bien Être</a></li>
+              <li><a href="#" className="hover:text-white">Bien Chez Soi</a></li>
+            </ul>
+          </div>
+
+          {/* Services */}
+          <div>
+            <h4 className="text-sm font-bold mb-4 uppercase text-gray-200">Services</h4>
+            <ul className="space-y-2 text-xs text-gray-400">
+              <li><a href="#" className="hover:text-white">Carte Club MG</a></li>
+              <li><a href="#" className="hover:text-white">Espace Crédit</a></li>
+              <li><a href="#" className="hover:text-white">Application MyMG</a></li>
             </ul>
           </div>
 
           {/* Support */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Support</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="/contact" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  Contact
-                </a>
-              </li>
-              <li>
-                <a href="/shipping" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  Livraison
-                </a>
-              </li>
-              <li>
-                <a href="/returns" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  Retours
-                </a>
-              </li>
-              <li>
-                <a href="/faq" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  FAQ
-                </a>
-              </li>
+            <h4 className="text-sm font-bold mb-4 uppercase text-gray-200">Support</h4>
+            <ul className="space-y-2 text-xs text-gray-400">
+              <li><a href="/contact" className="hover:text-white">Contact</a></li>
+              <li><a href="/faq" className="hover:text-white">FAQ</a></li>
+              <li><a href="#" className="hover:text-white">Livraison</a></li>
             </ul>
           </div>
 
-          {/* Contact et réseaux sociaux */}
+          {/* Responsabilité */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Contact</h3>
-            <div className="space-y-3">
-              <div className="flex items-center text-gray-300 text-sm">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <a href="tel:22578815" className="hover:text-white transition-colors">+216 50963367 </a>
-              </div>
-
-              <div className="flex space-x-4 mt-4">
-                <a href="#" className="w-8 h-8 flex items-center justify-center bg-gray-700 hover:bg-blue-600 rounded-full transition-colors">
-                  <i className="fab fa-facebook-f text-sm"></i>
-                </a>
-                <a href="#" className="w-8 h-8 flex items-center justify-center bg-gray-700 hover:bg-pink-600 rounded-full transition-colors">
-                  <i className="fab fa-instagram text-sm"></i>
-                </a>
-                <a href="#" className="w-8 h-8 flex items-center justify-center bg-gray-700 hover:bg-blue-400 rounded-full transition-colors">
-                  <i className="fab fa-twitter text-sm"></i>
-                </a>
-              </div>
-            </div>
+            <h4 className="text-sm font-bold mb-4 uppercase text-gray-200">Engagements</h4>
+            <ul className="space-y-2 text-xs text-gray-400">
+              <li><a href="#" className="hover:text-white">Consommi Watani</a></li>
+              <li><a href="#" className="hover:text-white">RSE</a></li>
+            </ul>
           </div>
+
         </div>
 
-
+        {/* Bottom Bar */}
+        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+          <p>© 2026 MG Tunisie. Tous droits réservés.</p>
+          <div className="flex gap-4 items-center">
+            <img src="https://mg.tn/themes/mg-tunisie/assets/img/visa.png" alt="Visa" className="h-3 opacity-50" />
+            <img src="https://mg.tn/themes/mg-tunisie/assets/img/mastercard.png" alt="Mastercard" className="h-3 opacity-50" />
+            <span className="mx-2">|</span>
+            <a href="/mentions-legales" className="hover:text-white">Mentions Légales</a>
+          </div>
+        </div>
       </div>
-
-
     </footer>
   );
-}
+};
 
 export default Footer;

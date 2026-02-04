@@ -54,6 +54,7 @@ const MobileMenu = ({
                             <i className="fas fa-user-circle me-2"></i>
                             Connecté: <strong>{auth.user?.nom_et_prenom}</strong>
                         </p>
+
                         <Nav className="flex-column">
                             <Nav.Link as={Link} to="/profile" className="py-2 text-dark" onClick={onHide}>
                                 <i className="fas fa-user me-3 text-primary" style={{ width: '20px' }}></i> Mon Profil

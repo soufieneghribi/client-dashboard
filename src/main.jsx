@@ -56,6 +56,8 @@ import DossierDetails from "./pages/Credit/DossierDetails";
 // ⬅️ NOUVEAU IMPORT - Toutes les catégories
 import AllCategories from "./pages/AllCategories";
 import Jeux from "./pages/Home/Jeux";
+import Recrutement from "./pages/Recrutement";
+import PressSpace from "./pages/PressSpace";
 
 import "./styles/index.css";
 
@@ -116,6 +118,8 @@ const router = createBrowserRouter(
       <Route path="/search" element={<SearchResult />} />
       <Route path="/recipe/:id" element={<RecipeDetails />} />
       <Route path="/recipes" element={<Recipes />} />
+      <Route path="/recrutement" element={<Recrutement />} />
+      <Route path="/espace-presse" element={<PressSpace />} />
       <Route path="/jeux" element={<ProtectedRoute><Jeux /></ProtectedRoute>} />
       <Route path="/MesDeals" element={<ProtectedRoute><MesDeals /></ProtectedRoute>} />
 

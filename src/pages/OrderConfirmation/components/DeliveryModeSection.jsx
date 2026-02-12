@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaTruck, FaMapMarkerAlt, FaStore, FaCheckCircle, FaHome, FaClock, FaTag, FaBox } from "react-icons/fa";
+import { FaTruck, FaMapMarkerAlt, FaStore, FaCheckCircle, FaHome, FaClock, FaTag, FaGift, FaShippingFast } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import RelayPointSelector from "../../../components/RelayPointSelector";
 import StorePickupSelector from "../../../components/StorePickupSelector";
@@ -35,37 +35,41 @@ const DeliveryModeSection = ({
             id: 'delivery',
             label: 'Livraison à domicile',
             icon: FaHome,
-            subtitle: 'Recevez votre commande chez vous',
-            time: '2-4 jours',
+            subtitle: 'Livré chez vous',
+            time: '24-72h',
             cost: 'Variable',
-            color: 'from-blue-500 to-cyan-500',
-            bgColor: 'from-blue-50 to-cyan-50',
-            borderColor: 'border-blue-200',
-            textColor: 'text-blue-700'
+            gradient: 'from-blue-500 to-indigo-600',
+            lightBg: 'from-blue-50 to-indigo-50',
+            borderActive: 'border-blue-300',
+            textColor: 'text-blue-700',
+            shadowColor: 'shadow-blue-500/20'
         },
         {
             id: 'pickup',
             label: 'Retrait en magasin',
             icon: FaStore,
-            subtitle: 'Disponible immédiatement',
-            time: '24h',
+            subtitle: 'Click & Collect',
+            time: '1h',
             cost: 'Gratuit',
-            color: 'from-emerald-500 to-teal-500',
-            bgColor: 'from-emerald-50 to-teal-50',
-            borderColor: 'border-emerald-200',
-            textColor: 'text-emerald-700'
+            gradient: 'from-emerald-500 to-teal-600',
+            lightBg: 'from-emerald-50 to-teal-50',
+            borderActive: 'border-emerald-300',
+            textColor: 'text-emerald-700',
+            shadowColor: 'shadow-emerald-500/20',
+            badge: 'ÉCONOMIQUE'
         },
         {
             id: 'relay_point',
             label: 'Point relais',
             icon: FaMapMarkerAlt,
-            subtitle: 'Retirez dans un point proche',
-            time: '3-5 jours',
+            subtitle: 'Proche de vous',
+            time: '48-96h',
             cost: 'Réduit',
-            color: 'from-amber-500 to-orange-500',
-            bgColor: 'from-amber-50 to-orange-50',
-            borderColor: 'border-amber-200',
-            textColor: 'text-amber-700'
+            gradient: 'from-amber-500 to-orange-600',
+            lightBg: 'from-amber-50 to-orange-50',
+            borderActive: 'border-amber-300',
+            textColor: 'text-amber-700',
+            shadowColor: 'shadow-amber-500/20'
         }
     ];
 
@@ -99,9 +103,9 @@ const DeliveryModeSection = ({
 
     return (
         <div className="space-y-6">
-            {/* Delivery Mode Selection Cards - Hidden if onlyDetails is true */}
+            {/* Mode Selection Cards */}
             {!onlyDetails && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
                     {modes.map((mode, index) => {
                         const Icon = mode.icon;
                         const isSelected = formData.order_type === mode.id;
@@ -112,52 +116,74 @@ const DeliveryModeSection = ({
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.1 }}
+                                whileHover={{ y: -2 }}
+                                whileTap={{ scale: 0.98 }}
                                 onClick={() => handleModeChange(mode.id)}
-                                className={`relative p-6 rounded-2xl border-2 transition-all text-left ${isSelected
-                                    ? `bg-gradient-to-br ${mode.bgColor} ${mode.borderColor} shadow-lg scale-102`
-                                    : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md text-slate-400'
-                                    }`}
+                                className={`
+                                    relative p-4 lg:p-6 rounded-2xl border-2 transition-all duration-300 text-left
+                                    ${isSelected
+                                        ? `bg-gradient-to-br ${mode.lightBg} ${mode.borderActive} shadow-lg ${mode.shadowColor}`
+                                        : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md'
+                                    }
+                                `}
                             >
-                                {/* Selected Indicator */}
+                                {/* Selected Check */}
                                 {isSelected && (
                                     <motion.div
                                         initial={{ scale: 0 }}
                                         animate={{ scale: 1 }}
-                                        className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg"
+                                        className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg"
                                     >
-                                        <FaCheckCircle className="text-white" size={16} />
+                                        <FaCheckCircle className="text-white text-sm" />
                                     </motion.div>
                                 )}
 
+                                {/* Badge */}
+                                {mode.badge && (
+                                    <div className="absolute top-3 right-3">
+                                        <span className={`
+                                            px-2 py-0.5 text-[8px] font-black uppercase tracking-wider rounded-full
+                                            ${isSelected ? 'bg-emerald-500 text-white' : 'bg-emerald-100 text-emerald-700'}
+                                        `}>
+                                            {mode.badge}
+                                        </span>
+                                    </div>
+                                )}
+
                                 {/* Icon */}
-                                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${isSelected ? mode.color : 'from-slate-100 to-slate-200'} flex items-center justify-center mb-4 shadow-lg transition-all`}>
-                                    <Icon className={isSelected ? 'text-white' : 'text-slate-400'} size={24} />
+                                <div className={`
+                                    w-12 h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center mb-3 lg:mb-4 transition-all
+                                    ${isSelected
+                                        ? `bg-gradient-to-br ${mode.gradient} shadow-lg ${mode.shadowColor}`
+                                        : 'bg-slate-100'
+                                    }
+                                `}>
+                                    <Icon className={`text-lg lg:text-xl ${isSelected ? 'text-white' : 'text-slate-400'}`} />
                                 </div>
 
                                 {/* Content */}
-                                <div>
-                                    <h3 className={`text-lg font-black mb-1 ${isSelected ? mode.textColor : 'text-slate-700'}`}>
-                                        {mode.label}
-                                    </h3>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-tight mb-4">{mode.subtitle}</p>
+                                <h3 className={`text-sm lg:text-base font-bold mb-0.5 ${isSelected ? mode.textColor : 'text-slate-700'}`}>
+                                    {mode.label}
+                                </h3>
+                                <p className="text-xs text-slate-400 mb-3 lg:mb-4">{mode.subtitle}</p>
 
-                                    {/* Info Badges */}
-                                    <div className="flex flex-wrap gap-2">
-                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-gray-100">
-                                            <FaClock className="text-slate-400" size={10} />
-                                            <span className="text-[10px] font-black text-slate-600 uppercase">{mode.time}</span>
-                                        </div>
-                                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${mode.cost === 'Gratuit'
-                                            ? 'bg-emerald-50 border border-emerald-100'
-                                            : 'bg-white border border-gray-100'
-                                            }`}>
-                                            <FaTag className={mode.cost === 'Gratuit' ? 'text-emerald-500' : 'text-slate-400'} size={10} />
-                                            <span className={`text-[10px] font-bold uppercase ${mode.cost === 'Gratuit' ? 'text-emerald-700' : 'text-slate-600'
-                                                }`}>
-                                                {mode.cost}
-                                            </span>
-                                        </div>
-                                    </div>
+                                {/* Info Tags */}
+                                <div className="flex flex-wrap gap-1.5">
+                                    <span className={`
+                                        inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-lg
+                                        ${isSelected ? 'bg-white/80' : 'bg-slate-50'} text-slate-600
+                                    `}>
+                                        <FaClock size={8} /> {mode.time}
+                                    </span>
+                                    <span className={`
+                                        inline-flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-lg
+                                        ${isSelected
+                                            ? mode.cost === 'Gratuit' ? 'bg-emerald-500 text-white' : 'bg-white/80 text-slate-600'
+                                            : mode.cost === 'Gratuit' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-50 text-slate-600'
+                                        }
+                                    `}>
+                                        <FaTag size={8} /> {mode.cost}
+                                    </span>
                                 </div>
                             </motion.button>
                         );
@@ -165,142 +191,158 @@ const DeliveryModeSection = ({
                 </div>
             )}
 
-            {/* Conditional Forms Based on Selected Mode - Hidden if onlyCards is true */}
+            {/* Delivery Forms */}
             {!onlyCards && (
                 <AnimatePresence mode="wait">
+                    {/* Home Delivery Form */}
                     {formData.order_type === 'delivery' && (
                         <motion.div
                             key="delivery-form"
-                            initial={{ opacity: 0, y: 10 }}
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.3 }}
-                            className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 shadow-sm"
+                            exit={{ opacity: 0, y: -20 }}
+                            className="bg-white rounded-2xl lg:rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-100 overflow-hidden"
                         >
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                    <FaHome className="text-white" size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-[#2D2D5F]">Adresse de livraison</h3>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">Où souhaitez-vous recevoir votre commande ?</p>
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 lg:p-8">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                        <FaHome className="text-white text-xl" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl lg:text-2xl font-black text-white">Adresse de livraison</h3>
+                                        <p className="text-blue-100 text-sm">Où souhaitez-vous être livré ?</p>
+                                    </div>
                                 </div>
                             </div>
-                            <DomicileDeliveryForm
-                                formData={formData}
-                                handleInputChange={handleInputChange}
-                                setFormData={setFormData}
-                                geolocationStatus={geolocationStatus}
-                                handleRetryGeolocation={handleRetryGeolocation}
-                                handleMapClick={handleMapClick}
-                                GOOGLE_MAPS_API_KEY={GOOGLE_MAPS_API_KEY}
-                                DEFAULT_LOCATION={DEFAULT_LOCATION}
-                            />
+
+                            <div className="p-6 lg:p-8">
+                                <DomicileDeliveryForm
+                                    formData={formData}
+                                    handleInputChange={handleInputChange}
+                                    setFormData={setFormData}
+                                    geolocationStatus={geolocationStatus}
+                                    handleRetryGeolocation={handleRetryGeolocation}
+                                    handleMapClick={handleMapClick}
+                                    GOOGLE_MAPS_API_KEY={GOOGLE_MAPS_API_KEY}
+                                    DEFAULT_LOCATION={DEFAULT_LOCATION}
+                                />
+                            </div>
                         </motion.div>
                     )}
 
+                    {/* Store Pickup */}
                     {formData.order_type === 'pickup' && (
                         <motion.div
                             key="pickup-form"
-                            initial={{ opacity: 0, y: 10 }}
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.3 }}
-                            className="bg-white rounded-3xl border border-emerald-100 p-6 sm:p-8 shadow-sm"
+                            exit={{ opacity: 0, y: -20 }}
+                            className="bg-white rounded-2xl lg:rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-100 overflow-hidden"
                         >
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                                    <FaStore className="text-white" size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-emerald-900">Choisissez votre magasin</h3>
-                                    <p className="text-xs font-bold text-emerald-700/60 uppercase tracking-widest mt-0.5">Retrait gratuit disponible immédiatement</p>
-                                </div>
-                            </div>
-
-                            {/* Free Badge */}
-                            <div className="mb-8 p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100/50 border-dashed">
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <div className="flex items-center gap-4 text-center sm:text-left">
-                                        <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm">
-                                            <FaCheckCircle className="text-emerald-500" size={24} />
-                                        </div>
-                                        <div>
-                                            <p className="font-black text-emerald-900 tracking-tight uppercase">Frais de livraison offerts</p>
-                                            <p className="text-xs font-bold text-emerald-700/70 uppercase">Économisez sur les frais de port</p>
-                                        </div>
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 lg:p-8">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                        <FaStore className="text-white text-xl" />
                                     </div>
-                                    <div className="px-6 py-3 bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-500/30">
-                                        <span className="text-xl font-black text-white uppercase italic">GRATUIT</span>
+                                    <div>
+                                        <h3 className="text-xl lg:text-2xl font-black text-white">Retrait en magasin</h3>
+                                        <p className="text-emerald-100 text-sm">Choisissez votre point de retrait</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <StorePickupSelector
-                                onStoreSelected={(store, fee) => {
-                                    setSelectedPickupStore(store);
-                                    setPickupStoreFee(fee);
-                                }}
-                                selectedStoreId={selectedPickupStore?.id}
-                            />
+                            <div className="p-6 lg:p-8">
+                                {/* Free Delivery Banner */}
+                                <div className="mb-6 p-4 lg:p-5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border-2 border-dashed border-emerald-200">
+                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <div className="flex items-center gap-3 text-center sm:text-left">
+                                            <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                                                <FaGift className="text-emerald-500 text-xl" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-emerald-800">Livraison offerte !</p>
+                                                <p className="text-xs text-emerald-600">Économisez sur les frais de port</p>
+                                            </div>
+                                        </div>
+                                        <div className="px-5 py-2.5 bg-emerald-500 rounded-xl shadow-lg shadow-emerald-500/30">
+                                            <span className="text-lg font-black text-white">GRATUIT</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <StorePickupSelector
+                                    onStoreSelected={(store, fee) => {
+                                        setSelectedPickupStore(store);
+                                        setPickupStoreFee(fee);
+                                    }}
+                                    selectedStoreId={selectedPickupStore?.id}
+                                />
+                            </div>
                         </motion.div>
                     )}
 
+                    {/* Relay Point */}
                     {formData.order_type === 'relay_point' && (
                         <motion.div
                             key="relay-form"
-                            initial={{ opacity: 0, y: 10 }}
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.3 }}
-                            className="bg-white rounded-3xl border border-amber-100 p-6 sm:p-8 shadow-sm"
+                            exit={{ opacity: 0, y: -20 }}
+                            className="bg-white rounded-2xl lg:rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-100 overflow-hidden"
                         >
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
-                                    <FaMapMarkerAlt className="text-white" size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-amber-900">Sélectionnez un point relais</h3>
-                                    <p className="text-xs font-bold text-amber-700/60 uppercase tracking-widest mt-0.5">Retirez votre colis à votre convenance</p>
-                                </div>
-                            </div>
-
-                            {/* Advantages */}
-                            <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="p-4 bg-amber-50/30 rounded-2xl border border-amber-100/50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-amber-500 shadow-sm">
-                                            <FaTag size={16} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-amber-900 uppercase tracking-widest leading-tight">Tarif réduit</p>
-                                            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-tight">Option économique</p>
-                                        </div>
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-6 lg:p-8">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                        <FaMapMarkerAlt className="text-white text-xl" />
                                     </div>
-                                </div>
-                                <div className="p-4 bg-amber-50/30 rounded-2xl border border-amber-100/50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-amber-500 shadow-sm">
-                                            <FaClock size={16} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-amber-900 uppercase tracking-widest leading-tight">Libre retrait</p>
-                                            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-tight">Horaires flexibles</p>
-                                        </div>
+                                    <div>
+                                        <h3 className="text-xl lg:text-2xl font-black text-white">Point relais</h3>
+                                        <p className="text-amber-100 text-sm">Retirez à votre convenance</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <RelayPointSelector
-                                onStoreSelected={(store, fee) => {
-                                    setSelectedRelayPoint(store);
-                                    setRelayPointFee(fee);
-                                }}
-                                selectedStoreId={selectedRelayPoint?.id}
-                                cartTotal={subtotal}
-                                cartItems={orderDetails}
-                                deliveryModes={deliveryModes}
-                            />
+                            <div className="p-6 lg:p-8">
+                                {/* Advantages */}
+                                <div className="mb-6 grid grid-cols-2 gap-3">
+                                    <div className="p-3 lg:p-4 bg-amber-50 rounded-xl border border-amber-100">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
+                                                <FaTag className="text-amber-500" size={14} />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-amber-800">Tarif réduit</p>
+                                                <p className="text-[10px] text-amber-600">Option économique</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="p-3 lg:p-4 bg-amber-50 rounded-xl border border-amber-100">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
+                                                <FaClock className="text-amber-500" size={14} />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-amber-800">Flexible</p>
+                                                <p className="text-[10px] text-amber-600">Horaires étendus</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <RelayPointSelector
+                                    onStoreSelected={(store, fee) => {
+                                        setSelectedRelayPoint(store);
+                                        setRelayPointFee(fee);
+                                    }}
+                                    selectedStoreId={selectedRelayPoint?.id}
+                                    cartTotal={subtotal}
+                                    cartItems={orderDetails}
+                                    deliveryModes={deliveryModes}
+                                />
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>

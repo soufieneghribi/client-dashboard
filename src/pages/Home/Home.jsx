@@ -10,6 +10,7 @@ import Banners from "../../components/Banners";
 import Popular from "../../components/Popular";
 import { getImageUrl } from "../../utils/imageHelper";
 import FeatureCarousel from "../../components/FeatureCarousel";
+import { fetchPopularWithPromotions } from "../../store/slices/Popular";
 
 // Sub-components
 import UniverseSelector from "./components/UniverseSelector";
@@ -43,7 +44,32 @@ const Home = () => {
     useEffect(() => {
         dispatch(fetchCategories());
         dispatch(fetchRecommendedProduct());
-    }, [dispatch]);
+
+        // 🚀 OPTIMISATION MAJEURE: Précharger les articles suggérés Électronique dès le démarrage
+        // On n'attend pas le clic : on remplit le cache Redux immédiatement.
+        const prefetchElectronics = async () => {
+            try {
+                const clientId = user?.ID_client || user?.id || localStorage.getItem("client_id");
+
+                // Charger les produits électroniques dans le store Redux (cache)
+                dispatch(fetchPopularWithPromotions({ clientId, universeId: 2 }));
+
+                // Précharger EN PARALLÈLE les autres données via cache HTTP
+                const promises = [
+                    fetch(`${import.meta.env.VITE_API_URL}/categories?parent_id=144`),
+                    fetch(`${import.meta.env.VITE_API_URL}/products/all`)
+                ];
+                await Promise.all(promises);
+                console.log('✅ Cycle de préchargement Électronique terminé (Redux + HTTP)');
+            } catch (error) {
+                console.log('⚠️ Erreur prefetch:', error.message);
+            }
+        };
+
+        // On lance le prefetch après un court délai pour ne pas charger le thread principal
+        const timer = setTimeout(prefetchElectronics, 1000);
+        return () => clearTimeout(timer);
+    }, [dispatch, user]);
 
 
 

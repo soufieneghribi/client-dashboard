@@ -297,11 +297,12 @@ const popularSlice = createSlice({
     // Données
     popular: [],
     products: [],
+    cache: {}, // 🚀 Nouveau: Stocke les produits par universeId pour un accès instantané
 
     // Promotions
-    hasPromotions: false,     // Indique si les produits affichés sont des promotions
-    promotionsData: null,     // Données complètes des promotions
-    clientId: null,           // ID du client actuel
+    hasPromotions: false,
+    promotionsData: null,
+    clientId: null,
 
     // États de chargement
     loading: false,
@@ -358,15 +359,18 @@ const popularSlice = createSlice({
       .addCase(fetchPopularWithPromotions.fulfilled, (state, action) => {
         state.loading = false;
         state.isLoaded = true;
-        state.products = action.payload.products || [];
+        const products = action.payload.products || [];
+        const universeId = action.payload.universeId;
+
+        state.products = products;
+        state.cache[universeId] = products; // 🚀 Mise en cache par univers
+
         state.hasPromotions = action.payload.hasPromotions || false;
         state.promotionsData = action.payload.promotionsData;
         state.clientId = action.payload.clientId;
-        state.totalCount = state.products.length;
+        state.totalCount = products.length;
         state.lastFetch = new Date().toISOString();
         state.error = null;
-
-
       })
       .addCase(fetchPopularWithPromotions.rejected, (state, action) => {
         state.loading = false;
@@ -431,6 +435,7 @@ export const selectPopularCount = (state) => state.popular.totalCount;
 export const selectPopularLastFetch = (state) => state.popular.lastFetch;
 export const selectHasPromotions = (state) => state.popular.hasPromotions;
 export const selectPromotionsData = (state) => state.popular.promotionsData;
+export const selectPopularCache = (state) => state.popular.cache; // 🚀 Accès au cache des univers
 
 // Selector avec transformation
 export const selectPopularProductsWithDiscount = (state) => {

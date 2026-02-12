@@ -6,6 +6,7 @@ import {
   selectPopularProducts,
   selectPopularLoading,
   selectHasPromotions,
+  selectPopularCache, // 🚀 Nouveau
 } from "../store/slices/Popular";
 import { useNavigate } from "react-router-dom";
 import {
@@ -28,8 +29,21 @@ const Popular = ({ selectedUniverse = null }) => {
   const navigate = useNavigate();
 
   const products = useSelector(selectPopularProducts);
+  const cache = useSelector(selectPopularCache); // 🚀 Accès au cache
   const loading = useSelector(selectPopularLoading);
   const hasPromotions = useSelector(selectHasPromotions);
+
+  // 🚀 Déterminer les produits à afficher : cache spécifique ou liste globale
+  const displayProducts = useMemo(() => {
+    if (cache && cache[selectedUniverse]) {
+      return cache[selectedUniverse];
+    }
+    return products;
+  }, [cache, products, selectedUniverse]);
+
+  // 🚀 Ne montrer le loading/skeleton QUE si on n'a absolument rien à afficher pour cet univers
+  const showLoading = loading && (!cache || !cache[selectedUniverse]);
+
   const { categories = [] } = useSelector((state) => state.categorie);
 
   const userProfile = useSelector((state) => state.auth?.user);
@@ -43,9 +57,16 @@ const Popular = ({ selectedUniverse = null }) => {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide());
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+  // 🚀 OPTIMISATION CRITIQUE: Réduire le debounce à 50ms au lieu de 300ms
   useEffect(() => {
-    dispatch(fetchPopularWithPromotions({ clientId, universeId: selectedUniverse }));
+    const timer = setTimeout(() => {
+      dispatch(fetchPopularWithPromotions({ clientId, universeId: selectedUniverse }));
+      setIsInitialLoad(false);
+    }, 50); // 50ms au lieu de 300ms pour un chargement quasi-instantané
+
+    return () => clearTimeout(timer);
   }, [dispatch, clientId, selectedUniverse]);
 
   useEffect(() => {
@@ -58,8 +79,8 @@ const Popular = ({ selectedUniverse = null }) => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) =>
-        products && products.length
-          ? (prev + 1) % Math.ceil(products.length / itemsPerSlide)
+        displayProducts && displayProducts.length
+          ? (prev + 1) % Math.ceil(displayProducts.length / itemsPerSlide)
           : 0
       );
     }, 4000); // Change slide every 4 seconds
@@ -134,7 +155,7 @@ const Popular = ({ selectedUniverse = null }) => {
     toast.success(`${product.name} ajouté au panier !`);
   };
 
-  const slides = products.reduce((acc, product, i) => {
+  const slides = displayProducts.reduce((acc, product, i) => {
     const slideIndex = Math.floor(i / itemsPerSlide);
     if (!acc[slideIndex]) acc[slideIndex] = [];
     acc[slideIndex].push(product);
@@ -149,15 +170,26 @@ const Popular = ({ selectedUniverse = null }) => {
     setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
 
-  if (loading) {
+  // 🚀 Optimisation: Afficher un skeleton loader au lieu d'un spinner bloquant
+  if (showLoading && isInitialLoad) {
     return (
-      <Container className="d-flex justify-content-center align-items-center py-5">
-        <Spinner animation="border" variant="primary" />
+      <Container fluid className="py-4">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div className="skeleton" style={{ width: '200px', height: '30px', borderRadius: '8px' }}></div>
+          <div className="skeleton" style={{ width: '100px', height: '35px', borderRadius: '20px' }}></div>
+        </div>
+        <Row className="g-2 g-md-3">
+          {[...Array(6)].map((_, i) => (
+            <Col key={i} xs={6} sm={4} md={3} lg={2}>
+              <div className="skeleton" style={{ height: '250px', borderRadius: '12px' }}></div>
+            </Col>
+          ))}
+        </Row>
       </Container>
     );
   }
 
-  if (!products || products.length === 0) {
+  if (!displayProducts || displayProducts.length === 0) {
     return (
       <Container className="py-5">
         <div className="text-center py-5 bg-light rounded">
@@ -228,7 +260,7 @@ const Popular = ({ selectedUniverse = null }) => {
                 return (
                   <Col key={product.id} xs={6} sm={4} md={3} lg={2}>
                     <Card
-                      className="h-100 shadow-sm border-0 product-card"
+                      className="h-100 shadow-sm border-0 product-card card-transition gpu-accelerated"
                       onClick={() => handleProductClick(product)}
                       style={{ cursor: 'pointer' }}
                     >
@@ -401,7 +433,7 @@ const Popular = ({ selectedUniverse = null }) => {
       <style jsx>{`
         .product-card {
           border-radius: 12px;
-          transition: 0.25s ease;
+          /* Utiliser les classes de performance.css au lieu de transition: all */
         }
         .product-card:hover {
           transform: translateY(-3px);
@@ -409,12 +441,11 @@ const Popular = ({ selectedUniverse = null }) => {
         }
 
         .badge-red {
-  background-color: #FF3B30 !important;
-  color: #fff;
-  font-size: 0.7rem;
-  padding: 3px 6px;
-}
-
+          background-color: #FF3B30 !important;
+          color: #fff;
+          font-size: 0.7rem;
+          padding: 3px 6px;
+        }
       `}</style>
     </Container >
   );

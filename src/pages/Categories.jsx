@@ -271,8 +271,8 @@ const Categories = () => {
                     <div
                       key={category.id}
                       onClick={() => handleCategorySelect(category)}
-                      className={`relative h-36 flex-1 rounded-xl shadow-lg overflow-hidden cursor-pointer group transition-all duration-500 ease-out ${selectedCategory?.id === category.id
-                        ? "ring-4 ring-blue-500 scale-105 shadow-2xll"
+                      className={`relative h-36 flex-1 rounded-xl shadow-lg overflow-hidden cursor-pointer group card-transition gpu-accelerated ${selectedCategory?.id === category.id
+                        ? "ring-4 ring-blue-500 scale-105 shadow-2xl"
                         : "hover:scale-105 hover:shadow-xl"
                         }`}
                       style={{
@@ -359,7 +359,7 @@ const Categories = () => {
                 <div
                   key={subCat.id}
                   onClick={() => handleSubCategoryClick(subCat)}
-                  className="group relative cursor-pointer rounded-xl overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl hover:scale-105"
+                  className="group relative cursor-pointer rounded-xl overflow-hidden card-transition gpu-accelerated shadow-lg hover:shadow-2xl hover:scale-105"
                 >
                   <div className="relative h-32 overflow-hidden">
                     <img

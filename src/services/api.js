@@ -9,7 +9,7 @@ export const API_BASE_URL = `${BASE_URL}/api/v1`;
 const API_TIMEOUT = 15000;
 
 // Google Maps API Key
-export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+export const GOOGLE_MAPS_API_KEY = "AIzaSyAFwGAsC3VUZYdxkEwB43DEf5tpSx4hAZg";
 
 // ==================== AXIOS INSTANCE SETUP ====================
 

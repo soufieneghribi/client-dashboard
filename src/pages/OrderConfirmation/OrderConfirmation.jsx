@@ -17,7 +17,7 @@ import {
     selectDeliveryCalculating,
 } from "../../store/slices/delivery";
 import store from "../../store";
-import { API_BASE_URL } from "../../services/api";
+import { API_BASE_URL, GOOGLE_MAPS_API_KEY } from "../../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaBoxOpen } from "react-icons/fa";
 
@@ -34,7 +34,7 @@ import StepNavigation from './components/StepNavigation';
 import './OrderConfirmation.css';
 
 // Constants
-const GOOGLE_MAPS_API_KEY = "AIzaSyAFwGAsC3VUZYdxkEwB43DEf5tpSx4hAZg";
+
 const DEFAULT_LOCATION = { lat: 36.8065, lng: 10.1815 };
 const PICKUP_DELIVERY_FEE = 0;
 

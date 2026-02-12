@@ -60,6 +60,7 @@ import Jeux from "./pages/Home/Jeux";
 import Recrutement from "./pages/Recrutement";
 import PressSpace from "./pages/PressSpace";
 import PressDetails from "./pages/PressDetails";
+import Stores from "./pages/Stores";
 
 import "./styles/index.css";
 import "./styles/performance.css"; // 🚀 Performance optimizations
@@ -123,6 +124,7 @@ const router = createBrowserRouter(
       <Route path="/recipe/:id" element={<RecipeDetails />} />
       <Route path="/recipes" element={<Recipes />} />
       <Route path="/recrutement" element={<Recrutement />} />
+      <Route path="/magasins" element={<Stores />} />
       <Route path="/espace-presse" element={<PressSpace />} />
       <Route path="/espace-presse/:slug" element={<PressDetails />} />
       <Route path="/jeux" element={<ProtectedRoute><Jeux /></ProtectedRoute>} />

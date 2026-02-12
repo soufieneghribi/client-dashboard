@@ -3,6 +3,7 @@ import { Provider } from "react-redux";
 import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom';
 import store from "./store";
 import App from "./App";
+import { QueryProvider } from "./config/queryClient.jsx";
 import Home from "./pages/Home/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register/Register";
@@ -58,8 +59,11 @@ import AllCategories from "./pages/AllCategories";
 import Jeux from "./pages/Home/Jeux";
 import Recrutement from "./pages/Recrutement";
 import PressSpace from "./pages/PressSpace";
+import PressDetails from "./pages/PressDetails";
 
 import "./styles/index.css";
+import "./styles/performance.css"; // 🚀 Performance optimizations
+
 
 /**
  * Suppress non-critical warnings from google-map-react library
@@ -120,6 +124,7 @@ const router = createBrowserRouter(
       <Route path="/recipes" element={<Recipes />} />
       <Route path="/recrutement" element={<Recrutement />} />
       <Route path="/espace-presse" element={<PressSpace />} />
+      <Route path="/espace-presse/:slug" element={<PressDetails />} />
       <Route path="/jeux" element={<ProtectedRoute><Jeux /></ProtectedRoute>} />
       <Route path="/MesDeals" element={<ProtectedRoute><MesDeals /></ProtectedRoute>} />
 
@@ -243,7 +248,9 @@ const router = createBrowserRouter(
  * Root render
  */
 createRoot(document.getElementById('root')).render(
-  <Provider store={store}>
-    <RouterProvider router={router} />
-  </Provider>
+  <QueryProvider>
+    <Provider store={store}>
+      <RouterProvider router={router} />
+    </Provider>
+  </QueryProvider>
 );

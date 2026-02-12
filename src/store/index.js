@@ -22,6 +22,9 @@ import deliveryReducer from './slices/delivery';  // ✅ NOUVEAU - Delivery fee 
 import storesReducer from './slices/stores';  // ✅ NOUVEAU - Stores/Relay points
 import complaintsReducer from './slices/complaints';  // ✅ NOUVEAU - Réclamations
 import creditReducer from './slices/credit';  // ✅ NOUVEAU - Crédit
+import blogReducer from './slices/blog';  // ✅ NOUVEAU - Blog/Presse
+import recruitmentReducer from './slices/recruitment';  // ✅ NOUVEAU - Recrutement
+
 
 
 // Import du middleware d'authentification
@@ -51,6 +54,9 @@ const store = configureStore({
         stores: storesReducer,  // ✅ NOUVEAU - Stores/Relay points
         complaints: complaintsReducer,  // ✅ NOUVEAU - Réclamations
         credit: creditReducer,  // ✅ NOUVEAU - Crédit
+        blog: blogReducer,  // ✅ NOUVEAU - Blog/Presse
+        recruitment: recruitmentReducer,  // ✅ NOUVEAU - Recrutement
+
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

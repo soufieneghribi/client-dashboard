@@ -219,6 +219,21 @@ export const claimService = {
   addFeedback: (id, data) => apiClient.post(`/claims/${id}/feedback`, data),
 };
 
+export const recruitmentService = {
+  getJobs: (params) => apiClient.get('/recrutement/jobs', { params }),
+  getJobDetails: (slug) => apiClient.get(`/recrutement/jobs/${slug}`),
+  apply: (formData) => apiClient.post('/recrutement/apply', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+};
+
+export const blogService = {
+  getAll: (params) => apiClient.get('/blogs', { params }),
+  getFeatured: () => apiClient.get('/blogs/featured'),
+  getDetails: (idOrSlug) => apiClient.get(`/blogs/${idOrSlug}`),
+};
+
+
 // ==================== LEGACY CONSTANTS (DEPRECATED but REQUIRED) ====================
 export const API_ENDPOINTS = {
   AUTH: {
@@ -353,7 +368,18 @@ export const API_ENDPOINTS = {
     RESERVE: (id) => `${API_BASE_URL}/promo-codes/${id}/reserve`,
     MY_CODES: `${API_BASE_URL}/promo-codes/my`,
   },
+  RECRUTEMENT: {
+    JOBS: `${API_BASE_URL}/recrutement/jobs`,
+    JOB_DETAILS: (slug) => `${API_BASE_URL}/recrutement/jobs/${slug}`,
+    APPLY: `${API_BASE_URL}/recrutement/apply`,
+  },
+  BLOG: {
+    ALL: `${API_BASE_URL}/blogs`,
+    FEATURED: `${API_BASE_URL}/blogs/featured`,
+    DETAILS: (idOrSlug) => `${API_BASE_URL}/blogs/${idOrSlug}`,
+  },
 };
+
 
 // ==================== EXPORTS ====================
 

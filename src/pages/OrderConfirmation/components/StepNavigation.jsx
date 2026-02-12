@@ -41,10 +41,10 @@ const StepNavigation = ({
                 onClick={isLastStep ? onSubmit : onNext}
                 disabled={!canProceed || isSubmitting}
                 className={`group relative overflow-hidden flex items-center justify-center gap-3 px-8 py-5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all shadow-xl sm:ml-auto w-full sm:w-auto ${!canProceed || isSubmitting
-                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                        : isLastStep
-                            ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white hover:from-emerald-600 hover:via-teal-600 hover:to-emerald-700 shadow-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/50'
-                            : 'bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 text-white hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-700 shadow-indigo-500/40 hover:shadow-2xl hover:shadow-indigo-500/50'
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                    : isLastStep
+                        ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white hover:from-emerald-600 hover:via-teal-600 hover:to-emerald-700 shadow-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/50'
+                        : 'bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 text-white hover:from-indigo-600 hover:via-purple-600 hover:to-indigo-700 shadow-indigo-500/40 hover:shadow-2xl hover:shadow-indigo-500/50'
                     }`}
             >
                 {/* Animated Background */}

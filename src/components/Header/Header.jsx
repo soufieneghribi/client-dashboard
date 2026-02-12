@@ -24,6 +24,7 @@ const NAV_LINKS = [
     { path: "/promotions", label: "Catalogue", icon: "fa-book" },
     { path: "/cadeaux", label: "Cadeaux", icon: "fa-gift" },
     { path: "/recrutement", label: "Recrutement", icon: "fa-user-tie" },
+    { path: "/magasins", label: "Nos Magasins", icon: "fa-map-marker-alt" },
     { path: "/espace-presse", label: "Presse", icon: "fa-newspaper" }
 ];
 

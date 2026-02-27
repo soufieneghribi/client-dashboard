@@ -12,7 +12,6 @@ const Recrutement = () => {
     const [showApplyModal, setShowApplyModal] = useState(false);
     const [selectedJob, setSelectedJob] = useState(null);
 
-    // Form data state
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
@@ -31,14 +30,7 @@ const Recrutement = () => {
         if (successMessage) {
             toast.success(successMessage || "Candidature envoyée avec succès !");
             setShowApplyModal(false);
-            setFormData({
-                first_name: '',
-                last_name: '',
-                email: '',
-                phone: '',
-                cover_letter: '',
-                resume: null
-            });
+            setFormData({ first_name: '', last_name: '', email: '', phone: '', cover_letter: '', resume: null });
             dispatch(clearMessages());
         }
         if (error) {
@@ -59,18 +51,9 @@ const Recrutement = () => {
 
     const handleSubmit = async (e, jobId = null) => {
         e.preventDefault();
-
         const finalJobId = jobId || selectedJob?.id;
-
-        if (!finalJobId && !jobId) {
-            toast.error("Veuillez sélectionner un poste.");
-            return;
-        }
-
-        if (!formData.resume) {
-            toast.error("Veuillez joindre votre CV.");
-            return;
-        }
+        if (!finalJobId && !jobId) { toast.error("Veuillez sélectionner un poste."); return; }
+        if (!formData.resume) { toast.error("Veuillez joindre votre CV."); return; }
 
         const data = new FormData();
         data.append('job_offer_id', finalJobId);
@@ -80,7 +63,6 @@ const Recrutement = () => {
         data.append('phone', formData.phone);
         data.append('cover_letter', formData.cover_letter);
         data.append('resume', formData.resume);
-
         dispatch(applyForJob(data));
     };
 
@@ -90,17 +72,17 @@ const Recrutement = () => {
     };
 
     return (
-        <div className="bg-white min-vh-100">
-            {/* --- HERO SECTION --- */}
+        <div className="recrutement-page bg-white min-vh-100">
+            {/* Hero */}
             <div
-                className="position-relative overflow-hidden py-8 py-lg-12"
+                className="position-relative overflow-hidden d-flex align-items-center"
                 style={{
                     backgroundImage: `linear-gradient(rgba(0, 40, 85, 0.85), rgba(0, 40, 85, 0.7)), url(${RECRUITMENT_BG})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    minHeight: '40vh',
-                    display: 'flex',
-                    alignItems: 'center'
+                    minHeight: '420px',
+                    paddingTop: '80px',
+                    paddingBottom: '120px',
                 }}
             >
                 <Container className="text-center text-white">
@@ -108,150 +90,134 @@ const Recrutement = () => {
                         <Col lg={9}>
                             <Badge
                                 bg="transparent"
-                                className="mb-4 px-4 py-2 text-uppercase tracking-widest border border-white rounded-pill fw-light"
-                                style={{ fontSize: '0.8rem' }}
+                                className="mb-3 px-4 py-2 text-uppercase border border-white rounded-pill fw-light"
+                                style={{ fontSize: '0.8rem', letterSpacing: '0.2em' }}
                             >
                                 Rejoignez nos équipes
                             </Badge>
-                            <h1 className="display-2 fw-bold mb-4 tracking-tight">
+                            <h1 className="fw-bold mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', letterSpacing: '-0.02em' }}>
                                 Cultivez votre talent <br className="d-none d-lg-block" />
                                 <span className="text-info">au cœur de la Tunisie.</span>
                             </h1>
-                            <p className="lead px-lg-10 opacity-90 fw-light mb-0">
+                            <p className="lead px-lg-5 opacity-90 fw-light mb-0" style={{ maxWidth: '700px', margin: '0 auto' }}>
                                 Plus qu'un métier, nous vous proposons une aventure humaine unique au sein du leader de la distribution.
-                                Ensemble, construisons le commerce de demain.
                             </p>
                         </Col>
                     </Row>
                 </Container>
-
-                <div
-                    className="position-absolute bottom-0 start-0 w-100 bg-white"
-                    style={{ height: '50px', clipPath: 'polygon(0 100%, 100% 100%, 100% 0)' }}
-                ></div>
+                <div className="position-absolute bottom-0 start-0 w-100 bg-white" style={{ height: '50px', clipPath: 'polygon(0 100%, 100% 100%, 100% 0)' }} />
             </div>
 
-            <Container className="pb-10 mt-n10 position-relative z-index-10">
+            {/* Main Card */}
+            <Container style={{ marginTop: '-80px', position: 'relative', zIndex: 10, paddingBottom: '60px' }}>
                 <Row className="justify-content-center">
                     <Col lg={11} xl={10}>
-                        <Card className="border-0 shadow-2xl rounded-5 overflow-hidden">
+                        <Card className="border-0 overflow-hidden" style={{ borderRadius: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.2)' }}>
                             <Row className="g-0">
-                                {/* Left Panel: Information */}
-                                <Col md={5} className="bg-primary p-5 p-lg-10 text-white d-flex flex-column justify-content-between">
+                                {/* Left Panel */}
+                                <Col md={5} className="text-white d-flex flex-column" style={{ background: 'linear-gradient(135deg, #0056b3 0%, #002855 100%)', padding: 'clamp(2rem, 4vw, 3.5rem)' }}>
                                     <div>
-                                        <h2 className="fw-bold mb-5 h1">Pourquoi MG ?</h2>
+                                        <h2 className="fw-bold mb-4" style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}>Pourquoi MG ?</h2>
 
-                                        <div className="mb-6 d-flex">
-                                            <div className="bg-white bg-opacity-10 rounded-3 p-3 me-4 h-100">
-                                                <i className="fas fa-rocket fs-4"></i>
+                                        <div className="d-flex mb-4">
+                                            <div className="rounded-3 p-3 me-3 flex-shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                                                <i className="fas fa-rocket fs-5"></i>
                                             </div>
                                             <div>
-                                                <h5 className="fw-bold mb-1">Innovation & Challenge</h5>
+                                                <h6 className="fw-bold mb-1">Innovation & Challenge</h6>
                                                 <p className="small opacity-75 mb-0">Participez à la transformation digitale du commerce de proximité.</p>
                                             </div>
                                         </div>
 
-                                        <div className="mb-6 d-flex">
-                                            <div className="bg-white bg-opacity-10 rounded-3 p-3 me-4 h-100">
-                                                <i className="fas fa-graduation-cap fs-4"></i>
+                                        <div className="d-flex mb-4">
+                                            <div className="rounded-3 p-3 me-3 flex-shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                                                <i className="fas fa-graduation-cap fs-5"></i>
                                             </div>
                                             <div>
-                                                <h5 className="fw-bold mb-1">Formation Continue</h5>
+                                                <h6 className="fw-bold mb-1">Formation Continue</h6>
                                                 <p className="small opacity-75 mb-0">Nous investissons dans votre potentiel dès le premier jour.</p>
                                             </div>
                                         </div>
 
-                                        <div className="mb-0 d-flex">
-                                            <div className="bg-white bg-opacity-10 rounded-3 p-3 me-4 h-100">
-                                                <i className="fas fa-heart fs-4"></i>
+                                        <div className="d-flex">
+                                            <div className="rounded-3 p-3 me-3 flex-shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                                                <i className="fas fa-heart fs-5"></i>
                                             </div>
                                             <div>
-                                                <h5 className="fw-bold mb-1">Bien-être au travail</h5>
+                                                <h6 className="fw-bold mb-1">Bien-être au travail</h6>
                                                 <p className="small opacity-75 mb-0">Un cadre respectueux favorisant l'équilibre pro/perso.</p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="mt-10 pt-10 border-top border-white border-opacity-10 d-none d-md-block">
-                                        <p className="small mb-0 opacity-60">
+                                    <div className="mt-auto pt-4 d-none d-md-block" style={{ borderTop: '1px solid rgba(255,255,255,0.15)', marginTop: '2rem' }}>
+                                        <p className="small mb-0 fst-italic opacity-60">
                                             "Chez MG, nous ne recrutons pas seulement des CV, nous recrutons des personnalités."
                                         </p>
                                     </div>
                                 </Col>
 
-                                {/* Right Panel: Form (Candidature Spontanée) */}
-                                <Col md={7} className="p-5 p-lg-10 bg-white">
-                                    <div className="mb-8">
-                                        <h3 className="fw-bold mb-2 h2">Candidature Spontanée</h3>
-                                        <p className="text-muted">Remplissez ce formulaire pour rejoindre notre base de talents.</p>
+                                {/* Right Panel: Form */}
+                                <Col md={7} className="bg-white" style={{ padding: 'clamp(2rem, 4vw, 3.5rem)' }}>
+                                    <div className="mb-4">
+                                        <h3 className="fw-bold mb-2" style={{ fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)' }}>Candidature Spontanée</h3>
+                                        <p className="text-muted mb-0">Remplissez ce formulaire pour rejoindre notre base de talents.</p>
                                     </div>
 
                                     <Form onSubmit={handleSubmit}>
-                                        <Row className="g-4">
+                                        <Row className="g-3">
                                             <Col md={6}>
                                                 <Form.Group>
-                                                    <Form.Label className="small text-muted fw-bold mb-2 tracking-wide uppercase">Prénom</Form.Label>
+                                                    <Form.Label className="small text-muted fw-bold mb-1">PRÉNOM</Form.Label>
                                                     <Form.Control
-                                                        type="text"
-                                                        required
-                                                        name="first_name"
-                                                        value={formData.first_name}
-                                                        onChange={handleInputChange}
+                                                        type="text" required name="first_name"
+                                                        value={formData.first_name} onChange={handleInputChange}
                                                         placeholder="Ahmed"
-                                                        className="form-control-lg border-2 border-light bg-light focus-bg-white px-4 py-3"
+                                                        className="border-2 bg-light px-3 py-2"
+                                                        style={{ borderColor: '#e9ecef', borderRadius: '0.75rem' }}
                                                     />
                                                 </Form.Group>
                                             </Col>
                                             <Col md={6}>
                                                 <Form.Group>
-                                                    <Form.Label className="small text-muted fw-bold mb-2 tracking-wide uppercase">Nom</Form.Label>
+                                                    <Form.Label className="small text-muted fw-bold mb-1">NOM</Form.Label>
                                                     <Form.Control
-                                                        type="text"
-                                                        required
-                                                        name="last_name"
-                                                        value={formData.last_name}
-                                                        onChange={handleInputChange}
+                                                        type="text" required name="last_name"
+                                                        value={formData.last_name} onChange={handleInputChange}
                                                         placeholder="Ben Ali"
-                                                        className="form-control-lg border-2 border-light bg-light focus-bg-white px-4 py-3"
+                                                        className="border-2 bg-light px-3 py-2"
+                                                        style={{ borderColor: '#e9ecef', borderRadius: '0.75rem' }}
                                                     />
                                                 </Form.Group>
                                             </Col>
                                             <Col md={12}>
                                                 <Form.Group>
-                                                    <Form.Label className="small text-muted fw-bold mb-2 tracking-wide uppercase">Adresse Email</Form.Label>
+                                                    <Form.Label className="small text-muted fw-bold mb-1">ADRESSE EMAIL</Form.Label>
                                                     <Form.Control
-                                                        type="email"
-                                                        required
-                                                        name="email"
-                                                        value={formData.email}
-                                                        onChange={handleInputChange}
+                                                        type="email" required name="email"
+                                                        value={formData.email} onChange={handleInputChange}
                                                         placeholder="ahmed.benali@email.com"
-                                                        className="form-control-lg border-2 border-light bg-light focus-bg-white px-4 py-3"
+                                                        className="border-2 bg-light px-3 py-2"
+                                                        style={{ borderColor: '#e9ecef', borderRadius: '0.75rem' }}
                                                     />
                                                 </Form.Group>
                                             </Col>
                                             <Col md={12}>
                                                 <Form.Group>
-                                                    <Form.Label className="small text-muted fw-bold mb-2 tracking-wide uppercase">Votre CV (PDF, Max 5MB)</Form.Label>
-                                                    <div className="position-relative">
-                                                        <Form.Control
-                                                            type="file"
-                                                            required
-                                                            accept=".pdf,.doc,.docx"
-                                                            onChange={handleFileChange}
-                                                            className="form-control-lg border-2 border-dashed border-light bg-light focus-bg-white px-4 py-3"
-                                                        />
-                                                    </div>
+                                                    <Form.Label className="small text-muted fw-bold mb-1">VOTRE CV (PDF, Max 5MB)</Form.Label>
+                                                    <Form.Control
+                                                        type="file" required accept=".pdf,.doc,.docx"
+                                                        onChange={handleFileChange}
+                                                        className="border-2 bg-light px-3 py-2"
+                                                        style={{ borderColor: '#e9ecef', borderRadius: '0.75rem', borderStyle: 'dashed' }}
+                                                    />
                                                 </Form.Group>
                                             </Col>
-                                            <Col md={12} className="pt-4">
+                                            <Col md={12} className="mt-3">
                                                 <Button
-                                                    type="submit"
-                                                    variant="primary"
-                                                    size="lg"
-                                                    disabled={submitting}
-                                                    className="w-100 fw-bold py-4 shadow-xl border-0 bg-gradient-brand hover-scale transition-all"
-                                                    style={{ background: 'linear-gradient(135deg, #0056b3 0%, #002855 100%)' }}
+                                                    type="submit" size="lg" disabled={submitting}
+                                                    className="w-100 fw-bold border-0 py-3"
+                                                    style={{ background: 'linear-gradient(135deg, #0056b3 0%, #002855 100%)', borderRadius: '0.75rem' }}
                                                 >
                                                     {submitting ? <Spinner size="sm" /> : "ENVOYER MA CANDIDATURE"} <i className="fas fa-paper-plane ms-2"></i>
                                                 </Button>
@@ -264,125 +230,116 @@ const Recrutement = () => {
                     </Col>
                 </Row>
 
-                {/* --- JOB OFFERS SECTION --- */}
-                <Row className="mt-12">
-                    <Col lg={12}>
-                        <div className="text-center mb-10">
-                            <Badge bg="primary" className="mb-3 px-3 py-2 text-uppercase fw-bold">Opportunités</Badge>
-                            <h2 className="display-5 fw-bold text-dark">Nos Offres d'Emploi</h2>
-                            <p className="lead text-muted">Consultez nos postes ouverts et postulez dès maintenant.</p>
-                        </div>
+                {/* Job Offers */}
+                <div style={{ marginTop: '4rem' }}>
+                    <div className="text-center mb-5">
+                        <Badge bg="primary" className="mb-3 px-3 py-2 text-uppercase fw-bold">Opportunités</Badge>
+                        <h2 className="fw-bold text-dark" style={{ fontSize: 'clamp(1.8rem, 4vw, 2.5rem)' }}>Nos Offres d'Emploi</h2>
+                        <p className="lead text-muted">Consultez nos postes ouverts et postulez dès maintenant.</p>
+                    </div>
 
-                        {loading ? (
-                            <div className="text-center py-10">
-                                <Spinner animation="border" variant="primary" />
-                                <p className="mt-3 text-muted">Chargement des offres...</p>
-                            </div>
-                        ) : (
-                            <Row className="g-4">
-                                {jobs.length > 0 ? (
-                                    jobs.map((job) => (
-                                        <Col lg={6} key={job.id}>
-                                            <Card className="border-0 shadow-sm hover-shadow-md transition-all rounded-4 overflow-hidden h-100">
-                                                <Card.Body className="p-5 d-flex align-items-center justify-content-between">
-                                                    <div>
-                                                        <Badge bg="light" className="text-primary mb-2 px-3 py-1 border">{job.type}</Badge>
-                                                        <h4 className="fw-bold mb-1">{job.title}</h4>
-                                                        <p className="text-muted small mb-0">
-                                                            <i className="fas fa-map-marker-alt me-2 text-info"></i> {job.location}
-                                                            <span className="mx-2 text-light opacity-50">|</span>
-                                                            <i className="far fa-calendar-alt me-2 text-info"></i> {new Date(job.published_at).toLocaleDateString()}
-                                                        </p>
-                                                    </div>
-                                                    <Button variant="outline-primary" className="rounded-pill px-4 fw-bold" onClick={() => openApplyModal(job)}>
-                                                        Postuler
-                                                    </Button>
-                                                </Card.Body>
-                                            </Card>
-                                        </Col>
-                                    ))
-                                ) : (
-                                    <Col className="text-center py-10">
-                                        <p className="text-muted">Aucune offre d'emploi disponible pour le moment.</p>
+                    {loading ? (
+                        <div className="text-center py-5">
+                            <Spinner animation="border" variant="primary" />
+                            <p className="mt-3 text-muted">Chargement des offres...</p>
+                        </div>
+                    ) : (
+                        <Row className="g-4">
+                            {jobs.length > 0 ? (
+                                jobs.map((job) => (
+                                    <Col lg={6} key={job.id}>
+                                        <Card className="border-0 shadow-sm h-100" style={{ borderRadius: '1rem', transition: 'box-shadow 0.3s' }}>
+                                            <Card.Body className="p-4 d-flex align-items-center justify-content-between gap-3">
+                                                <div className="flex-grow-1">
+                                                    <Badge bg="light" className="text-primary mb-2 px-3 py-1 border">{job.type}</Badge>
+                                                    <h5 className="fw-bold mb-1">{job.title}</h5>
+                                                    <p className="text-muted small mb-0">
+                                                        <i className="fas fa-map-marker-alt me-2 text-info"></i>{job.location}
+                                                        <span className="mx-2 opacity-25">|</span>
+                                                        <i className="far fa-calendar-alt me-2 text-info"></i>{new Date(job.published_at).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                                <Button variant="outline-primary" className="rounded-pill px-4 fw-bold flex-shrink-0" onClick={() => openApplyModal(job)}>
+                                                    Postuler
+                                                </Button>
+                                            </Card.Body>
+                                        </Card>
                                     </Col>
-                                )}
-                            </Row>
-                        )}
-                    </Col>
-                </Row>
+                                ))
+                            ) : (
+                                <Col className="text-center py-5">
+                                    <i className="fas fa-briefcase fa-3x text-muted mb-3 d-block opacity-25"></i>
+                                    <p className="text-muted">Aucune offre d'emploi disponible pour le moment.</p>
+                                </Col>
+                            )}
+                        </Row>
+                    )}
+                </div>
 
-                <Row className="mt-15 g-4 text-center">
-                    <Col md={4}>
-                        <div className="p-8 hover-bg-light transition-all rounded-4">
-                            <div className="d-inline-flex align-items-center justify-content-center mb-4 bg-info bg-opacity-10 text-info rounded-circle" style={{ width: '90px', height: '90px' }}>
-                                <i className="fas fa-map-marker-alt fs-2"></i>
+                {/* Stats */}
+                <Row className="g-4 text-center" style={{ marginTop: '4rem' }}>
+                    {[
+                        { icon: 'fa-map-marker-alt', color: '#0dcaf0', bg: 'rgba(13,202,240,0.1)', value: '80+', label: 'Points de vente' },
+                        { icon: 'fa-user-friends', color: '#198754', bg: 'rgba(25,135,84,0.1)', value: '4000+', label: 'Collaborateurs' },
+                        { icon: 'fa-shield-alt', color: '#ffc107', bg: 'rgba(255,193,7,0.1)', value: '140 Ans', label: 'De savoir-faire' },
+                    ].map((stat, i) => (
+                        <Col md={4} key={i}>
+                            <div className="p-4 rounded-4" style={{ transition: 'background 0.3s' }}>
+                                <div
+                                    className="d-inline-flex align-items-center justify-content-center mb-3 rounded-circle"
+                                    style={{ width: '80px', height: '80px', backgroundColor: stat.bg, color: stat.color }}
+                                >
+                                    <i className={`fas ${stat.icon} fs-3`}></i>
+                                </div>
+                                <h3 className="fw-bold mb-1">{stat.value}</h3>
+                                <p className="text-muted text-uppercase small fw-bold mb-0" style={{ letterSpacing: '0.15em' }}>{stat.label}</p>
                             </div>
-                            <h3 className="fw-bold h2 mb-1">80+</h3>
-                            <p className="text-muted text-uppercase tracking-widest small fw-bold">Points de vente</p>
-                        </div>
-                    </Col>
-                    <Col md={4}>
-                        <div className="p-8 hover-bg-light transition-all rounded-4">
-                            <div className="d-inline-flex align-items-center justify-content-center mb-4 bg-success bg-opacity-10 text-success rounded-circle" style={{ width: '90px', height: '90px' }}>
-                                <i className="fas fa-user-friends fs-2"></i>
-                            </div>
-                            <h3 className="fw-bold h2 mb-1">4000+</h3>
-                            <p className="text-muted text-uppercase tracking-widest small fw-bold">Collaborateurs</p>
-                        </div>
-                    </Col>
-                    <Col md={4}>
-                        <div className="p-8 hover-bg-light transition-all rounded-4">
-                            <div className="d-inline-flex align-items-center justify-content-center mb-4 bg-warning bg-opacity-10 text-warning rounded-circle" style={{ width: '90px', height: '90px' }}>
-                                <i className="fas fa-shield-alt fs-2"></i>
-                            </div>
-                            <h3 className="fw-bold h2 mb-1">140 Ans</h3>
-                            <p className="text-muted text-uppercase tracking-widest small fw-bold">De savoir-faire</p>
-                        </div>
-                    </Col>
+                        </Col>
+                    ))}
                 </Row>
             </Container>
 
-            {/* Application Modal */}
+            {/* Apply Modal */}
             <Modal show={showApplyModal} onHide={() => setShowApplyModal(false)} centered size="lg">
-                <Modal.Header closeButton className="border-0 pb-0">
+                <Modal.Header closeButton className="border-0 pb-0 px-4 pt-4">
                     <Modal.Title className="fw-bold">Postuler pour : {selectedJob?.title}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body className="p-4">
                     <Form onSubmit={handleSubmit}>
-                        <Row className="g-4">
+                        <Row className="g-3">
                             <Col md={6}>
                                 <Form.Group>
-                                    <Form.Label className="small text-muted fw-bold mb-2">Prénom</Form.Label>
+                                    <Form.Label className="small text-muted fw-bold mb-1">Prénom</Form.Label>
                                     <Form.Control type="text" required name="first_name" value={formData.first_name} onChange={handleInputChange} />
                                 </Form.Group>
                             </Col>
                             <Col md={6}>
                                 <Form.Group>
-                                    <Form.Label className="small text-muted fw-bold mb-2">Nom</Form.Label>
+                                    <Form.Label className="small text-muted fw-bold mb-1">Nom</Form.Label>
                                     <Form.Control type="text" required name="last_name" value={formData.last_name} onChange={handleInputChange} />
                                 </Form.Group>
                             </Col>
                             <Col md={12}>
                                 <Form.Group>
-                                    <Form.Label className="small text-muted fw-bold mb-2">Email</Form.Label>
+                                    <Form.Label className="small text-muted fw-bold mb-1">Email</Form.Label>
                                     <Form.Control type="email" required name="email" value={formData.email} onChange={handleInputChange} />
                                 </Form.Group>
                             </Col>
                             <Col md={12}>
                                 <Form.Group>
-                                    <Form.Label className="small text-muted fw-bold mb-2">Message / Lettre de motivation</Form.Label>
+                                    <Form.Label className="small text-muted fw-bold mb-1">Message / Lettre de motivation</Form.Label>
                                     <Form.Control as="textarea" rows={4} name="cover_letter" value={formData.cover_letter} onChange={handleInputChange} />
                                 </Form.Group>
                             </Col>
                             <Col md={12}>
                                 <Form.Group>
-                                    <Form.Label className="small text-muted fw-bold mb-2">Votre CV (PDF)</Form.Label>
+                                    <Form.Label className="small text-muted fw-bold mb-1">Votre CV (PDF)</Form.Label>
                                     <Form.Control type="file" required accept=".pdf" onChange={handleFileChange} />
                                 </Form.Group>
                             </Col>
-                            <Col md={12} className="text-end">
-                                <Button variant="secondary" className="me-2" onClick={() => setShowApplyModal(false)}>Annuler</Button>
-                                <Button variant="primary" type="submit" disabled={submitting}>
+                            <Col md={12} className="text-end mt-3">
+                                <Button variant="secondary" className="me-2 rounded-pill px-4" onClick={() => setShowApplyModal(false)}>Annuler</Button>
+                                <Button variant="primary" type="submit" disabled={submitting} className="rounded-pill px-4">
                                     {submitting ? <Spinner size="sm" /> : "Envoyer ma candidature"}
                                 </Button>
                             </Col>
@@ -390,30 +347,6 @@ const Recrutement = () => {
                     </Form>
                 </Modal.Body>
             </Modal>
-
-            <style>{`
-                .py-10 { padding-top: 5rem; padding-bottom: 5rem; }
-                .py-20 { padding-top: 10rem; padding-bottom: 10rem; }
-                .pb-10 { padding-bottom: 5rem; }
-                .mt-n10 { margin-top: -8rem !important; }
-                .mt-10 { margin-top: 5rem; }
-                .z-index-10 { z-index: 10; }
-                .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
-                .rounded-5 { border-radius: 2rem !important; }
-                .tracking-widest { letter-spacing: 0.2em; }
-                .tracking-tight { letter-spacing: -0.02em; }
-                .bg-gradient-brand { background: linear-gradient(135deg, #0056b3 0%, #002855 100%); }
-                .hover-scale { transition: transform 0.3s ease; }
-                .hover-scale:hover { transform: translateY(-3px); }
-                .hover-bg-light:hover { background-color: #f8f9fa; }
-                .italic { font-style: italic; }
-                .border-dashed { border-style: dashed !important; }
-                
-                @media (max-width: 991.98px) {
-                    .display-2 { font-size: 3rem; }
-                    .mt-n10 { margin-top: -4rem !important; }
-                }
-            `}</style>
         </div>
     );
 };

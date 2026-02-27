@@ -1,0 +1,401 @@
+.cart-container {
+    min-height: 100vh;
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+    background-color: #f8fafc;
+}
+
+.cart-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.cart-item-row {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 0.2s;
+}
+
+.cart-item-row:hover {
+    background-color: #f8fafc;
+}
+
+.cart-summary-card {
+    position: sticky;
+    top: 2rem;
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.cart-quantity-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: white;
+    color: #475569;
+    transition: all 0.2s;
+}
+
+.cart-quantity-btn:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.cart-quantity-btn:active {
+    transform: scale(0.95);
+}
+
+.cart-remove-btn {
+    color: #ef4444;
+    font-weight: bold;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    transition: color 0.2s;
+}
+
+.cart-remove-btn:hover {
+    color: #dc2626;
+}
+
+.cagnotte-badge {
+    background-color: #dcfce7;
+    color: #166534;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Redesigned Credit Section */
+.cagnotte-active-row {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid #10b98133;
+    animation: slideDown 0.3s ease-out;
+}
+
+.cagnotte-icon {
+    font-size: 1.5rem;
+}
+
+.remove-cagnotte-btn {
+    background: white;
+    border: 1px solid #ef444433;
+    color: #ef4444;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+}
+
+.remove-cagnotte-btn:hover {
+    background: #ef4444;
+    color: white;
+    transform: scale(1.1);
+}
+
+.alert-soft-blue {
+    background-color: #eff6ff;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+}
+
+.cagnotte-locked {
+    background-color: #f8fafc;
+    border: 2px dashed #e2e8f0;
+}
+
+.cagnotte-unlocked {
+    background: white;
+    border: 2px solid #10b981;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cagnotte-unlocked.active {
+    background: #f0fdf4;
+    border-color: #10b981;
+}
+
+.cagnotte-pulse-icon {
+    width: 40px;
+    height: 40px;
+    background: #10b981;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+.custom-switch {
+    width: 3rem !important;
+    height: 1.5rem !important;
+    cursor: pointer;
+}
+
+.custom-switch:checked {
+    background-color: #10b981 !important;
+    border-color: #10b981 !important;
+}
+
+.btn-emerald-soft {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: none;
+    padding: 0.6rem;
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.btn-emerald-soft:hover {
+    background-color: #10b981;
+    color: white;
+}
+
+.btn-checkout {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3);
+}
+
+.btn-checkout:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(234, 88, 12, 0.4);
+    background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+}
+
+.btn-checkout:active {
+    transform: translateY(0);
+}
+
+.x-small {
+    font-size: 0.7rem;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Utilities */
+.rounded-xl {
+    border-radius: 14px;
+}
+
+.text-slate-800 {
+    color: #1e293b;
+}
+
+.text-slate-700 {
+    color: #334155;
+}
+
+.text-slate-600 {
+    color: #475569;
+}
+
+.text-slate-500 {
+    color: #64748b;
+}
+
+.bg-slate-100 {
+    background-color: #f1f5f9;
+}
+
+.text-orange-500 {
+    color: #f97316;
+}
+
+.bg-orange-400 {
+    background-color: #fb923c;
+}
+
+.fw-black {
+    font-weight: 900;
+}
+
+/* Premium Modal Styles */
+.modal-content-premium {
+    animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-header-gradient {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    position: relative;
+}
+
+.modal-icon-container {
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 2rem;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-icon-shine {
+    animation: shine 2s infinite;
+}
+
+.btn-close-modal {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    background: none;
+    border: none;
+    color: white;
+    opacity: 0.5;
+    font-size: 1.2rem;
+    transition: opacity 0.2s;
+}
+
+.btn-close-modal:hover {
+    opacity: 1;
+}
+
+.instruction-box {
+    background-color: #f0f9ff;
+    border: 1px solid #e0f2fe;
+}
+
+.summary-box {
+    background-color: #ffffff;
+}
+
+.deduction-line {
+    border-style: dashed !important;
+}
+
+.btn-modal-primary {
+    flex: 1;
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 0.8rem;
+    border-radius: 12px;
+    font-weight: 700;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-modal-primary:hover {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-modal-secondary {
+    flex: 1;
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    padding: 0.8rem;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-modal-secondary:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes shine {
+    0% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+        filter: brightness(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-content-premium {
+        margin: 1rem;
+        border-radius: 20px;
+    }
+
+    .btn-modal-primary,
+    .btn-modal-secondary {
+        padding: 0.7rem;
+        font-size: 0.9rem;
+    }
+}

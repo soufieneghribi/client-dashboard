@@ -1,4 +1,4 @@
-import MG_LOGO_OFFICIAL from "../assets/images/mg_logo_official.png";
+import LOGO_360TN from "../assets/images/logo.png";
 
 const Footer = () => {
   return (
@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 mb-10">
 
           <div className="col-span-2 lg:col-span-1">
-            <img src={MG_LOGO_OFFICIAL} alt="MG Logo" className="h-8 mb-4 bg-white rounded p-1" />
+            <img src={LOGO_360TN} alt="360tn Logo" className="h-8 mb-4 bg-white rounded p-1 object-contain" />
             <div className="space-y-2 text-xs text-gray-400">
               <p><i className="fas fa-phone-alt me-2"></i> +216 50963367</p>
               <div className="flex gap-3 mt-4">

@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { SearchProduct as searchProduct, clearSearch } from "../../store/slices/search";
 import { fetchWishlist, selectWishlistCount } from "../../store/slices/wishlist";
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import MG_LOGO_OFFICIAL from "../../assets/images/mg_logo_official.png";
+import LOGO_360TN from "../../assets/images/logo.png";
 import { Navbar, Nav, Container, Button, Badge, NavDropdown } from 'react-bootstrap';
 import debounce from 'lodash.debounce';
 import Cookies from "js-cookie";
@@ -160,7 +160,7 @@ const Header = () => {
                     </Button>
 
                     <Navbar.Brand as={Link} to="/" className="me-lg-5">
-                        <img src={MG_LOGO_OFFICIAL} height="32" className="d-inline-block align-top" alt="MG Logo" />
+                        <img src={LOGO_360TN} height="0" style={{ height: '90px', width: 'auto', objectFit: 'contain' }} className="d-inline-block align-top" alt="360tn Logo" />
                     </Navbar.Brand>
 
                     <Nav className="d-none d-lg-flex me-auto align-items-center gap-2">
@@ -216,7 +216,7 @@ const Header = () => {
             <MobileMenu
                 show={showMobileMenu}
                 onHide={() => setShowMobileMenu(false)}
-                COMPANY_LOGO={MG_LOGO_OFFICIAL}
+                COMPANY_LOGO={LOGO_360TN}
                 handleSearchSubmit={handleSearchSubmit}
                 searchQuery={searchQuery}
                 handleSearchChange={handleSearchChange}

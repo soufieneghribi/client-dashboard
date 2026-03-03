@@ -17,8 +17,14 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci --silent
 
-# Copy source code (excluding chatbot-backend)
-COPY . .
+# Copy source code (only what's needed for React build)
+COPY src ./src
+COPY public ./public
+COPY index.html ./
+COPY vite.config.js ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
+COPY eslint.config.js ./
 
 # Build the application
 RUN npm run build
@@ -28,7 +34,7 @@ RUN npm run build
 # ============================================
 FROM python:3.12-slim
 
-# Install Nginx, supervisor, curl
+# Install Nginx, supervisor, curl, and other essentials
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     supervisor \
@@ -36,45 +42,46 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ============================================
-# Setup Nginx (React frontend)
-# ============================================
-# Remove default nginx config
-RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
-
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copy built React app
-COPY --from=frontend-builder /app/dist /usr/share/nginx/html
-
-# Copy public assets
-COPY --from=frontend-builder /app/public/robots.txt /usr/share/nginx/html/robots.txt
-COPY --from=frontend-builder /app/public/sitemap.xml /usr/share/nginx/html/sitemap.xml
-COPY --from=frontend-builder /app/public/manifest.json /usr/share/nginx/html/manifest.json
-
-# ============================================
-# Setup Python (FastAPI chatbot backend)
+# Setup Python (FastAPI chatbot backend) FIRST
 # ============================================
 WORKDIR /chatbot
 
 # Copy requirements and install Python dependencies
 COPY chatbot-backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir gunicorn
 
-# Copy chatbot backend code
+# Copy chatbot backend code (entire directory)
 COPY chatbot-backend/app ./app
-COPY chatbot-backend/run.py .
 
-# Create data directory for ChromaDB
+# Create data directory for ChromaDB (persistent volume in Cloud Run)
 RUN mkdir -p /chatbot/data/chromadb
+
+# ============================================
+# Setup Nginx (React frontend)
+# ============================================
+# Remove default nginx configs
+RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
+
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built React app from stage 1
+COPY --from=frontend-builder /app/dist /usr/share/nginx/html
+
+# Ensure nginx html directory has proper permissions
+RUN chmod -R 755 /usr/share/nginx/html
 
 # ============================================
 # Setup Supervisor (runs both Nginx + Uvicorn)
 # ============================================
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Create supervisor log directory
+RUN mkdir -p /var/log/supervisor
+
 # ============================================
-# Environment variables (overridable at runtime)
+# Environment variables (overridable at runtime via Cloud Run)
 # ============================================
 ENV OPENAI_API_KEY=""
 ENV OPENAI_MODEL="gpt-4.1-mini"
@@ -84,14 +91,17 @@ ENV EMBEDDING_MODEL="sentence-transformers/all-MiniLM-L6-v2"
 ENV CHROMA_PERSIST_DIR="/chatbot/data/chromadb"
 ENV HOST="0.0.0.0"
 ENV PORT="8000"
-ENV CORS_ORIGINS='["http://localhost","http://localhost:80"]'
+ENV PYTHONUNBUFFERED="1"
 
-# Expose port 80 (Cloud Run expects one port)
+# Set working directory back to root for supervisor
+WORKDIR /
+
+# Expose port 80 (Cloud Run default)
 EXPOSE 80
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost/health && curl -f http://localhost:8000/api/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost/health || exit 1
 
 # Start supervisor (manages nginx + uvicorn)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

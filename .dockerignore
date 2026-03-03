@@ -1,0 +1,16 @@
+node_modules
+dist
+.git
+.gitignore
+*.md
+.env
+.env.*
+!.env.example
+chatbot-backend/.env
+chatbot-backend/data/chromadb
+chatbot-backend/__pycache__
+chatbot-backend/app/__pycache__
+chatbot-backend/app/services/__pycache__
+.vscode
+.idea
+*.log

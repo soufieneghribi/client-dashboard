@@ -89,6 +89,16 @@ Desktop.ini
 # .dockerignore
 
 # ============================================
+# CHATBOT BACKEND
+# ============================================
+chatbot-backend/.env
+chatbot-backend/data/chromadb/
+chatbot-backend/__pycache__/
+chatbot-backend/app/__pycache__/
+chatbot-backend/app/services/__pycache__/
+*.pyc
+
+# ============================================
 # CI/CD SECRETS (ne jamais commiter)
 # ============================================
 *.pem

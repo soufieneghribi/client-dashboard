@@ -1,0 +1,20 @@
+# ==================== FastAPI Backend ====================
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-dotenv==1.0.1
+pydantic==2.10.4
+httpx==0.28.1
+
+# ==================== OpenAI ====================
+openai>=1.30.0
+
+# ==================== LangChain Ecosystem ====================
+langchain==0.3.19
+langchain-community==0.3.19
+langchain-huggingface==0.1.2
+
+# ==================== ChromaDB Vector Store ====================
+chromadb==0.5.23
+
+# ==================== HuggingFace Embeddings ====================
+sentence-transformers==3.3.1

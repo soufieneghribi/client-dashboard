@@ -5,6 +5,7 @@ import { fetchCategories } from "./store/slices/categorie";
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
+import ChatBot from "./components/ChatBot/ChatBot";
 import { Toaster } from 'react-hot-toast';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./styles/styles.css";
@@ -39,6 +40,9 @@ function App() {
 
       {/* Global Footer */}
       <Footer />
+
+      {/* Global AI Chatbot - Cart + Recipe + Complaint agent */}
+      <ChatBot />
 
       {/* Global Toast Notifications (Sleek and Modern) */}
       <Toaster

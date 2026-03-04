@@ -90,7 +90,7 @@ ENV TN360_API_URL="https://tn360-back-office-122923924979.europe-west1.run.app/a
 ENV EMBEDDING_MODEL="sentence-transformers/all-MiniLM-L6-v2"
 ENV CHROMA_PERSIST_DIR="/chatbot/data/chromadb"
 ENV HOST="0.0.0.0"
-ENV PORT="8000"
+ENV PORT="8001"
 ENV PYTHONUNBUFFERED="1"
 
 # Set working directory back to root for supervisor

@@ -69,8 +69,8 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 # Remove default nginx configs
 RUN rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx config as TEMPLATE (port will be injected at runtime)
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
 # Copy built React app from stage 1
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
@@ -85,6 +85,12 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Create supervisor log directory
 RUN mkdir -p /var/log/supervisor
+
+# ============================================
+# Startup script (injects PORT into nginx config)
+# ============================================
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
 # ============================================
 # Environment variables (overridable at runtime via Cloud Run)
@@ -108,10 +114,9 @@ WORKDIR /
 # Expose port 8080 (Cloud Run default)
 EXPOSE 8080
 
-# Health check - very lenient for slow embedding models
-# Wait 120s for backend to load embeddings + models + ChromaDB
+# Health check (Cloud Run uses its own, this is for local Docker)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
-  CMD curl -f http://localhost:8080/ || exit 1
+  CMD curl -f http://localhost:${PORT:-8080}/ || exit 1
 
-# Start supervisor (manages nginx + uvicorn)
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start via script (injects PORT into nginx, then runs supervisor)
+CMD ["/start.sh"]

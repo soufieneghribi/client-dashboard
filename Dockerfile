@@ -82,15 +82,17 @@ RUN chmod -R 755 /usr/share/nginx/html
 # Setup Supervisor (runs both Nginx + Uvicorn)
 # ============================================
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+RUN sed -i 's/\r$//' /etc/supervisor/conf.d/supervisord.conf
 
 # Create supervisor log directory
 RUN mkdir -p /var/log/supervisor
 
 # ============================================
 # Startup script (injects PORT into nginx config)
+# Fix Windows CRLF line endings → Unix LF
 # ============================================
 COPY start.sh /start.sh
-RUN chmod +x /start.sh
+RUN sed -i 's/\r$//' /start.sh && chmod +x /start.sh
 
 # ============================================
 # Environment variables (overridable at runtime via Cloud Run)

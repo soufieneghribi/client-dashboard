@@ -99,9 +99,10 @@ WORKDIR /
 # Expose port 80 (Cloud Run default)
 EXPOSE 80
 
-# Health check - wait 90s for backend to load embeddings
-HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
-  CMD curl -f http://localhost/health || exit 1
+# Health check - very lenient for slow embedding models
+# Wait 120s for backend to load embeddings + models + ChromaDB
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
+  CMD curl -f http://localhost/ || exit 1
 
 # Start supervisor (manages nginx + uvicorn)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

@@ -58,6 +58,12 @@ COPY chatbot-backend/app ./app
 RUN mkdir -p /chatbot/data/chromadb
 
 # ============================================
+# Pre-download the sentence-transformers model during build
+# This avoids download timeout at runtime on Cloud Run
+# ============================================
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
+
+# ============================================
 # Setup Nginx (React frontend)
 # ============================================
 # Remove default nginx configs
@@ -90,19 +96,22 @@ ENV TN360_API_URL="https://tn360-back-office-122923924979.europe-west1.run.app/a
 ENV EMBEDDING_MODEL="sentence-transformers/all-MiniLM-L6-v2"
 ENV CHROMA_PERSIST_DIR="/chatbot/data/chromadb"
 ENV HOST="0.0.0.0"
-ENV PORT="8001"
+# NOTE: Do NOT set PORT here - Cloud Run sets PORT automatically
+# The chatbot backend port (8001) is hardcoded in supervisord.conf
+# Nginx listens on PORT (set by Cloud Run, default 8080)
+ENV CHATBOT_PORT="8001"
 ENV PYTHONUNBUFFERED="1"
 
 # Set working directory back to root for supervisor
 WORKDIR /
 
-# Expose port 80 (Cloud Run default)
-EXPOSE 80
+# Expose port 8080 (Cloud Run default)
+EXPOSE 8080
 
 # Health check - very lenient for slow embedding models
 # Wait 120s for backend to load embeddings + models + ChromaDB
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
-  CMD curl -f http://localhost/ || exit 1
+  CMD curl -f http://localhost:8080/ || exit 1
 
 # Start supervisor (manages nginx + uvicorn)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

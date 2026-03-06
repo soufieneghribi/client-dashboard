@@ -41,23 +41,27 @@ async def lifespan(app: FastAPI):
     total = stats.get("total_products", 0)
 
     if total == 0:
-        print("[PRODUCT] No products indexed. Syncing from TN360 API...")
-        try:
-            products = await fetch_all_products_paginated(max_pages=10)
-            if products:
-                result = await index_products(products)
-                print(f"[OK] Initial sync: {result}")
-            else:
-                print("[WARN] No products fetched from API. Index is empty.")
-        except Exception as e:
-            print(f"[ERROR] Initial sync failed: {e}")
-            print("   You can manually sync later via POST /api/sync")
+        print("[PRODUCT] No products indexed. Launching background sync...")
+        # Start background sync to avoid Cloud Run startup timeout
+        asyncio.create_task(_background_sync())
     else:
         print(f"[OK] Vector store has {total} products indexed")
 
     yield
     print("[STOP] Shutting down...")
     await close_client()
+
+async def _background_sync():
+    """Background sync task for initial product indexing"""
+    try:
+        products = await fetch_all_products_paginated(max_pages=10)
+        if products:
+            result = await index_products(products)
+            print(f"[OK] Background sync: {result}")
+        else:
+            print("[WARN] Background sync: No products fetched.")
+    except Exception as e:
+        print(f"[ERROR] Background sync failed: {e}")
 
 
 # ==================== APP ====================

@@ -76,6 +76,7 @@ app = FastAPI(
     description="AI Chatbot with Cart, Recipe & Complaint support",
     version="2.0.0",
     lifespan=lifespan,
+    root_path="/api"
 )
 
 app.add_middleware(

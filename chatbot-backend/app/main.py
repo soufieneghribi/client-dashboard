@@ -1,3 +1,8 @@
+import os
+
+# Disable ChromaDB telemetry to prevent crashes on some environments
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 """
 TN360 RAG Chatbot API - FastAPI Backend
 Full RAG pipeline: TN360 API → ChromaDB → Ollama LLM

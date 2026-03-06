@@ -79,12 +79,16 @@ ENV TN360_API_URL="https://tn360-back-office-122923924979.europe-west1.run.app/a
 ENV EMBEDDING_MODEL="sentence-transformers/all-MiniLM-L6-v2"
 ENV CHROMA_PERSIST_DIR="/chatbot/data/chromadb"
 ENV HOST="0.0.0.0"
+# CHATBOT_PORT = port interne de FastAPI (8001, PAS 8080)
+# PORT = 8080 est injecté par Cloud Run et utilisé par Nginx
 ENV CHATBOT_PORT="8001"
+ENV PORT="8080"
 ENV PYTHONUNBUFFERED="1"
 
 WORKDIR /
 
-EXPOSE 80
+# Cloud Run route le trafic vers PORT=8080 — c'est Nginx qui l'expose
+EXPOSE 8080
 
 # Start supervisor directly (no startup script needed)
 CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

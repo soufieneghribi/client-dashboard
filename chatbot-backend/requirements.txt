@@ -17,4 +17,6 @@ langchain-huggingface==0.1.2
 chromadb==0.5.23
 
 # ==================== HuggingFace Embeddings ====================
+# NOTE: torch CPU-only est installé séparément dans le Dockerfile AVANT ce fichier
+# pour éviter que sentence-transformers tire PyTorch GPU (~5-8GB)
 sentence-transformers==3.3.1

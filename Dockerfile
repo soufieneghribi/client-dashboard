@@ -27,7 +27,7 @@ RUN npm run build
 # ============================================
 # Stage 2: Production image (Nginx + Python)
 # ============================================
-FROM python:3.12-slim
+FROM python:3.11-slim
 
 # Install Nginx, supervisor, curl
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -42,15 +42,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /chatbot
 
 COPY chatbot-backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir gunicorn
+
+# ⚠️ CRITIQUE: Installer PyTorch CPU-only EN PREMIER
+# Sans ça, sentence-transformers tire PyTorch+CUDA (~5-8GB) → timeout Cloud Run
+# CPU-only = ~400MB seulement
+RUN pip install --no-cache-dir \
+    torch==2.2.2 \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Installer le reste (sentence-transformers utilisera le torch CPU déjà installé)
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY chatbot-backend/app ./app
 
 RUN mkdir -p /chatbot/data/chromadb
 
-# Pre-download sentence-transformers model during build
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
+# Pré-télécharger le modèle sentence-transformers pendant le BUILD
+# (évite le téléchargement au démarrage du conteneur = évite le timeout)
+RUN python -c "\
+from sentence_transformers import SentenceTransformer; \
+model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2'); \
+print('[OK] Model pre-downloaded successfully')"
 
 # ============================================
 # Setup Nginx
@@ -79,16 +91,16 @@ ENV TN360_API_URL="https://tn360-back-office-122923924979.europe-west1.run.app/a
 ENV EMBEDDING_MODEL="sentence-transformers/all-MiniLM-L6-v2"
 ENV CHROMA_PERSIST_DIR="/chatbot/data/chromadb"
 ENV HOST="0.0.0.0"
-# CHATBOT_PORT = port interne de FastAPI (8001, PAS 8080)
-# PORT = 8080 est injecté par Cloud Run et utilisé par Nginx
+# CHATBOT_PORT = port interne FastAPI (8001)
+# PORT = 8080 injecté par Cloud Run → utilisé par Nginx
 ENV CHATBOT_PORT="8001"
 ENV PORT="8080"
 ENV PYTHONUNBUFFERED="1"
 
 WORKDIR /
 
-# Cloud Run route le trafic vers PORT=8080 — c'est Nginx qui l'expose
+# Cloud Run route le trafic vers PORT=8080 — Nginx écoute sur 8080
 EXPOSE 8080
 
-# Start supervisor directly (no startup script needed)
+# Start supervisor (lance Nginx + FastAPI)
 CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

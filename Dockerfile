@@ -22,6 +22,8 @@ COPY tailwind.config.js ./
 COPY postcss.config.js ./
 COPY eslint.config.js ./
 
+# Force empty URL for production build (uses relative paths)
+ENV VITE_CHATBOT_URL=""
 RUN npm run build
 
 # ============================================

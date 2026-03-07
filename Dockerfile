@@ -85,7 +85,7 @@ RUN sed -i 's/\r$//' /start.sh && chmod +x /start.sh
 # ============================================
 # Environment variables
 # ============================================
-ENV OPENAI_API_KEY="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"
+ENV OPENAI_API_KEY=""
 ENV OPENAI_MODEL="gpt-4.1-mini"
 ENV TEMPERATURE="0.3"
 ENV TN360_API_URL="https://tn360-back-office-122923924979.europe-west1.run.app/api/v1"

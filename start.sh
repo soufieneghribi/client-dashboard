@@ -2,6 +2,8 @@
 set -e
 
 echo "[START] Starting TN360 chatbot backend on port 8001..."
+echo "[ENV DEBUG] OPENAI_API_KEY present: $([ -n \"$OPENAI_API_KEY\" ] && echo 'YES (${OPENAI_API_KEY:0:12}...)' || echo 'EMPTY!')"
+echo "[ENV DEBUG] OPENAI_MODEL=$OPENAI_MODEL"
 
 # Start chatbot in background
 cd /chatbot

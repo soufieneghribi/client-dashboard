@@ -6,10 +6,14 @@ import os
 import json
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=False)
 
 # OpenAI LLM
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+if OPENAI_API_KEY:
+    print(f"[CONFIG] OpenAI API key loaded: {OPENAI_API_KEY[:8]}...{OPENAI_API_KEY[-4:]}")
+else:
+    print("[CONFIG] WARNING: OPENAI_API_KEY is empty!")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 TEMPERATURE = float(os.getenv("TEMPERATURE", "0.3"))
 

@@ -472,10 +472,9 @@ async def generate_llm_response(
                 yield delta
     except Exception as e:
         error_msg = str(e)
-        if "api_key" in error_msg.lower() or "auth" in error_msg.lower():
-            yield "⚠️ Clé API OpenAI invalide. Vérifiez votre configuration."
-        else:
-            yield f"⚠️ Erreur: {error_msg}"
+        print(f"[OPENAI ERROR] {type(e).__name__}: {error_msg}")
+        print(f"[OPENAI DEBUG] Key present: {bool(OPENAI_API_KEY)}, Key prefix: {OPENAI_API_KEY[:12] if OPENAI_API_KEY else 'EMPTY'}, Model: {OPENAI_MODEL}")
+        yield f"⚠️ Erreur OpenAI: {error_msg}"
 
 
 # ============================================================

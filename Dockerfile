@@ -34,7 +34,6 @@ FROM python:3.11-slim
 # Install Nginx, supervisor, curl
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
-    supervisor \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -77,11 +76,11 @@ COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 RUN chmod -R 755 /usr/share/nginx/html
 
 # ============================================
-# Setup Supervisor
+# Setup startup script (replaces supervisor)
+# nginx starts ONLY after chatbot is ready
 # ============================================
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-RUN sed -i 's/\r$//' /etc/supervisor/conf.d/supervisord.conf
-RUN mkdir -p /var/log/supervisor
+COPY start.sh /start.sh
+RUN sed -i 's/\r$//' /start.sh && chmod +x /start.sh
 
 # ============================================
 # Environment variables
@@ -104,5 +103,5 @@ WORKDIR /
 # Cloud Run route le trafic vers PORT=8080 — Nginx écoute sur 8080
 EXPOSE 8080
 
-# Start supervisor (lance Nginx + FastAPI)
-CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start: chatbot first, then nginx (no more 502 on cold start)
+CMD ["/start.sh"]

@@ -121,11 +121,10 @@ def detect_cart_intent(message: str) -> Optional[str]:
         if not re.search(r"supprim|enlev|retir|remove|vider|clear", msg):
             return "add"
 
-    # Add with explicit quantity (number + product)
-    if re.search(r"(?:prend[sz]?|achète(?:r)?|veux|voudrais)\s+(?:\d+|du\b|de\s+la|des\b|un(?:e)?\b)", msg):
+    # Add with explicit quantity (number + product) — accept any "number + word" pattern
+    if re.search(r"(?:prend[sz]?|achète(?:r)?|veux|voudrais|donne|commander)\s+(?:\d+|du\b|de\s+la|des\b|un(?:e)?\b)", msg):
         if not re.search(r"supprim|enlev|retir|remove", msg):
-            # Only if there's a product-like quantity pattern (not just navigation)
-            if re.search(r"\d+\s*(?:kg|g|l|ml|bouteill|paquet|pièce|boite|unité)", msg):
+            if re.search(r"\d+\s*(?:kg|g|l|ml|bouteill|paquet|pièce|boite|unité|\w{3,})", msg):
                 return "add"
 
     # Remove from cart — must explicitly mention cart
@@ -149,10 +148,45 @@ def detect_cart_intent(message: str) -> Optional[str]:
     return None
 
 
+def _relevance_score(query_name: str, product_name: str) -> float:
+    """Score how relevant a product is to the query. Higher = better match.
+    Prefers products whose name starts with the query keyword."""
+    q_lower = query_name.lower()
+    p_lower = product_name.lower()
+
+    fillers = {"de", "la", "le", "les", "des", "du", "d", "l", "au", "aux", "à", "en", "un", "une", "et"}
+    q_words = [w for w in q_lower.split() if w not in fillers and len(w) >= 2]
+    p_words = [w for w in p_lower.split() if w not in fillers and len(w) >= 2]
+
+    if not q_words:
+        return 0.0
+
+    matches = 0
+    for qw in q_words:
+        for pw in p_words:
+            if qw == pw or (len(qw) >= 3 and len(pw) >= 3 and (qw in pw or pw in qw)):
+                matches += 1
+                break
+
+    if matches == 0:
+        return 0.0
+
+    base_score = matches / len(q_words)
+
+    # Strong bonus: product name starts with a query word → it IS the product
+    first_p = p_words[0] if p_words else ""
+    for qw in q_words:
+        if qw == first_p or (len(qw) >= 3 and len(first_p) >= 3 and (qw in first_p or first_p in qw)):
+            base_score += 0.6
+            break
+
+    return base_score
+
+
 async def match_products_to_catalog(product_requests: List[Dict]) -> Tuple[List[CartProduct], List[str]]:
     """
     Match extracted product names to the product catalog via semantic search.
-    If multiple products share a very similar name, include all of them.
+    Uses relevance scoring to avoid returning wrong products.
     Returns: (matched_products, unmatched_names)
     """
     matched = []
@@ -161,36 +195,39 @@ async def match_products_to_catalog(product_requests: List[Dict]) -> Tuple[List[
 
     for req in product_requests:
         name = req["name"]
-        quantity = int(req.get("quantity", 1)) if req.get("unit") == "unit" else 1
+        raw_qty = float(req.get("quantity", 1))
+        quantity = max(1, int(raw_qty) if raw_qty == int(raw_qty) else int(raw_qty) + 1)
 
-        # Search in ChromaDB
-        results = search_products(query=name, k=5)
+        # Search in ChromaDB with minimum relevance score
+        results = search_products(query=name, k=5, min_score=0.15)
 
-        if results:
-            # Check if multiple results share the same/similar name
-            best = results[0]
-            name_lower = name.lower().strip()
-            similar = [r for r in results if name_lower in r["name"].lower() or r["name"].lower() in name_lower]
+        # Score each result and pick the best relevant match
+        best = None
+        best_rel = 0.0
+        for r in results:
+            rel = _relevance_score(name, r["name"])
+            if rel > best_rel:
+                best_rel = rel
+                best = r
+        # Require at least 50% of query words to match product name
+        if best_rel < 0.5:
+            best = None
 
-            # If no exact name matches, just use the best result
-            if not similar:
-                similar = [best]
-
-            for r in similar:
-                rid = str(r["id"])
-                if rid not in seen_ids:
-                    seen_ids.add(rid)
-                    matched.append(CartProduct(
-                        id=rid,
-                        name=r["name"],
-                        price=r["price"],
-                        old_price=r.get("old_price", 0),
-                        quantity=quantity,
-                        category=r.get("category", ""),
-                        brand=r.get("brand", ""),
-                        has_promo=r.get("has_promo", False),
-                        discount_pct=r.get("discount_pct", 0),
-                    ))
+        if best:
+            rid = str(best["id"])
+            if rid not in seen_ids:
+                seen_ids.add(rid)
+                matched.append(CartProduct(
+                    id=rid,
+                    name=best["name"],
+                    price=best["price"],
+                    old_price=best.get("old_price", 0),
+                    quantity=quantity,
+                    category=best.get("category", ""),
+                    brand=best.get("brand", ""),
+                    has_promo=best.get("has_promo", False),
+                    discount_pct=best.get("discount_pct", 0),
+                ))
         else:
             unmatched.append(name)
 

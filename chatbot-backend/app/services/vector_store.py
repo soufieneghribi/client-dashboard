@@ -178,37 +178,39 @@ def search_products(
     query: str,
     k: int = 15,
     price_max: Optional[float] = None,
-    category: Optional[str] = None
+    category: Optional[str] = None,
+    min_score: float = 0.0
 ) -> List[Dict]:
-    """Semantic search using LangChain + ChromaDB"""
+    """Semantic search using LangChain + ChromaDB with relevance scoring"""
     vectorstore = get_vectorstore()
 
     # Build metadata filter
     where_filter = {}
-    if price_max and price_max > 0:
-        # ChromaDB doesn't support numeric filters well, skip for now
-        pass
-
     if category:
         where_filter["category"] = {"$contains": category}
 
-    # Perform similarity search
+    # Perform similarity search WITH scores to filter bad matches
     try:
         if where_filter:
-            docs = vectorstore.similarity_search(
-                query,
-                k=k,
-                filter=where_filter
+            scored_docs = vectorstore.similarity_search_with_relevance_scores(
+                query, k=k, filter=where_filter
             )
         else:
-            docs = vectorstore.similarity_search(query, k=k)
+            scored_docs = vectorstore.similarity_search_with_relevance_scores(query, k=k)
     except Exception as e:
-        print(f"[WARN] Search error: {e}")
-        docs = vectorstore.similarity_search(query, k=k)
+        print(f"[WARN] Scored search failed, falling back: {e}")
+        try:
+            scored_docs = vectorstore.similarity_search_with_relevance_scores(query, k=k)
+        except Exception:
+            docs = vectorstore.similarity_search(query, k=k)
+            scored_docs = [(doc, 0.5) for doc in docs]
 
-    # Format results
+    # Format results — filter by minimum relevance score
     results = []
-    for doc in docs:
+    for doc, score in scored_docs:
+        if score < min_score:
+            continue
+
         metadata = doc.metadata
         price = float(metadata.get("price", 0))
 
@@ -227,9 +229,28 @@ def search_products(
             "has_promo": metadata.get("has_promo", "False") == "True",
             "discount_pct": int(metadata.get("discount_pct", 0)),
             "document": doc.page_content,
+            "score": round(score, 4),
         })
 
     return results
+
+
+def warm_up():
+    """Pre-load embedding model and do a dummy search to avoid 8s delay on first user request."""
+    try:
+        print("[WARMUP] Pre-loading embedding model...")
+        vectorstore = get_vectorstore()
+        total = vectorstore._collection.count()
+        if total > 0:
+            # Dummy search to force model weights into memory
+            vectorstore.similarity_search("test", k=1)
+            print(f"[WARMUP] Embedding model ready! ({total} products indexed)")
+        else:
+            # Just loading embeddings is enough
+            get_embeddings()
+            print("[WARMUP] Embedding model loaded (no products yet)")
+    except Exception as e:
+        print(f"[WARMUP WARN] {e}")
 
 
 def get_store_stats() -> dict:

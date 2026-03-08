@@ -6,6 +6,7 @@ All non-action responses are DYNAMIC via LLM (no hardcoded text).
 """
 import re
 import json
+import unicodedata
 from typing import AsyncGenerator, Optional
 from openai import AsyncOpenAI
 
@@ -242,8 +243,9 @@ def detect_intent(message: str) -> str:
 
     # ---- Orders / cart navigation ----
     if re.search(
-        r"command|panier|cart|livraison|acheter|payer|checkout"
-        r"|طلب|سلة|توصيل|nechri|commande",
+        r"command|panier|cart|livraison|payer|checkout"
+        r"|طلب|سلة|توصيل|commande"
+        r"|mes\s*commandes|suivi|historique\s*commande",
         msg
     ):
         return "navigation_order"
@@ -311,13 +313,67 @@ async def build_context(message: str, intent: str, cart: list = None) -> str:
         search_query = message
         if "budget" in intent and budget:
             search_query = f"produits moins de {budget} TND"
+        else:
+            # Extract keywords from message for better embedding search
+            noise = {"je", "veux", "cherche", "donne", "moi", "un", "une", "du", "de", "des", "la", "le", "les",
+                     "est", "ce", "que", "vous", "avez", "avoir", "acheter", "produit", "produits", "avec",
+                     "pour", "dans", "mon", "mes", "pas", "plus", "moins", "cher", "prix", "budget",
+                     "donner", "donnez", "trouve", "trouver", "panier", "cart", "ajouter", "ajoute",
+                     "besoin", "faut", "il", "elle", "on", "nous", "votre", "notre", "quel", "quelle",
+                     "comment", "combien", "quoi", "qui",
+                     # Tounsi noise
+                     "3aslema", "marhba", "slem", "ahla", "bslema",
+                     "3andkom", "3andek", "3andi", "na7eb", "n7eb", "7otli", "zidli", "winek",
+                     "chnahiya", "famma", "behi", "kifech", "9addech", "lyoum",
+                     "nechri", "t7eb", "7aja", "okhra", "hedha", "hedhi", "hkeya"}
+            # Tounsi/Arabic → French translations for common product words
+            translations = {
+                "halib": "lait", "7lib": "lait", "zebda": "beurre", "khobz": "pain",
+                "djej": "poulet", "lahm": "viande", "samak": "poisson", "3sel": "miel",
+                "zit": "huile", "roz": "riz", "sokar": "sucre", "9ahwa": "cafe",
+                "atay": "the", "ma": "eau", "fromage": "fromage", "beid": "oeufs",
+                "tomatich": "tomate", "batata": "pomme de terre", "besla": "oignon",
+                "tawabel": "epices", "felfel": "poivre", "mel7": "sel",
+                "حليب": "lait", "خبز": "pain", "دجاج": "poulet", "لحم": "viande",
+                "زيت": "huile", "أرز": "riz", "سكر": "sucre", "قهوة": "cafe",
+                "ماء": "eau", "بيض": "oeufs", "عسل": "miel", "زبدة": "beurre",
+            }
+            clean_msg = re.sub(r'[^a-zA-ZÀ-ÿ0-9\s\u0600-\u06FF]', '', message.lower())
+            keywords = [w for w in clean_msg.split() if w not in noise and len(w) >= 2]
+            # Translate known Tounsi/Arabic words to French
+            keywords = [translations.get(w, w) for w in keywords]
+            # Remove duplicates while preserving order
+            seen = set()
+            keywords = [w for w in keywords if w not in seen and not seen.add(w)]
+            if keywords:
+                search_query = " ".join(keywords)
 
-        rag_results = search_products(query=search_query, k=15, price_max=budget)
+        rag_results = search_products(query=search_query, k=10, price_max=budget, min_score=0.05)
+
+        # Post-filter: keep only products with word overlap with the query
+        if rag_results:
+            def _has_word_overlap(query: str, product_name: str) -> bool:
+                """Check if any meaningful query word appears in the product name."""
+                norm = lambda t: unicodedata.normalize("NFD", t.lower()).encode("ascii", "ignore").decode("ascii")
+                # Strip punctuation from words
+                clean = lambda t: re.sub(r'[^a-z0-9\s]', '', norm(t))
+                noise = {"je", "veux", "cherche", "donne", "moi", "un", "une", "du", "de", "des", "la", "le", "les",
+                         "est", "ce", "que", "vous", "avez", "avoir", "acheter", "produit", "produits", "avec",
+                         "pour", "dans", "mon", "mes", "pas", "plus", "moins", "cher", "prix", "budget",
+                         "donner", "donnez", "trouve", "trouver"}
+                q_words = [w for w in clean(query).split() if w not in noise and len(w) >= 3]
+                p_name = clean(product_name)
+                for w in q_words:
+                    if w in p_name:
+                        return True
+                return False
+
+            rag_results = [p for p in rag_results if _has_word_overlap(search_query, p["name"])]
 
         if rag_results:
             if "budget" in intent and budget:
                 context_parts.append(f"[BUDGET] BUDGET CLIENT: {budget} TND")
-                rag_results.sort(key=lambda x: x["price"], reverse=True)
+                rag_results.sort(key=lambda x: x["price"])
 
             products_text = []
             for p in rag_results:
@@ -333,6 +389,8 @@ async def build_context(message: str, intent: str, cart: list = None) -> str:
                 "promotion": "[PROMO] PRODUITS EN PROMOTION",
             }.get(intent.split("_")[0], "[PRODUCT] PRODUITS PERTINENTS")
             context_parts.append(f"{label}:\n" + "\n".join(products_text))
+        else:
+            context_parts.append("[PRODUCT] ⛔ AUCUN PRODUIT TROUVÉ dans notre catalogue pour cette recherche. Tu DOIS dire au client que ce produit n'est pas disponible dans notre catalogue MG Tunisie. Ne dis PAS 'je peux vérifier' ou 'je peux chercher'. Dis clairement: 'Ce produit n'est pas disponible dans notre catalogue.' Propose au client de chercher autre chose parmi nos rayons (alimentation, hygiène, entretien, électronique).")
 
     # --- Intent-specific data ---
     if "recommendation" in intent:
@@ -440,6 +498,10 @@ async def generate_llm_response(
     full_system = SYSTEM_PROMPT
     if context:
         full_system += f"\n\n--- DONNÉES CONTEXTUELLES ---\n{context}\n--- FIN DONNÉES ---"
+        full_system += "\n⚠️ RAPPEL: Mentionne UNIQUEMENT les produits listés ci-dessus. N'invente AUCUN produit, prix ou information."
+    else:
+        full_system += "\n\n--- DONNÉES CONTEXTUELLES ---\n⛔ AUCUNE DONNÉE DISPONIBLE pour cette requête. Ce produit N'EXISTE PAS dans le catalogue MG Tunisie.\n--- FIN DONNÉES ---"
+        full_system += "\n⚠️ AUCUNE DONNÉE. Tu DOIS dire clairement que ce produit n'est pas disponible. Ne dis PAS 'je peux vérifier'. Ne propose AUCUN produit."
     full_system += fewshot
 
     if lang == "tounsi":
@@ -674,9 +736,9 @@ async def chat_stream(
                 async for chunk in _quick_llm(user_message, recipe_ctx, chat_history):
                     yield chunk
             else:
-                results = search_recipes(user_message)
+                results = await search_recipes(user_message)
                 if results:
-                    recipes_text = "; ".join([f"{r.get('title', '')} ({r.get('prep_time', '')})" for r in results[:5]])
+                    recipes_text = "; ".join([f"{r.get('name', r.get('title', ''))} ({r.get('prep_time', '')})" for r in results[:5]])
                     recipe_ctx = f"[RECETTES TROUVÉES] {recipes_text}. Présente ces recettes et demande laquelle intéresse le client."
                     async for chunk in _quick_llm(user_message, recipe_ctx, chat_history):
                         yield chunk
@@ -685,14 +747,20 @@ async def chat_stream(
                         yield chunk
             return
 
-    # ---- COMPLAINT ---- Show inline form action + LLM text
+    # ---- COMPLAINT ---- Show form + guide user with context
     if intent == "complaint_new":
         form_action = {"action": {"type": "create_complaint", "message": "Formulaire de réclamation"}}
         yield f"__ACTION__{json.dumps(form_action, ensure_ascii=False)}"
         complaint_ctx = (
-            "[ACTION: FORMULAIRE DE RÉCLAMATION AFFICHÉ] "
-            "Guide le client pour remplir sa réclamation. "
-            "Types dispo: produit manquant, mauvais produit, retard livraison, produit endommagé, remboursement, retour, autre."
+            "[ACTION: FORMULAIRE DE RÉCLAMATION AFFICHÉ]\n"
+            "Le formulaire de réclamation est affiché au client.\n"
+            "Guide-le étape par étape pour remplir sa réclamation:\n"
+            "1. Choisir la catégorie: produit manquant, mauvais produit, retard livraison, produit endommagé, remboursement, retour, autre\n"
+            "2. Décrire le problème en détail\n"
+            "3. Ajouter la référence de commande si disponible\n"
+            "4. Le formulaire sera soumis via /reclamations/new\n"
+            "Sois empathique et rassurant. Dis-lui que son problème sera traité rapidement.\n"
+            "Numéro support: +216 50 963 367"
         )
         async for chunk in _quick_llm(user_message, complaint_ctx, chat_history):
             yield chunk

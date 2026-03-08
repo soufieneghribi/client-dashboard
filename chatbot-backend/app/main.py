@@ -19,7 +19,7 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from app.config import CORS_ORIGINS, HOST, PORT
-from app.services.vector_store import index_products, search_products, get_store_stats
+from app.services.vector_store import index_products, search_products, get_store_stats, warm_up
 from app.services.tn360_api import (
     fetch_all_products_paginated,
     fetch_recommended_products,
@@ -31,6 +31,7 @@ from app.services.recipe_service import (
     search_recipes,
     get_recipe_with_products,
     format_recipe_suggestions,
+    _fetch_recipes_from_api,
 )
 from app.models import CartProduct, ChatAction, ActionType
 
@@ -47,10 +48,15 @@ async def lifespan(app: FastAPI):
 
     if total == 0:
         print("[PRODUCT] No products indexed. Launching background sync...")
-        # Start background sync to avoid Cloud Run startup timeout
         asyncio.create_task(_background_sync())
     else:
         print(f"[OK] Vector store has {total} products indexed")
+
+    # Pre-warm embedding model (eliminates 8s delay on first user request)
+    warm_up()
+
+    # Pre-fetch recipes cache in background
+    asyncio.create_task(_prefetch_recipes())
 
     yield
     print("[STOP] Shutting down...")
@@ -63,10 +69,21 @@ async def _background_sync():
         if products:
             result = await index_products(products)
             print(f"[OK] Background sync: {result}")
+            # Warm up after indexing so first search is fast
+            warm_up()
         else:
             print("[WARN] Background sync: No products fetched.")
     except Exception as e:
         print(f"[ERROR] Background sync failed: {e}")
+
+
+async def _prefetch_recipes():
+    """Pre-fetch recipes from API into cache at startup"""
+    try:
+        recipes = await _fetch_recipes_from_api()
+        print(f"[OK] Recipes pre-cached: {len(recipes)} recipes")
+    except Exception as e:
+        print(f"[WARN] Recipe pre-fetch failed: {e}")
 
 
 # ==================== APP ====================
@@ -223,14 +240,14 @@ async def search(request: SearchRequest):
 @app.post("/api/recipes")
 async def get_recipes(request: RecipeRequest):
     """Get recipe suggestions with matched products"""
-    recipes = search_recipes(request.query)
+    recipes = await search_recipes(request.query)
 
     if not recipes:
         return {"recipes": [], "message": "Aucune recette trouvée"}
 
     if request.add_to_cart and recipes:
         # Return first recipe with full product matching
-        action = await get_recipe_with_products(recipes[0]["id"])
+        action = await get_recipe_with_products(str(recipes[0]["id"]))
         if action:
             return {
                 "recipes": recipes[:3],

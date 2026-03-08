@@ -128,8 +128,10 @@ def product_to_metadata(product: dict) -> dict:
     }
 
 
-async def index_products(products: List[dict]) -> dict:
-    """Index products into ChromaDB using LangChain"""
+async def index_products(products: List[dict], force_clear: bool = True) -> dict:
+    """Index products into ChromaDB using LangChain.
+    Clears existing data first to avoid stale/duplicate products.
+    """
     if not products:
         return {"status": "error", "message": "No products to index"}
 
@@ -137,12 +139,31 @@ async def index_products(products: List[dict]) -> dict:
 
     vectorstore = get_vectorstore()
 
+    # Clear existing collection to avoid stale/duplicate data
+    if force_clear:
+        try:
+            existing = vectorstore._collection.count()
+            if existing > 0:
+                print(f"[PRODUCT] Clearing {existing} old products from ChromaDB...")
+                vectorstore._collection.delete(where={"product_id": {"$ne": ""}})
+                # Fallback: if delete didn't work, try deleting all IDs
+                remaining = vectorstore._collection.count()
+                if remaining > 0:
+                    all_ids = vectorstore._collection.get()["ids"]
+                    if all_ids:
+                        vectorstore._collection.delete(ids=all_ids)
+                print(f"[PRODUCT] Collection cleared.")
+        except Exception as e:
+            print(f"[WARN] Could not clear collection: {e}")
+
     # Prepare LangChain Documents
     documents = []
+    seen_ids = set()
     for product in products:
         product_id = str(product.get("id") or product.get("code_article") or "")
-        if not product_id:
+        if not product_id or product_id in seen_ids:
             continue
+        seen_ids.add(product_id)
 
         text = product_to_text(product)
         if not text or len(text) < 10:
@@ -159,7 +180,7 @@ async def index_products(products: List[dict]) -> dict:
     if not documents:
         return {"status": "error", "message": "No valid products to index"}
 
-    print(f"[AI] Generating embeddings and storing in ChromaDB...")
+    print(f"[AI] Generating embeddings for {len(documents)} products...")
 
     # Add documents to ChromaDB (LangChain handles embeddings automatically)
     vectorstore.add_documents(documents)

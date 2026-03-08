@@ -43,14 +43,9 @@ async def lifespan(app: FastAPI):
     """Startup & shutdown"""
     print("[START] Starting TN360 RAG Chatbot Backend...")
 
-    stats = get_store_stats()
-    total = stats.get("total_products", 0)
-
-    if total == 0:
-        print("[PRODUCT] No products indexed. Launching background sync...")
-        asyncio.create_task(_background_sync())
-    else:
-        print(f"[OK] Vector store has {total} products indexed")
+    # Always re-sync products from API to keep ChromaDB fresh
+    print("[PRODUCT] Syncing all products from API...")
+    asyncio.create_task(_background_sync())
 
     # Pre-warm embedding model (eliminates 8s delay on first user request)
     warm_up()

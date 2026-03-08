@@ -113,7 +113,7 @@ def detect_cart_intent(message: str) -> Optional[str]:
     if re.search(
         r"\bajoute(?:r)?\b|\brajoute(?:r)?\b|\bmettre?\b.*panier|\bmet(?:s)?\b.*panier"
         r"|\bdans\s+(?:mon|le)\s+panier|\bau\s+panier|\badd\b"
-        r"|\bzidni\b|\bzidli\b|\bnzid\b|\b7ot\b|\b7otli\b|\b7othom\b"
+        r"|\bzidni\b|\bzidli\b|\bzidhom\b|\bzidhomli\b|\bnzid\b|\b7ot\b|\b7otli\b|\b7othom\b"
         r"|\bna7eb\s*nzid\b|\bn7eb\s*nzid\b"
         r"|\bf(?:il)?\s+(?:el\s+)?panier\b|\bfil\s+cart\b",
         msg

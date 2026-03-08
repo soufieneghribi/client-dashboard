@@ -118,7 +118,7 @@ async def fetch_stores() -> list:
         return []
 
 
-async def fetch_all_products_paginated(max_pages: int = 10) -> list:
+async def fetch_all_products_paginated(max_pages: int = 50) -> list:
     """Fetch all products across multiple pages for indexing"""
     all_products = []
     for page in range(1, max_pages + 1):

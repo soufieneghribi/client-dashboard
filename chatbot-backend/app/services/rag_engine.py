@@ -196,6 +196,7 @@ def detect_intent(message: str) -> str:
     # ---- Budget / price search ----
     if re.search(
         r"budget|dinars?|tnd|prix|combien|j'ai \d+|dépenser|pas cher|moins de"
+        r"|akal\s*m[ei]n|ta7t|ar5as|أرخص|أقل من"
         r"|9addech|قداش|بشحال|ب\d+|chhal|b?kaddesh|prix",
         msg
     ):
@@ -277,6 +278,9 @@ def extract_budget(message: str) -> Optional[float]:
         r"j'ai\s*(\d+[\s.,]?\d*)",
         r"avec\s*(\d+[\s.,]?\d*)",
         r"moins\s*de\s*(\d+[\s.,]?\d*)",
+        r"akal\s*m[ei]n\s*(\d+[\s.,]?\d*)",
+        r"ta7t\s*(\d+[\s.,]?\d*)",
+        r"أقل\s*من\s*(\d+[\s.,]?\d*)",
         r"3andi\s*(\d+[\s.,]?\d*)",
         r"b(\d+[\s.,]?\d*)\s*(?:dinar|dt|tnd)?",
         r"عندي\s*(\d+[\s.,]?\d*)",
@@ -312,63 +316,47 @@ async def build_context(message: str, intent: str, cart: list = None) -> str:
     if any(k in intent for k in ("budget", "recommend", "promo", "general", "cart", "recipe")):
         search_query = message
         if "budget" in intent and budget:
-            search_query = f"produits moins de {budget} TND"
+            # Keep original message keywords for semantic search, budget filter handles the price
+            # Remove budget amounts/words to keep product keywords
+            clean_msg = re.sub(r'\d+[\s.,]?\d*\s*(?:tnd|dinars?|dt|دينار)?', '', message, flags=re.IGNORECASE)
+            clean_msg = re.sub(
+                r'(?:budget|moins de|akal\s*m[ei]n|ta7t|prix\s*max|j\'ai|avec|3andi|عندي|أقل\s*من|andi|n7eb|nhb)\s*',
+                '', clean_msg, flags=re.IGNORECASE
+            ).strip()
+            # Also apply Tounsi translations for the keywords
+            translations = {
+                "ordinatuer": "ordinateur", "ordinateur": "ordinateur",
+                "telephon": "telephone", "tilifoun": "telephone",
+                "halib": "lait", "7lib": "lait", "roz": "riz", "rouz": "riz",
+                "zit": "huile", "djej": "poulet", "lahm": "viande",
+            }
+            words = clean_msg.lower().split()
+            translated = [translations.get(w.strip("?!.,"), w) for w in words]
+            clean_msg = " ".join(translated)
+            search_query = clean_msg if len(clean_msg) > 2 else message
         else:
-            # Extract keywords from message for better embedding search
-            noise = {"je", "veux", "cherche", "donne", "moi", "un", "une", "du", "de", "des", "la", "le", "les",
-                     "est", "ce", "que", "vous", "avez", "avoir", "acheter", "produit", "produits", "avec",
-                     "pour", "dans", "mon", "mes", "pas", "plus", "moins", "cher", "prix", "budget",
-                     "donner", "donnez", "trouve", "trouver", "panier", "cart", "ajouter", "ajoute",
-                     "besoin", "faut", "il", "elle", "on", "nous", "votre", "notre", "quel", "quelle",
-                     "comment", "combien", "quoi", "qui",
-                     # Tounsi noise
-                     "3aslema", "marhba", "slem", "ahla", "bslema",
-                     "3andkom", "3andek", "3andi", "na7eb", "n7eb", "7otli", "zidli", "winek",
-                     "chnahiya", "famma", "behi", "kifech", "9addech", "lyoum",
-                     "nechri", "t7eb", "7aja", "okhra", "hedha", "hedhi", "hkeya"}
             # Tounsi/Arabic → French translations for common product words
             translations = {
-                "halib": "lait", "7lib": "lait", "zebda": "beurre", "khobz": "pain",
+                "halib": "lait", "7lib": "lait", "hlib": "lait",
+                "zebda": "beurre", "khobz": "pain",
                 "djej": "poulet", "lahm": "viande", "samak": "poisson", "3sel": "miel",
-                "zit": "huile", "roz": "riz", "sokar": "sucre", "9ahwa": "cafe",
-                "atay": "the", "ma": "eau", "fromage": "fromage", "beid": "oeufs",
+                "zit": "huile", "roz": "riz", "rouz": "riz",
+                "sokar": "sucre", "9ahwa": "cafe",
+                "atay": "the", "fromage": "fromage", "beid": "oeufs",
                 "tomatich": "tomate", "batata": "pomme de terre", "besla": "oignon",
                 "tawabel": "epices", "felfel": "poivre", "mel7": "sel",
                 "حليب": "lait", "خبز": "pain", "دجاج": "poulet", "لحم": "viande",
                 "زيت": "huile", "أرز": "riz", "سكر": "sucre", "قهوة": "cafe",
                 "ماء": "eau", "بيض": "oeufs", "عسل": "miel", "زبدة": "beurre",
             }
-            clean_msg = re.sub(r'[^a-zA-ZÀ-ÿ0-9\s\u0600-\u06FF]', '', message.lower())
-            keywords = [w for w in clean_msg.split() if w not in noise and len(w) >= 2]
-            # Translate known Tounsi/Arabic words to French
-            keywords = [translations.get(w, w) for w in keywords]
-            # Remove duplicates while preserving order
-            seen = set()
-            keywords = [w for w in keywords if w not in seen and not seen.add(w)]
-            if keywords:
-                search_query = " ".join(keywords)
+            # Translate Tounsi/Arabic words in the message
+            words = message.lower().split()
+            translated = [translations.get(w.strip("?!.,"), w) for w in words]
+            if translated != words:
+                search_query = " ".join(translated)
 
-        rag_results = search_products(query=search_query, k=10, price_max=budget, min_score=0.05)
-
-        # Post-filter: keep only products with word overlap with the query
-        if rag_results:
-            def _has_word_overlap(query: str, product_name: str) -> bool:
-                """Check if any meaningful query word appears in the product name."""
-                norm = lambda t: unicodedata.normalize("NFD", t.lower()).encode("ascii", "ignore").decode("ascii")
-                # Strip punctuation from words
-                clean = lambda t: re.sub(r'[^a-z0-9\s]', '', norm(t))
-                noise = {"je", "veux", "cherche", "donne", "moi", "un", "une", "du", "de", "des", "la", "le", "les",
-                         "est", "ce", "que", "vous", "avez", "avoir", "acheter", "produit", "produits", "avec",
-                         "pour", "dans", "mon", "mes", "pas", "plus", "moins", "cher", "prix", "budget",
-                         "donner", "donnez", "trouve", "trouver"}
-                q_words = [w for w in clean(query).split() if w not in noise and len(w) >= 3]
-                p_name = clean(product_name)
-                for w in q_words:
-                    if w in p_name:
-                        return True
-                return False
-
-            rag_results = [p for p in rag_results if _has_word_overlap(search_query, p["name"])]
+        search_k = 20 if budget else 10
+        rag_results = search_products(query=search_query, k=search_k, price_max=budget)
 
         if rag_results:
             if "budget" in intent and budget:
@@ -390,7 +378,7 @@ async def build_context(message: str, intent: str, cart: list = None) -> str:
             }.get(intent.split("_")[0], "[PRODUCT] PRODUITS PERTINENTS")
             context_parts.append(f"{label}:\n" + "\n".join(products_text))
         else:
-            context_parts.append("[PRODUCT] ⛔ AUCUN PRODUIT TROUVÉ dans notre catalogue pour cette recherche. Tu DOIS dire au client que ce produit n'est pas disponible dans notre catalogue MG Tunisie. Ne dis PAS 'je peux vérifier' ou 'je peux chercher'. Dis clairement: 'Ce produit n'est pas disponible dans notre catalogue.' Propose au client de chercher autre chose parmi nos rayons (alimentation, hygiène, entretien, électronique).")
+            context_parts.append("[PRODUCT] Aucun produit trouvé pour cette recherche. Propose au client de préciser sa demande ou de chercher par catégorie.")
 
     # --- Intent-specific data ---
     if "recommendation" in intent:
@@ -498,10 +486,9 @@ async def generate_llm_response(
     full_system = SYSTEM_PROMPT
     if context:
         full_system += f"\n\n--- DONNÉES CONTEXTUELLES ---\n{context}\n--- FIN DONNÉES ---"
-        full_system += "\n⚠️ RAPPEL: Mentionne UNIQUEMENT les produits listés ci-dessus. N'invente AUCUN produit, prix ou information."
+        full_system += "\n⚠️ RAPPEL: Base ta réponse UNIQUEMENT sur les données ci-dessus. N'invente aucun produit ni prix."
     else:
-        full_system += "\n\n--- DONNÉES CONTEXTUELLES ---\n⛔ AUCUNE DONNÉE DISPONIBLE pour cette requête. Ce produit N'EXISTE PAS dans le catalogue MG Tunisie.\n--- FIN DONNÉES ---"
-        full_system += "\n⚠️ AUCUNE DONNÉE. Tu DOIS dire clairement que ce produit n'est pas disponible. Ne dis PAS 'je peux vérifier'. Ne propose AUCUN produit."
+        full_system += "\n\n--- DONNÉES CONTEXTUELLES ---\nAucune donnée spécifique disponible.\n--- FIN DONNÉES ---"
     full_system += fewshot
 
     if lang == "tounsi":
@@ -565,13 +552,17 @@ async def chat_stream(
     lang = detect_language(user_message)
     print(f"[INTENT] {intent} | [LANG] {lang} | Message: {user_message[:60]}...")
 
-    # ---- CART FOLLOW-UP: user responds to disambiguation ("les deux", "la 1ère", etc.) ----
-    if intent == "general" and chat_history:
+    # ---- CART FOLLOW-UP: user responds to disambiguation ("les deux", "ajouter tous", etc.) ----
+    if chat_history and intent in ("general", "cart_add", "cart_view"):
         followup_match = re.search(
             r"\bles?\s*deux\b|\bles?\s*trois\b|\btous?\b|\btoutes?\b"
             r"|\bla?\s*premi[eè]re?\b|\bla?\s*deuxi[eè]me\b"
             r"|\ble?\s*1\b|\ble?\s*2\b|\ble?\s*3\b"
-            r"|\boui\b|\bok\b|\bd'accord\b|\bbehi\b|\bey\b|\byes\b",
+            r"|\boui\b|\bok\b|\bd'accord\b|\bbehi\b|\bey\b|\byes\b"
+            r"|\bajoute(?:r|s)?\s+(?:les?|tous?|ces|au\s+panier)"
+            r"|\b7ot(?:hom)?\s+(?:lkol|fil\s+panier)"
+            r"|\bzidhom\b|\bzid(?:hom|ni|li)?\s+(?:f(?:il)?\s*panier|lkol)"
+            r"|\bses\s+produi?ts?\b|\bles\s+produi?ts?\b",
             user_message.lower()
         )
         if followup_match:
@@ -587,12 +578,12 @@ async def chat_stream(
                 last_assistant, re.IGNORECASE
             ):
                 # Extract product names from assistant's previous message
+                # Handles formats: "Name | Price TND", "Name à Price TND", "Name - Price TND"
                 product_lines = re.findall(
-                    r"(?:^|\n)\s*\d*\.?\s*(.+?)\s*(?:à|:|–|-)\s*(\d+[.,]?\d*)\s*TND",
+                    r"[-•]\s*(.+?)\s*(?:\||à|:|–|-)\s*(\d+[.,]?\d*)\s*TND",
                     last_assistant
                 )
                 if product_lines:
-                    from app.services.cart_service import match_products_to_catalog
                     product_requests = [{"name": name.strip(), "quantity": 1, "unit": "unit"} for name, _ in product_lines]
 
                     # Filter based on user's choice
@@ -663,7 +654,32 @@ async def chat_stream(
                 yield chunk
             return
 
-        # Cart action returned None (product not found) → fall through to LLM
+        # Cart action returned None → try extracting products from previous assistant message
+        if chat_history and not (action and action.products):
+            last_assistant = ""
+            for msg in reversed(chat_history[-4:]):
+                if msg.get("role") == "assistant":
+                    last_assistant = msg.get("content", "")
+                    break
+            if last_assistant and "TND" in last_assistant:
+                product_lines = re.findall(
+                    r"[-•]\s*(.+?)\s*(?:\||à|:|–|-)\s*(\d+[.,]?\d*)\s*TND",
+                    last_assistant
+                )
+                if product_lines:
+                    product_requests = [{"name": name.strip(), "quantity": 1, "unit": "unit"} for name, _ in product_lines]
+                    matched, _ = await match_products_to_catalog(product_requests)
+                    if matched:
+                        action = ChatAction(type=ActionType.ADD_TO_CART, products=matched)
+                        action_data = json.dumps({"action": action.dict()}, ensure_ascii=False)
+                        yield f"__ACTION__{action_data}"
+                        names = ", ".join([f"{p.name} ({p.price} TND)" for p in matched])
+                        total = sum(p.price * p.quantity for p in matched)
+                        confirm_ctx = f"[ACTION EFFECTUÉE] Produits ajoutés au panier: {names}. Total ajouté: {total:.2f} TND. Confirme au client."
+                        async for chunk in _quick_llm(user_message, confirm_ctx, chat_history):
+                            yield chunk
+                        return
+        # Fall through to LLM
 
     # ---- PROMO BASKET ---- (add all promo products to cart)
     if intent == "promo_basket":

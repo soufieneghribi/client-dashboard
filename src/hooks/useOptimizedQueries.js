@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useDispatch } from 'react-redux';
 import { queryKeys } from '../config/queryClient.jsx';
 import axios from 'axios';
+import { API_BASE_URL } from '../services/api';
 
 /**
  * 🚀 Hook optimisé pour charger les catégories avec cache
@@ -19,7 +20,7 @@ export const useCategories = () => {
     const { data, isLoading, error, refetch } = useQuery({
         queryKey: queryKeys.categories,
         queryFn: async () => {
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/categories`);
+            const response = await axios.get(`${API_BASE_URL}/categories`);
             return response.data;
         },
         staleTime: 1000 * 60 * 5, // 5 minutes - Les catégories changent rarement
@@ -53,7 +54,7 @@ export const useProductsBySubCategory = (subId, filters = {}) => {
             });
 
             const response = await axios.get(
-                `${import.meta.env.VITE_API_URL}/products/category/${subId}?${params}`
+                `${API_BASE_URL}/products/category/${subId}?${params}`
             );
             return response.data;
         },
@@ -88,7 +89,7 @@ export const useAttributes = (categoryId) => {
         queryKey: queryKeys.attributes(categoryId),
         queryFn: async () => {
             const response = await axios.get(
-                `${import.meta.env.VITE_API_URL}/attributes/${categoryId}`
+                `${API_BASE_URL}/attributes/${categoryId}`
             );
             return response.data;
         },
@@ -116,7 +117,7 @@ export const useProduct = (productId) => {
         queryKey: queryKeys.product(productId),
         queryFn: async () => {
             const response = await axios.get(
-                `${import.meta.env.VITE_API_URL}/products/${productId}`
+                `${API_BASE_URL}/products/${productId}`
             );
             return response.data;
         },
@@ -143,7 +144,7 @@ export const useRecommended = () => {
         queryKey: queryKeys.recommended,
         queryFn: async () => {
             const response = await axios.get(
-                `${import.meta.env.VITE_API_URL}/products/recommended`
+                `${API_BASE_URL}/products/recommended`
             );
             return response.data;
         },
@@ -169,7 +170,7 @@ export const useBanners = () => {
         queryKey: queryKeys.banners,
         queryFn: async () => {
             const response = await axios.get(
-                `${import.meta.env.VITE_API_URL}/banners`
+                `${API_BASE_URL}/banners`
             );
             return response.data;
         },

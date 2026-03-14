@@ -2,6 +2,7 @@ import React from "react";
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../../config/queryClient.jsx';
 import axios from 'axios';
+import { API_BASE_URL } from '../../../services/api';
 
 const UniverseSelector = ({ selectedUniverse, setSelectedUniverse }) => {
     const queryClient = useQueryClient();
@@ -18,7 +19,7 @@ const UniverseSelector = ({ selectedUniverse, setSelectedUniverse }) => {
             queryKey: ['popular', universeId],
             queryFn: async () => {
                 const response = await axios.get(
-                    `${import.meta.env.VITE_API_URL}/products/popular`,
+                    `${API_BASE_URL}/products/popular`,
                     { params: { universe_id: universeId } }
                 );
                 return response.data;
@@ -32,7 +33,7 @@ const UniverseSelector = ({ selectedUniverse, setSelectedUniverse }) => {
                 queryKey: queryKeys.categoryProducts(144), // ID root électronique
                 queryFn: async () => {
                     const response = await axios.get(
-                        `${import.meta.env.VITE_API_URL}/categories/144/products`
+                        `${API_BASE_URL}/categories/144/products`
                     );
                     return response.data;
                 },

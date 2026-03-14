@@ -3,6 +3,7 @@ TN360 API Service - Fetches product data and manages operations via TN360 backen
 Supports: products, categories, promotions, stores, complaints, orders
 """
 import httpx
+import asyncio
 from typing import Optional, Dict
 from app.config import TN360_API_URL
 
@@ -15,7 +16,7 @@ def get_client() -> httpx.AsyncClient:
     if _client is None or _client.is_closed:
         _client = httpx.AsyncClient(
             base_url=TN360_API_URL,
-            timeout=15.0,
+            timeout=30.0,
             headers={
                 "Content-Type": "application/json",
                 "Accept": "application/json",
@@ -118,34 +119,52 @@ async def fetch_stores() -> list:
         return []
 
 
-async def fetch_all_products_paginated(max_pages: int = 50) -> list:
-    """Fetch all products across multiple pages for indexing"""
+async def fetch_all_products_paginated(max_pages: int = 50, max_retries: int = 3) -> list:
+    """Fetch all products across multiple pages for indexing (with retries for GCP cold start)"""
     all_products = []
     for page in range(1, max_pages + 1):
-        try:
-            client = get_client()
-            response = await client.get("/products/allproducts", params={"page": page, "channel": "web"})
-            response.raise_for_status()
-            data = response.json()
+        last_error = None
+        for attempt in range(1, max_retries + 1):
+            try:
+                client = get_client()
+                response = await client.get("/products/allproducts", params={"page": page, "channel": "web"})
+                response.raise_for_status()
+                data = response.json()
 
-            products = []
-            if isinstance(data, dict):
-                # API returns {"products": [...], "total_size": N}
-                products = data.get("products", data.get("data", []))
-                # Check if we've reached the last page
-                total_size = data.get("total_size", 0)
-                if not products or (total_size > 0 and len(all_products) + len(products) >= total_size):
-                    all_products.extend(products)
-                    break
-            elif isinstance(data, list):
-                products = data
-                if not products:
-                    break
+                products = []
+                if isinstance(data, dict):
+                    # API returns {"products": [...], "total_size": N}
+                    products = data.get("products", data.get("data", []))
+                    # Check if we've reached the last page
+                    total_size = data.get("total_size", 0)
+                    if not products or (total_size > 0 and len(all_products) + len(products) >= total_size):
+                        all_products.extend(products)
+                        print(f"   [PAGE] Page {page}: {len(products)} produits (last page)")
+                        return all_products
+                elif isinstance(data, list):
+                    products = data
+                    if not products:
+                        return all_products
 
-            all_products.extend(products)
-            print(f"   [PAGE] Page {page}: {len(products)} produits")
-        except Exception as e:
-            print(f"   [ERROR] Page {page} error: {e}")
+                all_products.extend(products)
+                print(f"   [PAGE] Page {page}: {len(products)} produits")
+                last_error = None
+                break  # Success, go to next page
+            except Exception as e:
+                last_error = e
+                if attempt < max_retries:
+                    wait = 2 ** attempt  # 2s, 4s, 8s
+                    print(f"   [RETRY] Page {page} attempt {attempt}/{max_retries} failed: {e}. Retrying in {wait}s...")
+                    await asyncio.sleep(wait)
+                else:
+                    print(f"   [ERROR] Page {page} failed after {max_retries} attempts: {e}")
+
+        if last_error:
+            # If first page fails, all products are unavailable
+            if page == 1:
+                print(f"   [ERROR] Cannot fetch ANY products - API unreachable")
+                return []
+            # For later pages, return what we have
             break
 
     return all_products

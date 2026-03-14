@@ -9,6 +9,7 @@ import FeaturedRecipes from "../../components/FeaturedRecipes";
 import Banners from "../../components/Banners";
 import Popular from "../../components/Popular";
 import { getImageUrl } from "../../utils/imageHelper";
+import { API_BASE_URL } from "../../services/api";
 import FeatureCarousel from "../../components/FeatureCarousel";
 import { fetchPopularWithPromotions } from "../../store/slices/Popular";
 
@@ -56,8 +57,8 @@ const Home = () => {
 
                 // Précharger EN PARALLÈLE les autres données via cache HTTP
                 const promises = [
-                    fetch(`${import.meta.env.VITE_API_URL}/categories?parent_id=144`),
-                    fetch(`${import.meta.env.VITE_API_URL}/products/all`)
+                    fetch(`${API_BASE_URL}/categories?parent_id=144`),
+                    fetch(`${API_BASE_URL}/products/all`)
                 ];
                 await Promise.all(promises);
                 console.log('✅ Cycle de préchargement Électronique terminé (Redux + HTTP)');

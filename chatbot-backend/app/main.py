@@ -58,18 +58,32 @@ async def lifespan(app: FastAPI):
     await close_client()
 
 async def _background_sync():
-    """Background sync task for initial product indexing"""
-    try:
-        products = await fetch_all_products_paginated(max_pages=10)
-        if products:
-            result = await index_products(products)
-            print(f"[OK] Background sync: {result}")
-            # Warm up after indexing so first search is fast
-            warm_up()
-        else:
-            print("[WARN] Background sync: No products fetched.")
-    except Exception as e:
-        print(f"[ERROR] Background sync failed: {e}")
+    """Background sync task for initial product indexing (with retries for GCP cold start)"""
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            # Wait before first attempt to let TN360 back-office API warm up
+            if attempt == 1:
+                await asyncio.sleep(5)
+            
+            products = await fetch_all_products_paginated(max_pages=10)
+            if products:
+                result = await index_products(products)
+                print(f"[OK] Background sync: {result}")
+                # Warm up after indexing so first search is fast
+                warm_up()
+                return  # Success!
+            else:
+                print(f"[WARN] Background sync attempt {attempt}/{max_retries}: No products fetched.")
+        except Exception as e:
+            print(f"[ERROR] Background sync attempt {attempt}/{max_retries} failed: {e}")
+        
+        if attempt < max_retries:
+            wait = 10 * attempt  # 10s, 20s
+            print(f"[RETRY] Retrying product sync in {wait}s...")
+            await asyncio.sleep(wait)
+    
+    print("[ERROR] Background sync: All retries exhausted. Products NOT indexed.")
 
 
 async def _prefetch_recipes():

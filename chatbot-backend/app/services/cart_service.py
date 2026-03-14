@@ -71,13 +71,15 @@ def extract_products_from_message(message: str) -> List[Dict]:
         cleaned = msg
         # Remove cart action words (FR + Tounsi + Arabic)
         cleaned = re.sub(
-            r"\b(?:ajoute[rz]?|rajoute[rz]?|mets?|mettre|met|7ot|7otli|7othom|حط|زيد|زيدني"
+            r"\b(?:ajoute[rz]?|rajoute[rz]?|mets?|mettre|met"
+            r"|7ot(?:ou|li|ni|ha|hom|houm|lhom|lhoum|homli|houmli)?"
+            r"|حط|زيد|زيدني|behi"
             r"|na7eb\s*nzid|n7eb\s*nzid|zidni|zidli|nzid|a3tini)\b",
             "", cleaned
         )
         # Remove cart destination words
         cleaned = re.sub(
-            r"\b(?:dans|au|à|fil|fi|f|في)\s*(?:mon|le|el)?\s*(?:panier|cart|سلة)\b",
+            r"\b(?:dans|au|à|fil|fi|f|fel|في)\s*(?:mon|le|el)?\s*(?:panier|cart|سلة)\b",
             "", cleaned
         )
         # Remove common filler
@@ -113,9 +115,11 @@ def detect_cart_intent(message: str) -> Optional[str]:
     if re.search(
         r"\bajoute(?:r)?\b|\brajoute(?:r)?\b|\bmettre?\b.*panier|\bmet(?:s)?\b.*panier"
         r"|\bdans\s+(?:mon|le)\s+panier|\bau\s+panier|\badd\b"
-        r"|\bzidni\b|\bzidli\b|\bzidhom\b|\bzidhomli\b|\bnzid\b|\b7ot\b|\b7otli\b|\b7othom\b"
+        r"|\bzidni\b|\bzidli\b|\bzidhom\b|\bzidhomli\b|\bnzid\b"
+        r"|\b7ot(?:ou|li|ni|ha|hom|houm|lhom|lhoum|homli|houmli)?\b"
         r"|\bna7eb\s*nzid\b|\bn7eb\s*nzid\b"
-        r"|\bf(?:il)?\s+(?:el\s+)?panier\b|\bfil\s+cart\b",
+        r"|\b(?:f|fi|fil|fel)\s+(?:el\s+)?(?:panier|cart)\b"
+        r"|\b7ot.{0,30}(?:panier|cart|fil\b|fel\b)",
         msg
     ):
         if not re.search(r"supprim|enlev|retir|remove|vider|clear", msg):

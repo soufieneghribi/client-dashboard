@@ -463,19 +463,29 @@ const ChatBot = () => {
             const result = await submitComplaint({ category, description, orderReference: orderRef, authToken });
 
             // Close form and show result
+            const isSuccess = result.status === 'success' || (result.id && !result.error);
             setMessages(prev => [
                 ...prev.map(m => ({ ...m, showComplaintForm: false })),
                 {
                     id: Date.now(),
                     role: 'bot',
-                    content: result.status === 'success'
+                    content: isSuccess
                         ? `✅ **Réclamation soumise avec succès !**\n\nVotre réclamation a été enregistrée.\nConsultez vos réclamations : [/reclamations](/reclamations)`
-                        : `❌ Erreur : ${result.message || 'Veuillez réessayer ou aller sur /reclamations/new'}`,
+                        : `❌ Erreur : ${result.message || result.detail || 'Veuillez réessayer ou aller sur [/reclamations/new](/reclamations/new)'}`,
                     action: null,
                 }
             ]);
         } catch (err) {
-            console.error(err);
+            console.error('Complaint submit error:', err);
+            setMessages(prev => [
+                ...prev.map(m => ({ ...m, showComplaintForm: false })),
+                {
+                    id: Date.now(),
+                    role: 'bot',
+                    content: `❌ Erreur de connexion : ${err.message || 'Impossible de soumettre la réclamation.'}\n\nVeuillez réessayer ou aller sur [/reclamations/new](/reclamations/new)`,
+                    action: null,
+                }
+            ]);
         }
     }, [isLoggedIn, token]);
 

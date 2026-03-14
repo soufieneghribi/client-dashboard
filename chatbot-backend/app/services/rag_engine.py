@@ -580,7 +580,7 @@ async def chat_stream(
                 # Extract product names from assistant's previous message
                 # Handles formats: "Name | Price TND", "Name à Price TND", "Name - Price TND"
                 product_lines = re.findall(
-                    r"[-•]\s*(.+?)\s*(?:\||à|:|–|-)\s*(\d+[.,]?\d*)\s*TND",
+                    r"[-•]\s*(.+?)\s*(?:\||à|:|–|-|b)\s*(\d+[.,]?\d*)\s*TND",
                     last_assistant
                 )
                 if product_lines:
@@ -663,7 +663,7 @@ async def chat_stream(
                     break
             if last_assistant and "TND" in last_assistant:
                 product_lines = re.findall(
-                    r"[-•]\s*(.+?)\s*(?:\||à|:|–|-)\s*(\d+[.,]?\d*)\s*TND",
+                    r"[-•]\s*(.+?)\s*(?:\||à|:|–|-|b)\s*(\d+[.,]?\d*)\s*TND",
                     last_assistant
                 )
                 if product_lines:

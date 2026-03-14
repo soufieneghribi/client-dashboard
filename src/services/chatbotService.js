@@ -154,17 +154,34 @@ export async function getRecipes(query, addToCart = false) {
 
 // ==================== COMPLAINT API ====================
 export async function submitComplaint({ category, description, orderReference = '', authToken }) {
-  const response = await fetch(`${CHATBOT_API}/api/complaint`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      category,
-      description,
-      order_reference: orderReference,
-      auth_token: authToken,
-    }),
-  });
-  return response.json();
+  try {
+    const response = await fetch(`${CHATBOT_API}/api/complaint`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        category,
+        description,
+        order_reference: orderReference,
+        auth_token: authToken,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        message: data.detail || data.message || `Erreur serveur (${response.status})`,
+      };
+    }
+
+    return data;
+  } catch (err) {
+    return {
+      status: 'error',
+      message: err.message || 'Erreur de connexion au serveur',
+    };
+  }
 }
 
 

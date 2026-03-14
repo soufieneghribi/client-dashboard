@@ -166,6 +166,67 @@ async def fetch_product_by_id(product_id: str) -> Optional[dict]:
         return None
 
 
+async def fetch_claim_types(auth_token: str) -> list:
+    """Fetch available claim types from TN360 API"""
+    try:
+        client = get_client()
+        headers = {"Authorization": f"Bearer {auth_token}"}
+        response = await client.get("/claims/types", headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        if isinstance(data, dict) and "data" in data:
+            return data["data"]
+        return data if isinstance(data, list) else []
+    except Exception as e:
+        print(f"[ERROR] Error fetching claim types: {e}")
+        return []
+
+
+# Map chatbot category names to possible claim type names in DB
+_CATEGORY_TO_LABEL = {
+    "produit_manquant": ["produit manquant", "missing product", "manquant"],
+    "mauvais_produit": ["mauvais produit", "wrong product", "mauvais"],
+    "retard_livraison": ["retard de livraison", "retard livraison", "delivery delay", "retard"],
+    "produit_endommage": ["produit endommagé", "produit endommage", "damaged product", "endommagé"],
+    "remboursement": ["remboursement", "refund"],
+    "retour": ["retour", "return", "retour produit"],
+    "autre": ["autre", "other"],
+}
+
+
+async def _resolve_claim_type_id(auth_token: str, category: str) -> Optional[int]:
+    """Resolve a category name to a claim_type_id by fetching types from API"""
+    claim_types = await fetch_claim_types(auth_token)
+    if not claim_types:
+        return None
+
+    # Try exact match on name/slug first
+    category_lower = category.lower().strip()
+    for ct in claim_types:
+        ct_name = (ct.get("name") or ct.get("label") or ct.get("libelle") or "").lower()
+        ct_slug = (ct.get("slug") or "").lower()
+        if category_lower == ct_name or category_lower == ct_slug:
+            return ct.get("id")
+
+    # Try fuzzy match using our label map
+    labels = _CATEGORY_TO_LABEL.get(category_lower, [category_lower])
+    for ct in claim_types:
+        ct_name = (ct.get("name") or ct.get("label") or ct.get("libelle") or "").lower()
+        for label in labels:
+            if label in ct_name or ct_name in label:
+                return ct.get("id")
+
+    # Fallback: prefer "autre" type, then first type
+    if claim_types:
+        for ct in claim_types:
+            ct_name = (ct.get("name") or ct.get("label") or ct.get("libelle") or "").lower()
+            if "autre" in ct_name or "other" in ct_name:
+                return ct.get("id")
+        return claim_types[0].get("id")
+
+    return None
+
+
 async def create_complaint(
     auth_token: str,
     category: str,
@@ -174,9 +235,27 @@ async def create_complaint(
 ) -> Optional[dict]:
     """Create a customer complaint via TN360 API"""
     try:
+        # Resolve category name to claim_type_id
+        claim_type_id = await _resolve_claim_type_id(auth_token, category)
+        if not claim_type_id:
+            return {"error": "Impossible de trouver le type de réclamation. Veuillez réessayer."}
+
+        # Build subject from category
+        subject_map = {
+            "produit_manquant": "Produit manquant",
+            "mauvais_produit": "Mauvais produit reçu",
+            "retard_livraison": "Retard de livraison",
+            "produit_endommage": "Produit endommagé",
+            "remboursement": "Demande de remboursement",
+            "retour": "Retour produit",
+            "autre": "Autre réclamation",
+        }
+        subject = subject_map.get(category.lower(), f"Réclamation - {category}")
+
         client = get_client()
         payload = {
-            "type": category,
+            "claim_type_id": claim_type_id,
+            "subject": subject,
             "description": description,
         }
         if order_reference:
@@ -187,6 +266,14 @@ async def create_complaint(
         response.raise_for_status()
         data = response.json()
         return data
+    except httpx.HTTPStatusError as e:
+        error_body = ""
+        try:
+            error_body = e.response.json()
+        except Exception:
+            error_body = e.response.text
+        print(f"[ERROR] Error creating complaint (HTTP {e.response.status_code}): {error_body}")
+        return {"error": f"Erreur HTTP {e.response.status_code}: {error_body}"}
     except Exception as e:
         print(f"[ERROR] Error creating complaint: {e}")
         return {"error": str(e)}

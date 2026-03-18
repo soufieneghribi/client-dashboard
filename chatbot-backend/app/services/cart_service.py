@@ -6,6 +6,7 @@ import re
 from typing import List, Dict, Optional, Tuple
 from app.models import CartProduct, ChatAction, ActionType
 from app.services.vector_store import search_products
+from app.services.tounsi_utils import translate_tounsi_query
 
 
 # ==================== QUANTITY EXTRACTION ====================
@@ -74,12 +75,14 @@ def extract_products_from_message(message: str) -> List[Dict]:
             r"\b(?:ajoute[rz]?|rajoute[rz]?|mets?|mettre|met"
             r"|7ot(?:ou|li|ni|ha|hom|houm|lhom|lhoum|homli|houmli)?"
             r"|حط|زيد|زيدني|behi"
-            r"|na7eb\s*nzid|n7eb\s*nzid|zidni|zidli|nzid|a3tini)\b",
+            r"|na7eb\s*nzid|n7eb\s*nzid|zidni|zidli|zidha|zidhom|zidhomli|nzid|a3tini"
+            r"|na77i|zdedni|a77ili|7ayyed|naqes"
+            r"|n7eb\s*nechri|na7eb\s*nechri|nechri|n7eb|nheb)\b",
             "", cleaned
         )
-        # Remove cart destination words
+        # Remove cart destination words (handle typos like "pannier")
         cleaned = re.sub(
-            r"\b(?:dans|au|à|fil|fi|f|fel|في)\s*(?:mon|le|el)?\s*(?:panier|cart|سلة)\b",
+            r"\b(?:dans|au|à|fil|fi|f|fel|في)\s*(?:mon|le|el)?\s*(?:pan+ier|cart|سلة)\b",
             "", cleaned
         )
         # Remove common filler
@@ -113,13 +116,13 @@ def detect_cart_intent(message: str) -> Optional[str]:
     # Add to cart — require explicit product + quantity signals
     # 'je veux / voudrais / commander' are too vague → excluded
     if re.search(
-        r"\bajoute(?:r)?\b|\brajoute(?:r)?\b|\bmettre?\b.*panier|\bmet(?:s)?\b.*panier"
-        r"|\bdans\s+(?:mon|le)\s+panier|\bau\s+panier|\badd\b"
-        r"|\bzidni\b|\bzidli\b|\bzidhom\b|\bzidhomli\b|\bnzid\b"
+        r"\bajoute(?:r)?\b|\brajoute(?:r)?\b|\bmettre?\b.*pan+ier|\bmet(?:s)?\b.*pan+ier"
+        r"|\bdans\s+(?:mon|le)\s+pan+ier|\bau\s+pan+ier|\badd\b"
+        r"|\bzidni\b|\bzidli\b|\bzidha\b|\bzidhom\b|\bzidhomli\b|\bnzid\b"
         r"|\b7ot(?:ou|li|ni|ha|hom|houm|lhom|lhoum|homli|houmli)?\b"
         r"|\bna7eb\s*nzid\b|\bn7eb\s*nzid\b"
-        r"|\b(?:f|fi|fil|fel)\s+(?:el\s+)?(?:panier|cart)\b"
-        r"|\b7ot.{0,30}(?:panier|cart|fil\b|fel\b)",
+        r"|\b(?:f|fi|fil|fel)\s+(?:el\s+)?(?:pan+ier|cart)\b"
+        r"|\b7ot.{0,30}(?:pan+ier|cart|fil\b|fel\b)",
         msg
     ):
         if not re.search(r"supprim|enlev|retir|remove|vider|clear", msg):
@@ -132,21 +135,24 @@ def detect_cart_intent(message: str) -> Optional[str]:
                 return "add"
 
     # Remove from cart — must explicitly mention cart
-    if re.search(r"(?:supprim|enlev|retir|enlève).+(?:panier|cart|commande)", msg):
+    if re.search(r"(?:supprim|enlev|retir|enlève).+(?:pan+ier|cart|commande)", msg):
         return "remove"
-    if re.search(r"(?:du|de\s+la|des|le|la)\s+.+\s+(?:du|de\s+la|des)\s+panier", msg):
+    if re.search(r"(?:du|de\s+la|des|le|la)\s+.+\s+(?:du|de\s+la|des)\s+pan+ier", msg):
+        return "remove"
+    # Tounsi: "na77i", "zdedni", "a77ili" (remove)
+    if re.search(r"\bna77i\b|\bzdedni\b|\ba77ili\b|\b7ayyed\b|\bnaqes\b", msg):
         return "remove"
 
     # View cart
     if re.search(
-        r"(?:voir|affich|montr|show|qu'est.ce qu'il y a dans|contenu\s+du)\s+(?:mon\s+)?(?:panier|cart|caddie)"
-        r"|mon\s+panier\s*[?!]?",
+        r"(?:voir|affich|montr|show|qu'est.ce qu'il y a dans|contenu\s+du)\s+(?:mon\s+)?(?:pan+ier|cart|caddie)"
+        r"|mon\s+pan+ier\s*[?!]?",
         msg
     ):
         return "view"
 
     # Clear cart
-    if re.search(r"vide(?:r)?\s+(?:mon|le)\s+panier|effac.+panier|réinitialis.+panier", msg):
+    if re.search(r"vide(?:r)?\s+(?:mon|le)\s+pan+ier|effac.+pan+ier|réinitialis.+pan+ier", msg):
         return "clear"
 
     return None
@@ -202,8 +208,10 @@ async def match_products_to_catalog(product_requests: List[Dict]) -> Tuple[List[
         raw_qty = float(req.get("quantity", 1))
         quantity = max(1, int(raw_qty) if raw_qty == int(raw_qty) else int(raw_qty) + 1)
 
+        # Translate Tounsi words to French for better search
+        search_name = translate_tounsi_query(name)
         # Search in ChromaDB with minimum relevance score
-        results = search_products(query=name, k=5, min_score=0.15)
+        results = search_products(query=search_name, k=5, min_score=0.15)
 
         # Score each result and pick the best relevant match
         best = None

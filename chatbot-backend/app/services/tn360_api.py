@@ -328,6 +328,40 @@ async def prepare_order(auth_token: str, cart_items: list) -> Optional[dict]:
         return {"error": str(e)}
 
 
+async def fetch_promo_codes() -> list:
+    """Fetch available promo codes / public offers"""
+    try:
+        client = get_client()
+        response = await client.get("/promo-codes")
+        response.raise_for_status()
+        data = response.json()
+        if isinstance(data, dict) and "data" in data:
+            return data["data"]
+        return data if isinstance(data, list) else []
+    except Exception as e:
+        print(f"[ERROR] Error fetching promo codes: {e}")
+        return []
+
+
+async def reserve_promo_code(auth_token: str, code: str) -> Optional[dict]:
+    """Reserve a promo code for the authenticated user"""
+    try:
+        client = get_client()
+        headers = {"Authorization": f"Bearer {auth_token}"}
+        response = await client.post(f"/promo-codes/{code}/reserve", headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        error_body = ""
+        try:
+            error_body = e.response.json()
+        except Exception:
+            error_body = e.response.text
+        return {"error": f"HTTP {e.response.status_code}", "details": error_body}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 async def close_client():
     """Close the HTTP client"""
     global _client

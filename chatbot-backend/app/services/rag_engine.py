@@ -18,6 +18,9 @@ from app.services.tn360_api import (
     fetch_stores,
     fetch_recommended_products,
     create_complaint,
+    fetch_promo_codes,
+    reserve_promo_code,
+    fetch_product_by_id,
 )
 from app.services.cart_service import (
     detect_cart_intent,
@@ -25,6 +28,7 @@ from app.services.cart_service import (
     match_products_to_catalog,
     process_cart_action,
     format_cart_summary,
+    _relevance_score,
 )
 from app.services.recipe_service import (
     detect_recipe_intent,
@@ -33,6 +37,7 @@ from app.services.recipe_service import (
     format_recipe_suggestions,
     get_recipe_with_products,
 )
+from app.services.tounsi_utils import translate_tounsi_query, TOUNSI_PRODUCT_SYNONYMS
 from app.models import CartProduct, ChatAction, ActionType
 
 
@@ -74,12 +79,23 @@ def detect_language(message: str) -> str:
         r'\bchkoun\b', r'\bwahed\b', r'\bzouz\b', r'\btleta\b',
         r'\bma3andich\b', r'\bma3labalech\b', r'\bna3ref\b',
         r'\bchbik\b', r'\bwin\b', r'\bmouch\b', r'\bkif\b',
+        r'\bmthabet\b', r'\bnechri\b', r'\b3dham\b', r'\b7lib\b',
+        r'\bkhobz\b', r'\bzidha\b', r'\bzdedni\b', r'\bokhra\b',
+        r'\bn7ab\b', r'\bnekho\b', r'\bnachri\b',
+        r'\bna77i\b', r'\bse3a\b', r'\btfaddal\b', r'\b5alli\b',
+        r'\byezzi\b', r'\bbarsha\b', r'\byfoutech\b', r'\bsoumeha\b',
+        r'\bma\s*yfoutech\b', r'\bnheb\b', r'\bchay\b', r'\b7aja\b',
+        r'\byekhi\b', r'\b3lech\b', r'\bkbal\b', r'\btaw\b',
+        r'\bnharek\b', r'\bsa77a\b', r'\byaatik\b', r'\bchnoua\b',
     ]
-    # Also detect arabizi number patterns: 3, 5, 7, 9 used as letters
-    arabizi_numbers = len(re.findall(r'[3579]', msg))
+    # Also detect arabizi number patterns: 3, 5, 7, 9 used as letters (inside words, not standalone)
+    arabizi_numbers = len(re.findall(r'(?<=[a-zA-Z])[3579]|[3579](?=[a-zA-Z])', msg))
     has_tounsi_words = any(re.search(p, msg.lower()) for p in tounsi_patterns)
+    # Check if any word is in the Tounsi synonym map
+    msg_words = [w.strip(".,!?;:'\"").lower() for w in msg.split()]
+    has_tounsi_product = any(w in TOUNSI_PRODUCT_SYNONYMS for w in msg_words)
 
-    if has_tounsi_words or (arabizi_numbers >= 2 and not msg.isdigit()):
+    if has_tounsi_words or has_tounsi_product or (arabizi_numbers >= 2 and not msg.isdigit()):
         return "tounsi"
 
     return "french"
@@ -171,10 +187,10 @@ def detect_intent(message: str) -> str:
 
     # ---- Broad cart-add patterns (FR + Tounsi) ----
     if re.search(
-        r"ajoute(?:r)?\b.{1,40}(?:panier|cart)"
-        r"|(?:panier|cart).{1,20}ajoute(?:r)?"
-        r"|mets?.{1,30}dans\s+(?:mon\s+)?(?:le\s+)?panier"
-        r"|7ot.{1,30}(?:panier|cart)|na7eb\s*nzid|زيد.+سلة|حط",
+        r"ajoute(?:r)?\b.{1,40}(?:pan+ier|cart)"
+        r"|(?:pan+ier|cart).{1,20}ajoute(?:r)?"
+        r"|mets?.{1,30}dans\s+(?:mon\s+)?(?:le\s+)?pan+ier"
+        r"|7ot.{1,30}(?:pan+ier|cart)|na7eb\s*nzid|زيد.+سلة|حط",
         msg
     ):
         return "cart_add"
@@ -193,13 +209,35 @@ def detect_intent(message: str) -> str:
     if recipe_intent:
         return f"recipe_{recipe_intent}"
 
-    # ---- Budget / price search ----
+    # ---- Product details / characteristics ----
     if re.search(
-        r"budget|dinars?|tnd|prix|combien|j'ai \d+|dépenser|pas cher|moins de"
-        r"|akal\s*m[ei]n|ta7t|ar5as|أرخص|أقل من"
-        r"|9addech|قداش|بشحال|ب\d+|chhal|b?kaddesh|prix",
+        r"caractéristique|caracteristique|fiche\s*technique|détail|detail|spécification|specification"
+        r"|info(?:rmation)?s?\s+(?:sur|de|du|mta3)"
+        r"|a3tini.*(?:détail|info|caractéristique|se3a)"
+        r"|مواصفات|تفاصيل"
+        r"|c'est\s*quoi\s*(?:exactement|comme)"
+        r"|describe|description\s+(?:de|du|mta3)",
         msg
     ):
+        return "product_detail"
+
+    # ---- Budget / price search ----
+    # "9addech" alone = asking a price → general, NOT budget
+    # Budget requires a number or "less than" / "under" intent
+    if re.search(
+        r"budget\s*\d|j'ai\s*\d+|dépenser|pas\s*cher|moins\s*de\s*\d"
+        r"|akal\s*(?:m[ei]?n|mn)|ta7t\s*\d|ar5as|أرخص|أقل\s*من\s*\d"
+        r"|ma\s*(?:yfoutech|yefoutech)\s*\d"
+        r"|\d+\s*(?:tnd|dt|dinars?)",
+        msg
+    ):
+        return "budget"
+    # Price inquiry WITH a standalone number → budget search
+    # Exclude digits embedded in Tounsi words (9addech, 7lib, 3dham)
+    if re.search(
+        r"9addech|قداش|بشحال|chhal|combien|prix|b?kaddesh|soumeha|yfoutech",
+        msg
+    ) and re.search(r'(?<![a-zA-Z])\d+(?![a-zA-Z])', re.sub(r'9addech|7lib|3dham|3andi|5obz|7out|9ahwa', '', msg)):
         return "budget"
 
     # ---- Recommendations ----
@@ -210,10 +248,21 @@ def detect_intent(message: str) -> str:
     ):
         return "recommendation"
 
+    # ---- Promo code (code promo, coupon) ----
+    if re.search(
+        r"code\s*promo|promo\s*code|coupon|bon\s*de\s*réduction|bon\s*reduction"
+        r"|كود\s*برومو|code\s*de\s*réduction|code\s*reduction"
+        r"|3andi\s*code|3andi\s*coupon|kod\s*promo|code\s*mta3",
+        msg
+    ):
+        return "promo_code"
+
     # ---- Promotions (info only, not basket) ----
     if re.search(
         r"promo|promotion|réduction|remise|solde|offre|deal"
-        r"|تخفيض|عرض|famma\s*promo|promo\s*lyoum",
+        r"|تخفيض|عرض|famma\s*promo|promo\s*lyoum"
+        r"|reduction\s*de\s*prix|mthabet.*reduction|ta5fidh"
+        r"|en\s*promo|article.*promotion|produit.*promo",
         msg
     ):
         return "promotion"
@@ -244,9 +293,9 @@ def detect_intent(message: str) -> str:
 
     # ---- Orders / cart navigation ----
     if re.search(
-        r"command|panier|cart|livraison|payer|checkout"
-        r"|طلب|سلة|توصيل|commande"
-        r"|mes\s*commandes|suivi|historique\s*commande",
+        r"mes?\s*commandes?|suivi\s*commande|historique\s*commande"
+        r"|livraison|payer|checkout"
+        r"|طلب|توصيل",
         msg
     ):
         return "navigation_order"
@@ -278,10 +327,12 @@ def extract_budget(message: str) -> Optional[float]:
         r"j'ai\s*(\d+[\s.,]?\d*)",
         r"avec\s*(\d+[\s.,]?\d*)",
         r"moins\s*de\s*(\d+[\s.,]?\d*)",
-        r"akal\s*m[ei]n\s*(\d+[\s.,]?\d*)",
+        r"akal\s*(?:m[ei]?n|mn)\s*(\d+[\s.,]?\d*)",
         r"ta7t\s*(\d+[\s.,]?\d*)",
         r"أقل\s*من\s*(\d+[\s.,]?\d*)",
         r"3andi\s*(\d+[\s.,]?\d*)",
+        r"ma\s*(?:yfoutech|y(?:e|i)foutech)\s*(\d+[\s.,]?\d*)",
+        r"soumeha\s*(?:ma\s*)?(?:yfoutech|y(?:e|i)foutech)?\s*(\d+[\s.,]?\d*)",
         r"b(\d+[\s.,]?\d*)\s*(?:dinar|dt|tnd)?",
         r"عندي\s*(\d+[\s.,]?\d*)",
     ]
@@ -313,22 +364,32 @@ async def build_context(message: str, intent: str, cart: list = None) -> str:
     # --- Product search (semantic RAG) ---
     budget = extract_budget(message) if "budget" in intent else None
 
-    if any(k in intent for k in ("budget", "recommend", "promo", "general", "cart", "recipe")):
-        search_query = message
+    rag_results = []
+
+    if any(k in intent for k in ("budget", "recommend", "promo", "general", "cart", "recipe", "product_detail")):
+        search_query = translate_tounsi_query(message)
         if "budget" in intent and budget:
             # Keep original message keywords for semantic search, budget filter handles the price
             # Remove budget amounts/words to keep product keywords
-            clean_msg = re.sub(r'\d+[\s.,]?\d*\s*(?:tnd|dinars?|dt|دينار)?', '', message, flags=re.IGNORECASE)
+            # Remove standalone numbers + currency (but NOT digits inside Tounsi words like n7ab, 7lib, 3dham)
+            clean_msg = re.sub(r'(?<![a-zA-Z])\d+[\s.,]?\d*\s*(?:tnd|dinars?|dt|دينار)?(?![a-zA-Z])', '', message, flags=re.IGNORECASE)
             clean_msg = re.sub(
-                r'(?:budget|moins de|akal\s*m[ei]n|ta7t|prix\s*max|j\'ai|avec|3andi|عندي|أقل\s*من|andi|n7eb|nhb)\s*',
+                r'\b(?:budget|moins de|akal\s*(?:m[ei]?n|mn)|ta7t|prix\s*max|j\'ai|avec'
+                r'|3andi|عندي|أقل\s*من|andi'
+                r'|n7[ae]b|na7[ae]b|n7eb|nheb|nhb'
+                r'|nekho|nechri|nachri|n7ab'
+                r'|soumeha|ma\s*yfoutech|ma\s*yefoutech)\b\s*',
                 '', clean_msg, flags=re.IGNORECASE
             ).strip()
             # Also apply Tounsi translations for the keywords
             translations = {
                 "ordinatuer": "ordinateur", "ordinateur": "ordinateur",
-                "telephon": "telephone", "tilifoun": "telephone",
+                "telephon": "telephone", "tilifoun": "telephone", "telephone": "telephone smartphone",
+                "ecran": "ecran moniteur televiseur tv", "chasheh": "ecran moniteur",
                 "halib": "lait", "7lib": "lait", "roz": "riz", "rouz": "riz",
                 "zit": "huile", "djej": "poulet", "lahm": "viande",
+                "pc": "ordinateur pc portable", "laptop": "ordinateur portable",
+                "tablette": "tablette tablet", "smartphone": "smartphone telephone",
             }
             words = clean_msg.lower().split()
             translated = [translations.get(w.strip("?!.,"), w) for w in words]
@@ -356,7 +417,9 @@ async def build_context(message: str, intent: str, cart: list = None) -> str:
                 search_query = " ".join(translated)
 
         search_k = 20 if budget else 10
+        print(f"[SEARCH] query='{search_query}' | k={search_k} | price_max={budget} | intent={intent}")
         rag_results = search_products(query=search_query, k=search_k, price_max=budget)
+        print(f"[SEARCH] Found {len(rag_results)} results")
 
         if rag_results:
             if "budget" in intent and budget:
@@ -381,7 +444,34 @@ async def build_context(message: str, intent: str, cart: list = None) -> str:
             context_parts.append("[PRODUCT] Aucun produit trouvé pour cette recherche. Propose au client de préciser sa demande ou de chercher par catégorie.")
 
     # --- Intent-specific data ---
-    if "recommendation" in intent:
+    if intent == "product_detail":
+        # Fetch detailed product info from API
+        if rag_results:
+            best_id = rag_results[0].get("id", "")
+            if best_id:
+                try:
+                    full_product = await fetch_product_by_id(best_id)
+                    if full_product:
+                        detail_parts = []
+                        name = full_product.get("designation") or full_product.get("name") or ""
+                        desc = full_product.get("description") or ""
+                        brand = full_product.get("marque") or full_product.get("brand") or ""
+                        weight = full_product.get("poids") or full_product.get("weight") or ""
+                        specs = full_product.get("specifications") or full_product.get("caracteristiques") or ""
+                        detail_parts.append(f"Nom: {name}")
+                        if brand: detail_parts.append(f"Marque: {brand}")
+                        if desc: detail_parts.append(f"Description: {desc[:500]}")
+                        if weight: detail_parts.append(f"Poids: {weight}")
+                        if specs: detail_parts.append(f"Caractéristiques: {specs}")
+                        context_parts.append(
+                            f"[DETAIL PRODUIT] INFORMATIONS DÉTAILLÉES:\n" + "\n".join(detail_parts)
+                            + f"\nLien: [Voir le produit](/product/{best_id})"
+                            + "\n\nIMPORTANT: Présente les infos de CE produit. Ne propose PAS un autre produit."
+                        )
+                except Exception:
+                    pass
+
+    elif "recommendation" in intent:
         try:
             recommended = await fetch_recommended_products()
             if recommended:
@@ -396,6 +486,20 @@ async def build_context(message: str, intent: str, cart: list = None) -> str:
             pass
 
     elif "promotion" in intent:
+        # 1) Search vector store for products with has_promo=True
+        try:
+            promo_rag = search_products(query="promotion reduction solde promo", k=20)
+            promo_products = [p for p in promo_rag if p.get("has_promo")]
+            if promo_products:
+                promo_prod_text = []
+                for p in promo_products[:12]:
+                    promo_prod_text.append(
+                        f"- {p['name']} | ~~{p['old_price']} TND~~ -> **{p['price']} TND** (-{p['discount_pct']}%) | ID: {p['id']}"
+                    )
+                context_parts.append("[PROMO] PRODUITS EN PROMOTION (reductions actives):\n" + "\n".join(promo_prod_text))
+        except Exception:
+            pass
+        # 2) Also fetch promotions from API (banners, campaigns)
         try:
             promos = await fetch_promotions()
             if promos:
@@ -403,9 +507,28 @@ async def build_context(message: str, intent: str, cart: list = None) -> str:
                 for p in promos[:8]:
                     pct = f" (-{p.get('pourcentage')}%)" if p.get("pourcentage") else ""
                     promo_text.append(f"- {p.get('titre') or p.get('title', 'Promo')}: {p.get('description', '')}{pct}")
-                context_parts.append("[PROMO] PROMOTIONS ACTIVES:\n" + "\n".join(promo_text))
+                context_parts.append("[CAMPAGNE] PROMOTIONS ACTIVES:\n" + "\n".join(promo_text))
         except Exception:
             pass
+
+    elif intent == "promo_code":
+        try:
+            codes = await fetch_promo_codes()
+            if codes:
+                code_text = []
+                for c in codes[:10]:
+                    code_val = c.get("code") or c.get("code_value") or c.get("name") or ""
+                    desc = c.get("description") or c.get("label") or ""
+                    discount = c.get("discount") or c.get("reduction") or c.get("pourcentage") or ""
+                    code_text.append(f"- Code: **{code_val}** | {desc} | Reduction: {discount}")
+                context_parts.append(
+                    "[CODE PROMO] CODES PROMO DISPONIBLES:\n" + "\n".join(code_text)
+                    + "\n\nPage codes promo: /code-promo"
+                )
+            else:
+                context_parts.append("[CODE PROMO] Aucun code promo disponible. Page: /code-promo")
+        except Exception:
+            context_parts.append("[CODE PROMO] Page codes promo: /code-promo")
 
     elif "category" in intent:
         try:
@@ -559,9 +682,10 @@ async def chat_stream(
             r"|\bla?\s*premi[eè]re?\b|\bla?\s*deuxi[eè]me\b"
             r"|\ble?\s*1\b|\ble?\s*2\b|\ble?\s*3\b"
             r"|\boui\b|\bok\b|\bd'accord\b|\bbehi\b|\bey\b|\byes\b"
-            r"|\bajoute(?:r|s)?\s+(?:les?|tous?|ces|au\s+panier)"
-            r"|\b7ot(?:hom)?\s+(?:lkol|fil\s+panier)"
-            r"|\bzidhom\b|\bzid(?:hom|ni|li)?\s+(?:f(?:il)?\s*panier|lkol)"
+            r"|\bajoute(?:r|s)?\s+(?:les?|tous?|ces|au\s+pan+ier)"
+            r"|\bajoute(?:r|s)?\s*$|\bachete(?:r|z)?\b"
+            r"|\b7ot(?:hom|ha)?\s+(?:lkol|fil\s+pan+ier|f\s+pan+ier)"
+            r"|\bzidhom\b|\bzidha\b|\bzid(?:hom|ha|ni|li)?\s+(?:f(?:il)?\s*pan+ier|lkol)"
             r"|\bses\s+produi?ts?\b|\bles\s+produi?ts?\b",
             user_message.lower()
         )
@@ -580,7 +704,7 @@ async def chat_stream(
                 # Extract product names from assistant's previous message
                 # Handles formats: "Name | Price TND", "Name à Price TND", "Name - Price TND"
                 product_lines = re.findall(
-                    r"[-•]\s*(.+?)\s*(?:\||à|:|–|-|b)\s*(\d+[.,]?\d*)\s*TND",
+                    r"[-•*]\s*(.+?)\s*(?:\||\bà\b|\ben\s*promo\s*à\b|\bb\s)?\s*(\d+[.,]?\d*)\s*TND",
                     last_assistant
                 )
                 if product_lines:
@@ -592,7 +716,31 @@ async def chat_stream(
                         product_requests = [product_requests[0]]
                     elif re.search(r"deuxi[eè]me|\b2\b", user_lower) and len(product_requests) > 1:
                         product_requests = [product_requests[1]]
-                    # else: keep all (les deux, tous, oui, etc.)
+                    elif re.search(r"\bles?\s*deux\b|\btous?\b|\btoutes?\b|\blkol\b", user_lower):
+                        pass  # keep all
+                    else:
+                        # User may have named specific products — filter by relevance
+                        # Remove action keywords to get product name keywords
+                        user_keywords = re.sub(
+                            r"\b(?:zidhom|zidha|zid(?:hom|ha|ni|li)?|7ot(?:hom|ha)?|ajoute[rz]?|rajoute[rz]?"
+                            r"|mets?|mettre|dans|mon|le|la|les|au|et|fil|f|fel|fi|panier|cart"
+                            r"|n7eb|na7eb|nzid|nechri|behi|ok|oui|svp|stp)\b",
+                            "", user_lower
+                        ).strip()
+                        if user_keywords and len(user_keywords) > 3:
+                            # Score each product from previous message against user's keywords
+                            scored = []
+                            for req in product_requests:
+                                rel = _relevance_score(user_keywords, req["name"])
+                                scored.append((req, rel))
+                            filtered = [req for req, rel in scored if rel >= 0.5]
+                            if filtered:
+                                product_requests = filtered
+                        elif len(product_requests) > 1:
+                            # No product name given — check if singular ("zidha" = add it)
+                            # vs plural ("zidhom" = add them)
+                            if re.search(r"\bzidha\b|\b7otha\b|\bajoute\s+le\b|\bajoute\s+la\b", user_lower):
+                                product_requests = [product_requests[0]]  # singular → first product
 
                     matched, _ = await match_products_to_catalog(product_requests)
                     if matched:
@@ -655,6 +803,7 @@ async def chat_stream(
             return
 
         # Cart action returned None → try extracting products from previous assistant message
+        # BUT filter by user's current message to avoid adding unrelated products
         if chat_history and not (action and action.products):
             last_assistant = ""
             for msg in reversed(chat_history[-4:]):
@@ -663,22 +812,45 @@ async def chat_stream(
                     break
             if last_assistant and "TND" in last_assistant:
                 product_lines = re.findall(
-                    r"[-•]\s*(.+?)\s*(?:\||à|:|–|-|b)\s*(\d+[.,]?\d*)\s*TND",
+                    r"[-•*]\s*(.+?)\s*(?:\||\bà\b|\ben\s*promo\s*à\b|\bb\s)?\s*(\d+[.,]?\d*)\s*TND",
                     last_assistant
                 )
                 if product_lines:
-                    product_requests = [{"name": name.strip(), "quantity": 1, "unit": "unit"} for name, _ in product_lines]
-                    matched, _ = await match_products_to_catalog(product_requests)
-                    if matched:
-                        action = ChatAction(type=ActionType.ADD_TO_CART, products=matched)
-                        action_data = json.dumps({"action": action.dict()}, ensure_ascii=False)
-                        yield f"__ACTION__{action_data}"
-                        names = ", ".join([f"{p.name} ({p.price} TND)" for p in matched])
-                        total = sum(p.price * p.quantity for p in matched)
-                        confirm_ctx = f"[ACTION EFFECTUÉE] Produits ajoutés au panier: {names}. Total ajouté: {total:.2f} TND. Confirme au client."
-                        async for chunk in _quick_llm(user_message, confirm_ctx, chat_history):
-                            yield chunk
-                        return
+                    # Filter products from previous message by relevance to user's current request
+                    user_keywords = re.sub(
+                        r"\b(?:ajoute[rz]?|rajoute[rz]?|mets?|mettre|dans|mon|le|la|les|au|panier"
+                        r"|7ot(?:ou|li|ni|ha|hom|houm)?|zid(?:ni|li|hom)?|nzid|n7eb|na7eb|nechri)\b",
+                        "", user_message.lower()
+                    ).strip()
+                    if user_keywords and len(user_keywords) > 1:
+                        # Score each product from previous message against user's request
+                        scored = []
+                        for name, price in product_lines:
+                            rel = _relevance_score(user_keywords, name.strip())
+                            scored.append((name.strip(), price, rel))
+                        # Only keep products that match the user's request (score >= 0.5)
+                        best_matches = [(n, p) for n, p, r in scored if r >= 0.5]
+                        # If no match found with filtering, pick the single best match
+                        if not best_matches and scored:
+                            best = max(scored, key=lambda x: x[2])
+                            if best[2] > 0.0:
+                                best_matches = [(best[0], best[1])]
+                        product_requests = [{"name": n, "quantity": 1, "unit": "unit"} for n, _ in best_matches]
+                    else:
+                        product_requests = [{"name": name.strip(), "quantity": 1, "unit": "unit"} for name, _ in product_lines]
+
+                    if product_requests:
+                        matched, _ = await match_products_to_catalog(product_requests)
+                        if matched:
+                            action = ChatAction(type=ActionType.ADD_TO_CART, products=matched)
+                            action_data = json.dumps({"action": action.dict()}, ensure_ascii=False)
+                            yield f"__ACTION__{action_data}"
+                            names = ", ".join([f"{p.name} ({p.price} TND)" for p in matched])
+                            total = sum(p.price * p.quantity for p in matched)
+                            confirm_ctx = f"[ACTION EFFECTUÉE] Produits ajoutés au panier: {names}. Total ajouté: {total:.2f} TND. Confirme au client."
+                            async for chunk in _quick_llm(user_message, confirm_ctx, chat_history):
+                                yield chunk
+                            return
         # Fall through to LLM
 
     # ---- PROMO BASKET ---- (add all promo products to cart)
@@ -686,9 +858,15 @@ async def chat_stream(
         try:
             promos = await fetch_promotions()
             if not promos:
-                promo_products = search_products(query="promotion solde réduction", k=10)
-                promos = [{"id": p["id"], "designation": p["name"], "prix_vente": p["price"],
-                           "promo_price": p["price"], "price": p.get("old_price", p["price"])} for p in promo_products[:8]]
+                # Fallback: search vector store for products with has_promo
+                promo_products = search_products(query="promotion solde reduction promo", k=20)
+                promo_with_discount = [p for p in promo_products if p.get("has_promo")]
+                if promo_with_discount:
+                    promos = [{"id": p["id"], "designation": p["name"], "promo_price": p["price"],
+                               "price": p.get("old_price", p["price"])} for p in promo_with_discount[:8]]
+                else:
+                    promos = [{"id": p["id"], "designation": p["name"], "prix_vente": p["price"],
+                               "promo_price": p["price"], "price": p.get("old_price", p["price"])} for p in promo_products[:8]]
 
             if promos:
                 cart_promo = []
@@ -762,6 +940,29 @@ async def chat_stream(
                     async for chunk in generate_llm_response(user_message, intent, chat_history, cart):
                         yield chunk
             return
+
+    # ---- PROMO CODE ---- Fetch and present promo codes
+    if intent == "promo_code":
+        try:
+            codes = await fetch_promo_codes()
+            if codes:
+                code_match = re.search(
+                    r"(?:code|coupon|kod)\s*(?:promo)?\s*[:\s]*[\"']?([A-Za-z0-9_-]{3,20})[\"']?",
+                    user_message, re.IGNORECASE
+                )
+                if code_match and auth_token:
+                    code_value = code_match.group(1)
+                    result = await reserve_promo_code(auth_token, code_value)
+                    if result and "error" not in result:
+                        reserve_ctx = f"[ACTION EFFECTUEE] Code promo '{code_value}' reserve avec succes. Confirme et explique comment l'utiliser au checkout."
+                        async for chunk in _quick_llm(user_message, reserve_ctx, chat_history):
+                            yield chunk
+                        return
+        except Exception as e:
+            print(f"[ERROR] Promo code: {e}")
+        async for chunk in generate_llm_response(user_message, intent, chat_history, cart):
+            yield chunk
+        return
 
     # ---- COMPLAINT ---- Show form + guide user with context
     if intent == "complaint_new":
